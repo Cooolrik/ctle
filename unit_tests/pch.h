@@ -8,12 +8,11 @@
 #include <conio.h>
 #include <time.h>
 
-#include "../idx_vector.h"
-#include "../optional_idx_vector.h"
-#include "../optional_value.h"
-#include "../optional_vector.h"
-
-#include "../thread_safe_map.h"
+#include "../ctle/idx_vector.h"
+#include "../ctle/optional_idx_vector.h"
+#include "../ctle/optional_value.h"
+#include "../ctle/optional_vector.h"
+#include "../ctle/thread_safe_map.h"
 
 typedef uint8_t u8;
 typedef uint16_t u16;

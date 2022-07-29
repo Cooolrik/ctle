@@ -94,11 +94,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\idx_vector.h" />
-    <ClInclude Include="..\optional_idx_vector.h" />
-    <ClInclude Include="..\optional_value.h" />
-    <ClInclude Include="..\optional_vector.h" />
-    <ClInclude Include="..\thread_safe_map.h" />
+    <ClInclude Include="..\ctle\idx_vector.h" />
+    <ClInclude Include="..\ctle\optional_idx_vector.h" />
+    <ClInclude Include="..\ctle\optional_value.h" />
+    <ClInclude Include="..\ctle\optional_vector.h" />
+    <ClInclude Include="..\ctle\thread_safe_map.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

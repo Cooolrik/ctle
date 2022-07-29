@@ -3,7 +3,11 @@
 #include <iostream>
 #include <map>
 
-#include "../thread_safe_map.h"
+#include "../ctle/idx_vector.h"
+#include "../ctle/optional_idx_vector.h"
+#include "../ctle/optional_value.h"
+#include "../ctle/optional_vector.h"
+#include "../ctle/thread_safe_map.h"
 
 using namespace ctle;
 
