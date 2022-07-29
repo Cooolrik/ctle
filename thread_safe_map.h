@@ -46,5 +46,11 @@ namespace ctle
 				std::lock_guard<std::mutex> guard( this->AccessMutex );
 				return this->Data.erase( key );
 				}
+
+			size_t size() 
+				{
+				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				return this->Data.size();
+				}
 		};
 	};

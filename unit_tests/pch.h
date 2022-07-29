@@ -35,7 +35,4 @@ template<class T> T random_value();
 		setup_random_seed();\
 		}
 
-
-
-
 #endif //PCH_H
