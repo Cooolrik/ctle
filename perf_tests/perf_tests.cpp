@@ -1,6 +1,7 @@
 
 #include <windows.h>
 #include <iostream>
+#include <map>
 
 #include "../thread_safe_map.h"
 
@@ -45,92 +46,99 @@ template <> u16 random_value<u16>() { return u16_rand() ; }
 template <> u32 random_value<u32>() { return u32_rand() ; }
 template <> u64 random_value<u64>() { return u64_rand() ; }
 
-std::vector<u64> random_vector;
-
-const size_t itemCount_thread_safe_map = 2048; 
-const size_t passCount_thread_safe_map = 10; 
-
-std::atomic<size_t> max_size = 0;
-
-void testThread_thread_safe_map( thread_safe_map<u64, u64> *testMap) 
+template<class _MapTy, size_t levelsToTest> 
+class threadedMapPerfTesting
 	{
-	for( size_t pass = 0; pass < passCount_thread_safe_map; ++pass )
-		{
-		// insert all values	
-		for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+	private:
+		std::vector<u64> random_vector;
+
+		_MapTy testMap;
+
+		const size_t itemCount_thread_safe_map = 2048; 
+		const size_t passCount_thread_safe_map = 10; 
+
+		void testThread() 
 			{
-			const u64 value = random_vector[inx];
-			testMap->insert( std::pair<u64, u64>( value, value ) );
-			u64 result;
-			bool success;
-			std::tie( result, success ) = testMap->find( value );
+			for( size_t pass = 0; pass < passCount_thread_safe_map; ++pass )
+				{
+				// insert all values	
+				for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+					{
+					const u64 value = random_vector[inx];
+					testMap.insert( std::pair<u64, u64>( value, value ) );
+					}
+
+				// remove all values	
+				for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+					{
+					const u64 value = random_vector[inx];
+					testMap.erase( value );
+					}
+				}
 			}
 
-		// update max size (try until we can set it)
-		size_t curr_size = testMap->size();
-		size_t curr_max_size = max_size.load();
-		while( curr_max_size < curr_size )
+		static void testEntry( void *pthis )
 			{
-			if( max_size.compare_exchange_weak( curr_max_size, curr_size ) )
-				break;
-			curr_max_size = max_size.load();
+			threadedMapPerfTesting *ptr = (threadedMapPerfTesting *)pthis;
+			ptr->testThread();
 			}
 
-		// remove all values	
-		for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+		void run()
 			{
-			const u64 value = random_vector[inx];
-			testMap->erase( value );
+			std::cout << "threadedMapPerfTesting:" << std::endl;
+
+			// setup random vector
+			random_vector.resize( itemCount_thread_safe_map );
+			for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+				{
+				random_vector[inx] = random_value<u64>();
+				}
+
+			// test the number of levels specified
+			for( size_t lev = 0; lev < levelsToTest; ++lev )
+				{
+				testMap.clear();
+
+				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+				// setup and run all threads
+				const size_t num_threads = ((size_t)1 << lev);
+				std::vector<std::thread> threads(num_threads);
+				for (size_t i = 0; i < num_threads; i++) 
+					{
+					threads[i] = std::thread(testEntry, this);
+					}
+
+				// wait for all threads to complete
+				for (auto& th : threads) 
+					{
+					th.join();
+					} 
+
+				std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+				double timeSpan_s = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+				double perIterationTime_us = timeSpan_s / double( num_threads ) / double( itemCount_thread_safe_map*passCount_thread_safe_map ) * double(1000000);
+
+				std::cout << "\tRunning " << num_threads << " threads took " << timeSpan_s << " secs.\tTime per iteration: " << perIterationTime_us << " usecs." << std::endl;
+				}
 			}
 
-		//Sleep( 1 );
-		}
-	}
-
-void testCode_thread_safe_map()
-	{
-	std::cout << "testCode_thread_safe_map():" << std::endl;
-	
-	// setup random vector
-	random_vector.resize( itemCount_thread_safe_map );
-	for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
-		{
-		random_vector[inx] = random_value<u64>();
-		}
-
-	// test 1, 2, 4, 8, 16, 32, 64 and 128 threads
-	for( size_t lev = 0; lev < 8; ++lev )
-		{
-		thread_safe_map<u64, u64> testMap;
-		max_size = 0;
-
-		std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-		// setup and run all threads
-		const size_t num_threads = ((size_t)1 << lev);
-		std::vector<std::thread> threads(num_threads);
-		for (size_t i = 0; i < num_threads; i++) 
+	public:
+		static void runTest()
 			{
-			threads[i] = std::thread(testThread_thread_safe_map, &testMap);
+			threadedMapPerfTesting tst;
+			tst.run();
 			}
-		
-		// wait for all threads to complete
-		for (auto& th : threads) 
-			{
-			th.join();
-			} 
 
-		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-
-		double timeSpan_s = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
-		double perIterationTime_us = timeSpan_s / double( num_threads ) / double( itemCount_thread_safe_map*passCount_thread_safe_map ) * double(1000000);
-
-		std::cout << "\tRunning " << num_threads << " threads took " << timeSpan_s << " secs.\tTime per iteration: " << perIterationTime_us << " usecs. max_size:" << max_size.load() << std::endl;
-		}
-	}
+	};
 
 int main()
 	{
-	testCode_thread_safe_map();
+	threadedMapPerfTesting<std::unordered_map<u64, u64>, 1>::runTest();
+	threadedMapPerfTesting<std::map<u64, u64>, 1>::runTest();
+	threadedMapPerfTesting<ctle::thread_safe_map<u64, u64>, 8>::runTest();
+
+
 	}
 

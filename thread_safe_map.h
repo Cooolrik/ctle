@@ -8,9 +8,8 @@
 
 namespace ctle
 	{
-	// thread safe map, does not allow access to 
-	// items, only insert, erase and find with value returned as copy 
-	// all public methods are thread safe 
+	// thread safe map, forces single access to map. performace as if single threaded access.
+	// (this code should be upgraded to a lock free map for multi-core performance)
 	template<class _Kty, class _Ty> class thread_safe_map
 		{
 		private:
@@ -24,7 +23,14 @@ namespace ctle
 			std::mutex AccessMutex;
 
 		public:
-			std::pair<_Ty, bool> find( const _Kty &key )
+			bool has( const _Kty &key )
+				{
+				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				iterator it = this->Data.find( key );
+				return it != this->Data.end();
+				}
+
+			std::pair<_Ty, bool> get( const _Kty &key )
 				{
 				std::lock_guard<std::mutex> guard( this->AccessMutex );
 				iterator it = this->Data.find( key );
@@ -33,6 +39,12 @@ namespace ctle
 					return std::make_pair( it->second, true );
 					}
 				return std::make_pair( _Ty(), false );
+				}
+
+			void clear()
+				{
+				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				this->Data.clear();
 				}
 
 			bool insert( const value_type &value )

@@ -217,7 +217,7 @@ namespace ctletests
 						char num[20];
 						sprintf_s( num, "%d", list[look_for] );
 						std::string str = num;
-						auto val = pthis->object->find( list[look_for] );
+						auto val = pthis->object->get( list[look_for] );
 						Assert::IsTrue( val.second ); // make sure we found it
 						Assert::IsTrue( str == val.first );
 						}
@@ -248,7 +248,7 @@ namespace ctletests
 		TEST_METHOD( Test_thread_safe_map )
 			{
 			thread_safe_map<u32, std::string> uint_string_map;
-			std::vector<uint_string_map_test_class> test_objects( 4 );
+			std::vector<uint_string_map_test_class> test_objects( 40 );
 			std::vector<HANDLE> thread_handles( test_objects.size() );
 			for( size_t i = 0; i < test_objects.size(); ++i )
 				{
