@@ -231,12 +231,12 @@ namespace ctletests
 					pthis->done = true;
 					}
 
-				HANDLE run( u32 _index , thread_safe_map<u32, std::string> *_object )
+				std::thread run( u32 _index , thread_safe_map<u32, std::string> *_object )
 					{
 					this->done = false;
 					this->index = _index;
 					this->object = _object;
-					return (HANDLE)_beginthread( &uint_string_map_test_thread, 0, (void *)this );
+					return std::thread( &uint_string_map_test_thread, (void *)this );
 					}
 
 				bool is_done() const
@@ -249,16 +249,18 @@ namespace ctletests
 			{
 			thread_safe_map<u32, std::string> uint_string_map;
 			std::vector<uint_string_map_test_class> test_objects( 40 );
-			std::vector<HANDLE> thread_handles( test_objects.size() );
+			std::vector<std::thread> threads( test_objects.size() );
+
+			// run all threads
 			for( size_t i = 0; i < test_objects.size(); ++i )
 				{
-				thread_handles[i] = test_objects[i].run( (u32)i, &uint_string_map );
+				threads[i] = test_objects[i].run( (u32)i, &uint_string_map );
 				}
-			DWORD val = WaitForMultipleObjects( (u32)thread_handles.size(), thread_handles.data(), TRUE, INFINITE );
-			Assert::IsTrue( val == 0 );
+
+			// wait for all threads to finish
 			for( size_t i = 0; i < test_objects.size(); ++i )
 				{
-				Assert::IsTrue( test_objects[i].is_done() );
+				threads[i].join();
 				}
 			}
 

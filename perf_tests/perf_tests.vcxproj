@@ -16,6 +16,7 @@
     <ProjectGuid>{55dad1f8-0455-41b9-b1cb-5782da91ebde}</ProjectGuid>
     <RootNamespace>perftests</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ctle_perf_tests</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
