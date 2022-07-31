@@ -44,5 +44,8 @@
     <ClInclude Include="..\ctle\thread_safe_map.h">
       <Filter>Header Files\ctle</Filter>
     </ClInclude>
+    <ClInclude Include="..\ctle\bimap.h">
+      <Filter>Header Files\ctle</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

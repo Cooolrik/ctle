@@ -95,6 +95,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ctle\bimap.h" />
     <ClInclude Include="..\ctle\idx_vector.h" />
     <ClInclude Include="..\ctle\optional_idx_vector.h" />
     <ClInclude Include="..\ctle\optional_value.h" />
