@@ -27,36 +27,55 @@ namespace ctle
 		public:
 			using const_iterator = typename map_type::const_iterator;
 
+			// just default ctor/dtor and assignments
+			bimap() = default;
+			bimap( const bimap &other ) = default;
+			bimap &operator=( const bimap &other ) = default;
+			bimap( bimap &&other ) = default;
+			bimap &operator=( bimap &&other ) = default;
+			~bimap() = default;
+
+			// only need to compare one of the maps, since the other is just a reverse lookup
+			bool operator==( const bimap &other ) const noexcept { return (this->Fwd == other.Fwd); }
+			bool operator!=( const bimap &other ) const noexcept { return !operator==( other ); }
+
+			// returns the constant iterator to the beginning of the forward mapping key->value
 			const_iterator begin() const noexcept
 				{
 				return this->Fwd.begin();
 				}
 
+			// returns the constant iterator to beyond the end of the forward mapping key->value
 			const_iterator end() const noexcept
 				{
 				return this->Fwd.end();
 				}
 
+			// returns true if key exists in map
 			bool contains_key( const _Kty &key ) const noexcept
 				{
 				return this->Fwd.find( key ) != this->Fwd.end();
 				}
 
+			// returns true if value exists in map
 			bool contains_value( const _Vty &value ) const noexcept
 				{
 				return this->Rev.find( value ) != this->Rev.end();
 				}
 
+			// returs the value mapped at key (will throw std::out_of_bounds if key does not exist)
 			const _Vty & at_key( const _Kty &key ) const
 				{
 				return this->Fwd.at( key );
 				}
 
-			const _Kty & at_value( const _Vty &key ) const
+			// retuns the key that maps to value (will throw std::out_of_bounds if value does not exist)
+			const _Kty & at_value( const _Vty &value ) const
 				{
-				return this->Rev.at( key );
+				return this->Rev.at( value );
 				}
 
+			// gets the value at key, IF the key exists (the returned bool is false otherwise)
 			std::pair<_Vty, bool> get_value( const _Kty &key ) const noexcept
 				{
 				const iterator it = this->Fwd.find( key );
@@ -67,6 +86,7 @@ namespace ctle
 				return std::make_pair( {} , false );
 				}
 
+			// gets the key that maps to value, IF the value exists (the returned bool is false otherwise)
 			std::pair<_Kty, bool> get_key( const _Vty &value ) const noexcept
 				{
 				const riterator it = this->Rev.find( value );
@@ -77,12 +97,15 @@ namespace ctle
 				return std::make_pair( {} , false );
 				}
 
+			// clear the map
 			void clear() noexcept
 				{
 				this->Fwd.clear();
 				this->Rev.clear();
 				}
 
+			// inserts or replaces the key/value pair
+			// Note: if the key or value already exist in the bimap, they are removed along with the values which they are mapped to.
 			void insert( const _Kty &key , const _Vty &value ) noexcept
 				{
 				// make sure neither value is already in the map
@@ -95,7 +118,7 @@ namespace ctle
 				}
 
 			// remove by key
-			size_t erase_by_key( const _Kty &key )
+			size_t erase_by_key( const _Kty &key ) noexcept
 				{
 				iterator it = this->Fwd.find( key );
 				if( it != this->Fwd.end() )
@@ -112,7 +135,7 @@ namespace ctle
 				}
 
 			// remove by value
-			size_t erase_by_value( const _Vty &value )
+			size_t erase_by_value( const _Vty &value ) noexcept
 				{
 				riterator rit = this->Rev.find( value );
 				if( rit != this->Rev.end() )
@@ -128,6 +151,7 @@ namespace ctle
 				return 0;
 				}
 
+			// returns the number of mappings (key->value pairs)
 			size_t size() const noexcept
 				{
 				return this->Fwd.size();
