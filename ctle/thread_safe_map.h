@@ -53,6 +53,12 @@ namespace ctle
 				return this->Data.insert( value ).second;
 				}
 
+			bool insert( const value_type &&value )
+				{
+				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				return this->Data.insert( value ).second;
+				}
+
 			size_t erase( const _Kty &key )
 				{
 				std::lock_guard<std::mutex> guard( this->AccessMutex );
