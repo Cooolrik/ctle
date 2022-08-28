@@ -10,7 +10,7 @@ namespace ctle
 	// readers_writer_lock.
 	// allows concurrent access for read-only operations. write operations is given exclusive access.
 	// use read_lock/read_unlock for read operations, and write_lock/write_unlock for write operations
-    // (the code uses a spin lock for efficiency, so assumes the operations are fast)
+    // (the write code uses a spin lock (but calls yield()) for efficiency, so assumes the read operations are fast)
 	class readers_writer_lock
 		{
 		private:
@@ -25,19 +25,19 @@ namespace ctle
                 // increase number of readers
                 ++this->numReaders;
 
-                // if there is a writer, we have to wait for it
+                // if there is an active writer, we have to wait for it
                 if( this->numWriters != 0 )
                     {
-                    // remove us again, until the writer is done
+                    // remove us from active readers again, until the writer is done
                     --this->numReaders;
 
-                    // wait for writer to be done, by locking the write mutex
+                    // wait for writer finish, by locking the write mutex
                     this->writeMutex.lock();
 
-                    // we have the lock, add to readers again
+                    // the writer has relased the mutex, so we can go ahead and become active
                     ++this->numReaders;
 
-                    // done with the lock
+                    // we can now release the write mutex again
                     this->writeMutex.unlock();
                     }
                 }
@@ -52,11 +52,11 @@ namespace ctle
             // lock before writing 
             inline void write_lock()
                 {
-                // lock the write thread
+                // lock the write mutex, so we have unique access to writing 
                 this->writeMutex.lock();
 
                 // increase the number of writers
-                // this will block any new readers for reading
+                // this will block any new readers from reading (writers are already blocked by the mutex)
                 ++this->numWriters;
 
                 // let any reader finish before writing
@@ -64,16 +64,18 @@ namespace ctle
                     {
                     std::this_thread::yield();
                     }
+					
+				// done, we now have a unique write lock
                 }
             
             // unlock after writing 
             inline void write_unlock()
                 {
-                // lower the number of writers again
+                // we are done, so remove from number of writers again
                 --this->numWriters;
 
-                // unlock the write lock, so any waiting reader or writer gets access again
-                _Requires_lock_held_(this->writeMutex)
+                // unlock the write lock, so anyone waiting (reader or writer) gets access again
+                _Requires_lock_held_(this->writeMutex) // markup for VS SCA
                 this->writeMutex.unlock();
                 }
 
