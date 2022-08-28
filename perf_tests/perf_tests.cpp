@@ -59,25 +59,38 @@ class threadedMapPerfTesting
 		_MapTy testMap;
 
 		const size_t itemCount_thread_safe_map = 2048; 
-		const size_t passCount_thread_safe_map = 10; 
+		const size_t passCount_thread_safe_map = 65536; 
+
+		size_t iterations_per_thread = 0; 
 
 		void testThread() 
 			{
-			for( size_t pass = 0; pass < passCount_thread_safe_map; ++pass )
+			for( size_t pass = 0; pass < iterations_per_thread; ++pass )
 				{
-				// insert all values	
-				for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
-					{
-					const u64 value = random_vector[inx];
-					testMap.insert( std::pair<u64, u64>( value, value ) );
-					}
+				//// insert all values	
+				//for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+				//	{
+				//	const u64 value = random_vector[inx];
+				//	testMap.insert( std::pair<u64, u64>( value, value ) );
+				//	}
+				//
+				//// remove all values	
+				//for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+				//	{
+				//	const u64 value = random_vector[inx];
+				//	testMap.erase( value );
+				//	}
 
-				// remove all values	
+				// find all values	
 				for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
 					{
 					const u64 value = random_vector[inx];
-					testMap.erase( value );
-					}
+					if( !testMap.has( value ) )
+						{
+						std::cout << "this should not happen" << std::endl;
+						}
+ 					}
+
 				}
 			}
 
@@ -103,10 +116,18 @@ class threadedMapPerfTesting
 				{
 				testMap.clear();
 
+				// insert all values	
+				for( size_t inx = 0; inx < itemCount_thread_safe_map; ++inx )
+					{
+					const u64 value = random_vector[inx];
+					testMap.insert( std::pair<u64, u64>( value, value ) );
+					}
+
 				std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
 				// setup and run all threads
 				const size_t num_threads = ((size_t)1 << lev);
+				this->iterations_per_thread = this->passCount_thread_safe_map / num_threads;
 				std::vector<std::thread> threads(num_threads);
 				for (size_t i = 0; i < num_threads; i++) 
 					{
@@ -139,8 +160,8 @@ class threadedMapPerfTesting
 
 int main()
 	{
-	threadedMapPerfTesting<std::unordered_map<u64, u64>, 1>::runTest();
-	threadedMapPerfTesting<std::map<u64, u64>, 1>::runTest();
+	//threadedMapPerfTesting<std::unordered_map<u64, u64>, 1>::runTest();
+	//threadedMapPerfTesting<std::map<u64, u64>, 1>::runTest();
 	threadedMapPerfTesting<ctle::thread_safe_map<u64, u64>, 8>::runTest();
 
 

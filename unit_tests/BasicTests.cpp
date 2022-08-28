@@ -207,7 +207,7 @@ namespace ctletests
 						char num[20];
 						sprintf_s( num, "%d", list[i] );
 						std::string str = num;
-						pthis->object->insert( std::pair<u32,std::string>(list[i],str));
+						pthis->object->insert( std::move(std::pair<u32,std::string>(list[i],str)) );
 						}
 
 					// make sure that the values exist, (do random lookup)

@@ -47,5 +47,8 @@
     <ClInclude Include="..\ctle\bimap.h">
       <Filter>Header Files\ctle</Filter>
     </ClInclude>
+    <ClInclude Include="..\ctle\readers_writer_lock.h">
+      <Filter>Header Files\ctle</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

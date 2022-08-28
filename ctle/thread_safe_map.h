@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <mutex>
+#include "readers_writer_lock.h"
 
 namespace ctle
 	{
@@ -17,23 +18,26 @@ namespace ctle
 			using key_type = _Kty;
 			using mapped_type = _Ty;
 			using iterator = typename map_type::iterator;
+			using const_iterator = typename map_type::const_iterator;
 			using value_type = std::pair<const _Kty, _Ty>;
 
 			map_type Data;
-			std::mutex AccessMutex;
+			readers_writer_lock AccessLock;
 
 		public:
-			bool has( const _Kty &key )
+			bool has( const _Kty &key ) 
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
-				iterator it = this->Data.find( key );
+				readers_writer_lock::read_guard guard( this->AccessLock );
+
+				const_iterator it = this->Data.find( key );
 				return it != this->Data.end();
 				}
 
-			std::pair<_Ty, bool> get( const _Kty &key )
+			std::pair<_Ty, bool> get( const _Kty &key ) 
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
-				iterator it = this->Data.find( key );
+				readers_writer_lock::read_guard guard( this->AccessLock );
+
+				const_iterator it = this->Data.find( key );
 				if( it != this->Data.end() )
 					{
 					return std::make_pair( it->second, true );
@@ -43,31 +47,36 @@ namespace ctle
 
 			void clear()
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				readers_writer_lock::write_guard guard( this->AccessLock );
+
 				this->Data.clear();
 				}
 
 			bool insert( const value_type &value )
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				readers_writer_lock::write_guard guard( this->AccessLock );
+
 				return this->Data.insert( value ).second;
 				}
 
-			bool insert( const value_type &&value )
+			bool insert( value_type &&value )
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				readers_writer_lock::write_guard guard( this->AccessLock );
+
 				return this->Data.insert( value ).second;
 				}
 
 			size_t erase( const _Kty &key )
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				readers_writer_lock::write_guard guard( this->AccessLock );
+
 				return this->Data.erase( key );
 				}
 
 			size_t size() 
 				{
-				std::lock_guard<std::mutex> guard( this->AccessMutex );
+				readers_writer_lock::read_guard guard( this->AccessLock );
+
 				return this->Data.size();
 				}
 		};
