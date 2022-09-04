@@ -50,5 +50,8 @@
     <ClInclude Include="..\ctle\readers_writer_lock.h">
       <Filter>Header Files\ctle</Filter>
     </ClInclude>
+    <ClInclude Include="..\ctle\string_funcs.h">
+      <Filter>Header Files\ctle</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

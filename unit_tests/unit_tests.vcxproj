@@ -101,6 +101,7 @@
     <ClInclude Include="..\ctle\optional_value.h" />
     <ClInclude Include="..\ctle\optional_vector.h" />
     <ClInclude Include="..\ctle\readers_writer_lock.h" />
+    <ClInclude Include="..\ctle\string_funcs.h" />
     <ClInclude Include="..\ctle\thread_safe_map.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

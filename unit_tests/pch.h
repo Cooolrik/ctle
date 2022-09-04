@@ -14,6 +14,7 @@
 #include "../ctle/optional_vector.h"
 #include "../ctle/thread_safe_map.h"
 #include "../ctle/bimap.h"
+#include "../ctle/string_funcs.h"
 
 typedef uint8_t u8;
 typedef uint16_t u16;
