@@ -263,6 +263,43 @@ namespace ctletests
 					threads[i].join();
 					}
 				}
+			
+			status_return<bool,std::string> TestReturnString()
+				{
+				return { true , "hej" };
+				}
+
+			enum class TestEnum : uint32_t
+				{
+				val0 = 0,
+				val15534 = 15534,
+				val242398723 = 242398723
+				};
+
+			status_return<TestEnum,std::unique_ptr<int>> TestReturnUniquePtr()
+				{
+				auto ptr = std::make_unique<int>(100);
+				return { TestEnum::val242398723 , std::move(ptr) };
+				}
+
+			status_return<TestEnum,void> TestReturnJustStatus()
+				{
+				return TestEnum::val15534;
+				}
+
+			TEST_METHOD( Test_status_return )
+				{
+				auto ret = TestReturnString();
+				Assert::IsTrue( ret.GetStatus() );
+				Assert::IsTrue( ret.GetValue() == "hej" );
+
+				auto ret2 = TestReturnUniquePtr();
+				Assert::IsTrue( ret2.GetStatus() == TestEnum::val242398723 );
+				Assert::IsTrue( *(ret2.GetValue().get()) == 100 );
+
+				auto ret3 = TestReturnJustStatus();
+				Assert::IsTrue( ret3.GetStatus() == TestEnum::val15534 );
+				}
 
 			TEST_METHOD( Test_bimap )
 				{
