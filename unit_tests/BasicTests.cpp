@@ -282,6 +282,11 @@ namespace ctletests
 				return { TestEnum::val242398723 , std::move(ptr) };
 				}
 
+			status_return<TestEnum,std::unique_ptr<int>> TestDontReturnUniquePtr()
+				{
+				return { TestEnum::val0 };
+				}
+
 			status_return<TestEnum,void> TestReturnJustStatus()
 				{
 				return TestEnum::val15534;
@@ -297,8 +302,12 @@ namespace ctletests
 				Assert::IsTrue( ret2.GetStatus() == TestEnum::val242398723 );
 				Assert::IsTrue( *(ret2.GetValue().get()) == 100 );
 
-				auto ret3 = TestReturnJustStatus();
-				Assert::IsTrue( ret3.GetStatus() == TestEnum::val15534 );
+				auto ret3 = TestDontReturnUniquePtr();
+				Assert::IsTrue( ret3.GetStatus() == TestEnum::val0 );
+				Assert::IsTrue( ret3.GetValue().get() == nullptr );
+
+				auto ret4 = TestReturnJustStatus();
+				Assert::IsTrue( ret4.GetStatus() == TestEnum::val15534 );
 				}
 
 			TEST_METHOD( Test_bimap )
