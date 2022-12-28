@@ -163,6 +163,10 @@ namespace ctle
 			const status &operator = ( const VkResult &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
 #endif//VULKAN_CORE_H_
 
+			// use as a bool
+			operator bool() const { return svalue == status_code::ok; }
+
+			// get the status_code value 
 			status_code value() const { return svalue; }
 
 			// get the name of the status code as a string 
@@ -467,4 +471,11 @@ namespace ctle
 
 #endif//CTLE_IMPLEMENTATION
 
+	}
+
+// stream operator for writing a status to a stream
+inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
+	{
+	os << "status_code: " << _status.name() << " description: \"" << _status.description() << "\"";
+	return os;
 	}
