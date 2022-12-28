@@ -15,36 +15,36 @@ namespace ctle
 		static_assert( std::is_trivial<_StatusType>() , "_StatusType needs to be just a plain old value, like bool, int or enum" );
 
 		private:
-			_StatusType Status = {};
-			_RetType Value = {};
+			_StatusType sstatus = {};
+			_RetType svalue = {};
 
 			status_return() = delete;
 
 		public:
-			status_return( const status_return &other ) noexcept : Status(other.Status) , Value(other.Value) {}
+			status_return( const status_return &other ) noexcept : sstatus(other.sstatus) , svalue(other.svalue) {}
 			const status_return & operator = ( const status_return &other )
 				{
-				this->Status = other.status;
-				this->Value = other.value;
+				this->sstatus = other.sstatus;
+				this->svalue = other.svalue;
 				}
 
-			status_return( status_return &&other ) noexcept : Status(other.Status) , Value(std::move(other.Value)) {}
+			status_return( status_return &&other ) noexcept : sstatus(other.sstatus) , svalue(std::move(other.svalue)) {}
 			const status_return & operator = ( status_return &&other )
 				{
-				this->Status = other.Status;
-				this->Value = std::move(other.Value);
+				this->sstatus = other.sstatus;
+				this->svalue = std::move(other.svalue);
 				}
 
-			status_return( _StatusType status ) : Status(status) {}
-			status_return( _StatusType status, const _RetType &value ) : Status(status) , Value(value) {}
-			status_return( _StatusType status, _RetType &&value ) noexcept : Status(status) , Value(std::move(value)) {}
+			status_return( _StatusType _status ) : sstatus(_status) {}
+			status_return( _StatusType _status, const _RetType &_value ) : sstatus(_status) , svalue(_value) {}
+			status_return( _StatusType _status, _RetType &&_value ) noexcept : sstatus(_status) , svalue(std::move(_value)) {}
 
 			// get the status/result
-			_StatusType GetStatus() const { return this->Status; }
+			_StatusType status() const { return this->sstatus; }
 			
 			// get a reference to the value returned
-			_RetType &GetValue() { return this->Value; }
-			const _RetType &GetValue() const { return this->Value; }
+			_RetType &value() { return this->svalue; }
+			const _RetType &value() const { return this->svalue; }
 		};
 
 	// partial implementation when we only have a _StatusType
@@ -53,21 +53,21 @@ namespace ctle
 		static_assert( std::is_trivial<_StatusType>() , "_StatusType needs to be just a plain old value, like bool, int or enum" );
 
 		private:
-			_StatusType Status = {};
+			_StatusType sstatus = {};
 
 			status_return() = delete;
 
 		public:
-			status_return( const status_return &other ) noexcept : Status(other.Status) {};
-			const status_return & operator = ( const status_return &other ) { this->Status = other.status; }
+			status_return( const status_return &other ) noexcept : sstatus(other.sstatus) {};
+			const status_return & operator = ( const status_return &other ) { this->sstatus = other.sstatus; }
 
-			status_return( status_return &&other ) noexcept : Status(other.Status) {};
-			const status_return & operator = ( status_return &&other ) { this->Status = other.Status; }
+			status_return( status_return &&other ) noexcept : sstatus(other.sstatus) {};
+			const status_return & operator = ( status_return &&other ) { this->sstatus = other.sstatus; }
 
-			status_return( const _StatusType status ) : Status(status) {};
+			status_return( const _StatusType _status ) : sstatus(_status) {};
 
 			// get the status/result
-			_StatusType GetStatus() const { return this->Status; }
+			_StatusType status() const { return this->sstatus; }
 		};
 
 	}

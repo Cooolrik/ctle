@@ -295,19 +295,19 @@ namespace ctletests
 			TEST_METHOD( Test_status_return )
 				{
 				auto ret = TestReturnString();
-				Assert::IsTrue( ret.GetStatus() );
-				Assert::IsTrue( ret.GetValue() == "hej" );
+				Assert::IsTrue( ret.status() );
+				Assert::IsTrue( ret.value() == "hej" );
 
 				auto ret2 = TestReturnUniquePtr();
-				Assert::IsTrue( ret2.GetStatus() == TestEnum::val242398723 );
-				Assert::IsTrue( *(ret2.GetValue().get()) == 100 );
+				Assert::IsTrue( ret2.status() == TestEnum::val242398723 );
+				Assert::IsTrue( *(ret2.value().get()) == 100 );
 
 				auto ret3 = TestDontReturnUniquePtr();
-				Assert::IsTrue( ret3.GetStatus() == TestEnum::val0 );
-				Assert::IsTrue( ret3.GetValue().get() == nullptr );
+				Assert::IsTrue( ret3.status() == TestEnum::val0 );
+				Assert::IsTrue( ret3.value().get() == nullptr );
 
 				auto ret4 = TestReturnJustStatus();
-				Assert::IsTrue( ret4.GetStatus() == TestEnum::val15534 );
+				Assert::IsTrue( ret4.status() == TestEnum::val15534 );
 				}
 
 			TEST_METHOD( Test_bimap )
