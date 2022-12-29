@@ -12,7 +12,7 @@ namespace ctle
 	// general implementation
 	template<class _StatusType, class _RetType> class status_return
 		{
-		static_assert( std::is_trivial<_StatusType>() , "_StatusType needs to be just a plain old value, like bool, int or enum" );
+		static_assert( std::is_trivially_copyable<_StatusType>() , "_StatusType needs to be trivially copyable, like a plain old value, like bool, int or enum, or a class with a default copy ctor" );
 
 		private:
 			_StatusType sstatus = {};
@@ -21,24 +21,15 @@ namespace ctle
 			status_return() = delete;
 
 		public:
-			status_return( const status_return &other ) noexcept : sstatus(other.sstatus) , svalue(other.svalue) {}
-			const status_return & operator = ( const status_return &other )
-				{
-				this->sstatus = other.sstatus;
-				this->svalue = other.svalue;
-				}
-
-			status_return( status_return &&other ) noexcept : sstatus(other.sstatus) , svalue(std::move(other.svalue)) {}
-			const status_return & operator = ( status_return &&other )
-				{
-				this->sstatus = other.sstatus;
-				this->svalue = std::move(other.svalue);
-				}
+			status_return( const status_return &other ) = default;
+			status_return( status_return &&other ) = default;
 
 			status_return( _StatusType _status ) : sstatus(_status) {}
 			status_return( _StatusType _status, const _RetType &_value ) : sstatus(_status) , svalue(_value) {}
 			status_return( _StatusType _status, _RetType &&_value ) noexcept : sstatus(_status) , svalue(std::move(_value)) {}
-
+			status_return( const _RetType &_value ) : svalue(_value) {}
+			status_return( _RetType &&_value ) noexcept : svalue(std::move(_value)) {}
+			
 			// get the status/result
 			_StatusType status() const { return this->sstatus; }
 			
@@ -50,7 +41,7 @@ namespace ctle
 	// partial implementation when we only have a _StatusType
 	template<class _StatusType> class status_return<_StatusType,void>
 		{
-		static_assert( std::is_trivial<_StatusType>() , "_StatusType needs to be just a plain old value, like bool, int or enum" );
+		static_assert( std::is_trivially_copyable<_StatusType>() , "_StatusType needs to be trivially copyable, like a plain old value, like bool, int or enum, or a class with a default copy ctor" );
 
 		private:
 			_StatusType sstatus = {};
@@ -58,11 +49,8 @@ namespace ctle
 			status_return() = delete;
 
 		public:
-			status_return( const status_return &other ) noexcept : sstatus(other.sstatus) {};
-			const status_return & operator = ( const status_return &other ) { this->sstatus = other.sstatus; }
-
-			status_return( status_return &&other ) noexcept : sstatus(other.sstatus) {};
-			const status_return & operator = ( status_return &&other ) { this->sstatus = other.sstatus; }
+			status_return( const status_return &other ) = default;
+			status_return( status_return &&other ) = default;
 
 			status_return( const _StatusType _status ) : sstatus(_status) {};
 

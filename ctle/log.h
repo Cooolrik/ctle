@@ -10,8 +10,8 @@
 #ifdef CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
 
 #define ctle_log( msg_level )\
-	if( ctle::log_level::##msg_level <= get_global_log_level() ) {\
-		log_msg _ctle_log_entry(ctle::log_level::##msg_level,__FILE__,__LINE__,__FUNCSIG__); _ctle_log_entry.message()
+	if( ctle::log_level::##msg_level <= ctle::get_global_log_level() ) {\
+		ctle::log_msg _ctle_log_entry(ctle::log_level::##msg_level,__FILE__,__LINE__,__FUNCSIG__); _ctle_log_entry.message()
 
 #define ctle_log_error ctle_log( error )
 #define ctle_log_warning ctle_log( warning )

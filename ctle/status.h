@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 namespace ctle
 	{
 	enum class status_code : int
@@ -20,6 +22,7 @@ namespace ctle
 		corrupted                              = -107, // a file, data or object is corrupted 
 		invalid                                = -108, // invalid file, wrong file format, or failed validation
 		cant_write                             = -109, // cant write to file or handle
+		not_found                              = -110, // one or multiple objects are missing or not found
 		
 		// stl portable errors (from errc)
 		stl_unrecognized_error_code            = -1000, // unknown/unrecognized STL error, which could not be mapped to a specific error value
@@ -131,20 +134,18 @@ namespace ctle
 		vulkan_not_permitted_khr                            = -2025, // Vulkan error code VkResult::VK_ERROR_NOT_PERMITTED_KHR
 		vulkan_full_screen_exclusive_mode_lost_ext          = -2026, // Vulkan error code VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT
 		vulkan_compression_exhausted_ext                    = -2027, // Vulkan error code VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT
-
 		};
 
-
-	// status represents the 
+	// status maps a number of error values into one error enum
+	// and has ctors which converts these error values into a status_code value
 	class status
 		{
 		private:
 			status_code svalue = status_code::ok;
 
 		public:
-			status() noexcept {}
-			status( const status &other ) noexcept : svalue(other.svalue) {}
-			const status &operator = ( const status &other ) noexcept { this->svalue = other.svalue; return *this; }
+			status() = default;
+			status( const status &other ) = default;
 
 			status( const status_code &_value ) noexcept : svalue( _value ) {}
 			const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
@@ -462,6 +463,8 @@ namespace ctle
 	
 	status_code status::to_status_code( VkResult value ) noexcept
 		{
+		if( value >= VK_SUCCESS )	
+			return status_code::ok;
 		auto it = vkresult_to_status_code_mapping.find( value );
 		if( it == vkresult_to_status_code_mapping.end() )
 			return status_code::vulkan_unrecognized_error_code;
@@ -476,6 +479,6 @@ namespace ctle
 // stream operator for writing a status to a stream
 inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 	{
-	os << "status_code: " << _status.name() << " description: \"" << _status.description() << "\"";
+	os << _status.name() << std::string(" (\"") << _status.description() << std::string("\")");
 	return os;
 	}
