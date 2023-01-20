@@ -5,13 +5,14 @@
 
 #include <memory>
 #include <string>
+#include <stdexcept>
 
 namespace ctle
 	{
-	class bad_optional_value_access : public std::exception
+	class bad_optional_value_access : public std::runtime_error
 		{
 		public:
-			explicit bad_optional_value_access(const char* _Message) noexcept : std::exception(_Message) {}
+			explicit bad_optional_value_access(const char* _Message) noexcept : std::runtime_error(_Message) {}
 		};
 
 	template<class T> class optional_value

@@ -3,3 +3,9 @@ x64
 
 /perf_tests/*.user
 *.user
+CMakeUserPresets.json
+
+build/
+out/
+install/
+vcpkg_installed/

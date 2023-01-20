@@ -1,0 +1,99 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake (List Presets)",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "command": "cmake --list-presets=all",
+        },
+        {
+            "label": "CMake (Configure)",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "command": "cmake --preset x64-win-debug",
+        },
+        {
+            "label": "CMake (Clean Build) ",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "command": "cmake --build --preset clean-build",
+        },
+        {
+            "label": "Ninja Generate",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -DENABLE_UNIT_TESTING=ON -DENABLE_PERFORMACE_TESTING=ON -DCMAKE_TOOLCHAIN_FILE=${workspaceRoot}/vcpkg/scripts/buildsystems/vcpkg.cmake ..",
+        },
+        {
+            "label": "Ninja Build",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "ninja",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Ninja Generate & Build",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "ninja",
+            "dependsOn": [
+                "Generate"
+            ]
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "del",
+            "args" : [
+                "*",
+                "-Recurse",
+                "-Force"
+            ]
+        },
+        {
+            "label": "Run Unit Test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "unit_test.exe",
+        },
+        {
+            "label": "Run Perf Test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "perf_test.exe",
+        },
+        {
+            "label": "Install test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "command": "cmake --install .. --target install --config Debug --prefix ${workspaceRoot}/c_install",
+        }
+    ]
+}

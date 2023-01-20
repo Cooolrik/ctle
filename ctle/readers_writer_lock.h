@@ -4,6 +4,8 @@
 #pragma once
 
 #include <mutex>
+#include <atomic>
+#include <thread>
 
 namespace ctle
 	{
@@ -14,8 +16,8 @@ namespace ctle
 	class readers_writer_lock
 		{
 		private:
-			std::atomic<unsigned int> numReaders = 0;
-			std::atomic<unsigned int> numWriters = 0;
+			std::atomic<unsigned int> numReaders{0};
+			std::atomic<unsigned int> numWriters{0};
 			std::mutex writeMutex;
 
 		public:
@@ -75,7 +77,9 @@ namespace ctle
 				--this->numWriters;
 
 				// unlock the write lock, so anyone waiting (reader or writer) gets access again
+#ifdef __WIN32__
 				_Requires_lock_held_(this->writeMutex) // markup for VS SCA
+#endif
 				this->writeMutex.unlock();
 				}
 
