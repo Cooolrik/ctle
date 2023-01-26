@@ -9,3 +9,4 @@ build/
 out/
 install/
 vcpkg_installed/
+Testing/
