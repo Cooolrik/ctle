@@ -47,9 +47,9 @@ namespace ctle
 		private:
 			log_level level;
 			std::stringstream msg;
-			const char *func_sig;
 			const char *file_name;
 			int file_line;
+			const char* func_sig;
 
 			// enters the message into the log
 			void enter()
