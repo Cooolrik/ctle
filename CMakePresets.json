@@ -17,7 +17,7 @@
             "inherits": [ "base" ],
             "architecture":{
                 "strategy": "external",
-                "value": "win32"
+                "value": "x64"
             },
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "cl",
