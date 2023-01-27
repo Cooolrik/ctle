@@ -68,20 +68,25 @@ target_include_directories(${CTLE_LIB_NAME}
         $<INSTALL_INTERFACE:ctle>
 )
 
+# public header file set
+set(PUBLIC_HEADER_SET
+    ctle/bimap.h
+    ctle/idx_vector.h
+    ctle/log.h
+    ctle/optional_idx_vector.h
+    ctle/optional_value.h
+    ctle/optional_vector.h
+    ctle/readers_writer_lock.h
+    ctle/status_return.h
+    ctle/status.h
+    ctle/string_funcs.h
+    ctle/thread_safe_map.h
+)
+
 # setup public headers
 set_target_properties(${CTLE_LIB_NAME} PROPERTIES
-    PUBLIC_HEADER
-        ctle/bimap.h
-        ctle/idx_vector.h
-        ctle/log.h
-        ctle/optional_idx_vector.h
-        ctle/optional_value.h
-        ctle/optional_vector.h
-        ctle/readers_writer_lock.h
-        ctle/status_return.h
-        ctle/status.h
-        ctle/string_funcs.h
-        ctle/thread_safe_map.h
+    PUBLIC_HEADER "${PUBLIC_HEADER_SET}"
+        
 )
 
 if(ENABLE_UNIT_TESTING)
