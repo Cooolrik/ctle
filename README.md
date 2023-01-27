@@ -36,7 +36,16 @@ ctest --preset <testPreset-name>
 
 ## Linux using DevContainer setup
 
-A devcontainer(VSCode) setup is provide to build for x64-linux platform. See [Developing inside a Container](https://code.visualstudio.com/docs/devcontainers/containers) for how to setup devcontainer and use them in VSCode.
+A devcontainer setup can be setup for x64-linux platform. 
+See [Developing inside a Container](https://code.visualstudio.com/docs/devcontainers/containers) for how to setup devcontainer and use them in VSCode.
+
+You can use the devcontainer setup from the following repo.
+
+```
+git clone https://github.com/mtungekar/devcontainer.git .devcontainer
+```
+
+
 
 Some usefull Ctrl+Shift+P commands are :
 
