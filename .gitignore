@@ -10,3 +10,5 @@ out/
 install/
 vcpkg_installed/
 Testing/
+.vscode/
+.devcontainer/
