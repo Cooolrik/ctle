@@ -16,11 +16,13 @@ namespace ctle
 	class readers_writer_lock
 		{
 		private:
-			std::atomic<unsigned int> numReaders{0};
-			std::atomic<unsigned int> numWriters{0};
+			std::atomic<unsigned int> numReaders;
+			std::atomic<unsigned int> numWriters;
 			std::mutex writeMutex;
 
 		public:
+			readers_writer_lock() : numReaders(0) , numWriters(0) {}
+
 			// lock before reading 
 			inline void read_lock()
 				{

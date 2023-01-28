@@ -1,10 +1,6 @@
-<<<<<<<< HEAD:unit_tests/utils.cpp
-// pch.cpp: source file corresponding to the pre-compiled header
-
-#include "utils.h"
-========
+// ctle Copyright (c) 2023 Ulrik Lindahl
+// Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #include "unit_tests.h"
->>>>>>>> 76006d8 (Moved to cmake, Linux updates):unit_tests/unit_tests.cpp
 
 // just some value
 const i64 global_random_seed = 12876123876;
