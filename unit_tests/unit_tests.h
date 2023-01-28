@@ -1,17 +1,17 @@
 #ifndef PCH_H
 #define PCH_H
 
-#include <Windows.h>
-#include <process.h>
+#include <cstdint>
+
 #include <stddef.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <time.h>
 
 #include "../ctle/idx_vector.h"
 #include "../ctle/optional_idx_vector.h"
 #include "../ctle/optional_value.h"
 #include "../ctle/optional_vector.h"
+#include "../ctle/readers_writer_lock.h"
 #include "../ctle/thread_safe_map.h"
 #include "../ctle/bimap.h"
 #include "../ctle/string_funcs.h"

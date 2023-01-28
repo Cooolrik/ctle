@@ -83,7 +83,7 @@ namespace ctle
 					{
 					return std::make_pair( it->second, true );
 					}
-				return std::make_pair( {} , false );
+				return std::make_pair( _Vty() , false );
 				}
 
 			// gets the key that maps to value, IF the value exists (the returned bool is false otherwise)
@@ -94,7 +94,7 @@ namespace ctle
 					{
 					return std::make_pair( it->second, true );
 					}
-				return std::make_pair( {} , false );
+				return std::make_pair( _Vty() , false );
 				}
 
 			// clear the map

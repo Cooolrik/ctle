@@ -1,6 +1,4 @@
-// pch.cpp: source file corresponding to the pre-compiled header
-
-#include "pch.h"
+#include "unit_tests.h"
 
 // just some value
 const i64 global_random_seed = 12876123876;
