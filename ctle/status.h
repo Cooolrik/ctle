@@ -203,6 +203,7 @@ namespace ctle
 			{ status_code::corrupted, { "corrupted","a file, data or object is corrupted { " } },
 			{ status_code::invalid, { "invalid","invalid file, wrong file format, or failed validation" } },
 			{ status_code::cant_write, { "cant_write","cant write to file or handle" } },
+			{ status_code::not_found, { "not_found","one or multiple objects are missing or not found" } },
 
 			// stl portable errors (from errc)
 			{ status_code::stl_unrecognized_error_code, { "stl_unrecognized_error_code","unknown/unrecognized STL error, which could not be mapped to a specific error value" } },
