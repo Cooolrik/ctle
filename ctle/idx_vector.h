@@ -24,8 +24,8 @@ namespace ctle
 			using size_type = typename values_vector_type::size_type;
 
 		private:
-			index_vector_type index_m;
 			values_vector_type values_m;
+			index_vector_type index_m;
 
 		public:
 			idx_vector() = default;

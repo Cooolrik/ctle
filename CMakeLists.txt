@@ -8,10 +8,11 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 				
 	# googletest
 	FetchContent_Declare(
-	    googletest
-	    URL https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip
-	    )
-
+		googletest
+		GIT_REPOSITORY 	https://github.com/google/googletest.git
+		GIT_TAG			58d77fa8070e8cec2dc1ed015d66b454c8d78850 # 1.12.1 
+		)
+	
 	FetchContent_MakeAvailable( 
 		googletest 
 		)
@@ -23,13 +24,16 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 		add_compile_options(-Wall -Wextra -pedantic -Werror)
 	endif()
 
+	# c++14
+	set (CMAKE_CXX_STANDARD 14)
+
 	# unit_tests
 	add_executable( 
         unit_tests
         ./unit_tests/unit_tests.cpp
         ./unit_tests/unit_tests.h
 		
-		#./unit_tests/basic_tests.cpp
+		./unit_tests/basic_tests.cpp
 		)
 	target_link_libraries( 	
         unit_tests 

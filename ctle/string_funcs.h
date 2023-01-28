@@ -156,7 +156,7 @@ namespace ctle
 		int64_t value = int64_t( stou64_t( ptr, end ) );
 		return sign ? -value : value;
 		}
-	template<class _Ty> uint64_t stoi64_t( const string_span<_Ty> &span )
+	template<class _Ty> int64_t stoi64_t( const string_span<_Ty> &span )
 		{
 		return stoi64_t( span.start, span.end );
 		}

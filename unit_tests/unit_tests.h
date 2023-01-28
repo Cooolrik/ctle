@@ -1,3 +1,6 @@
+// ctle Copyright (c) 2023 Ulrik Lindahl
+// Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
+
 #ifndef PCH_H
 #define PCH_H
 
@@ -17,6 +20,8 @@
 #include "../ctle/string_funcs.h"
 #include "../ctle/status_return.h"
 
+#include <gtest/gtest.h>
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -28,8 +33,6 @@ typedef int32_t i32;
 typedef int64_t i64;
 
 template<class T> T random_value();
-
-#define AssertExpectException( expected_exception , statement ) Assert::ExpectException<expected_exception>( [&]() { statement } );
 
 #define STANDARD_TEST_INIT() \
 	TEST_METHOD_INITIALIZE( InitMethod )\
