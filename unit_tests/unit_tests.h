@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
+
 #include "../ctle/idx_vector.h"
 #include "../ctle/optional_idx_vector.h"
 #include "../ctle/optional_value.h"
@@ -19,6 +21,10 @@
 #include "../ctle/bimap.h"
 #include "../ctle/string_funcs.h"
 #include "../ctle/status_return.h"
+#include "../ctle/status.h"
+#include "../ctle/uuid.h"
+#include "../ctle/endianness.h"
+#include "../ctle/log.h"
 
 #include <gtest/gtest.h>
 

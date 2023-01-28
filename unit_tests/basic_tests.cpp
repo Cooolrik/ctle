@@ -484,3 +484,93 @@ TEST( basic_tests , Test_string_funcs )
 	EXPECT_TRUE( lexed_tokens.size() == 3 );
 	EXPECT_TRUE( std::string( lexed_tokens[2] ) == "this string does end well" );
 	}
+
+TEST( basic_tests , Test_uuid )
+	{
+	uuid id = uuid::generate();
+
+	std::string idstr = value_to_hex_string(id);
+	uuid id2 = hex_string_to_value<uuid>(idstr.c_str());
+	EXPECT_TRUE( id == id2 );
+
+	EXPECT_TRUE( id != uuid::nil );
+	EXPECT_TRUE( id2 != uuid::nil );
+
+	uuid id_nil = hex_string_to_value<uuid>("00000000-0000-0000-0000-000000000000");
+	EXPECT_TRUE( id_nil == uuid::nil );
+
+	std::stringstream str;
+	str << id;
+	uuid id3 = hex_string_to_value<uuid>(str.str().c_str());
+	EXPECT_TRUE( id == id3 );
+	}
+
+template<class _Ty> void test_bigendian_from_value( _Ty value , uint8_t *expected )
+	{
+	uint8_t big_endian_dest[sizeof(_Ty)] = {};
+	bigendian_from_value<_Ty>( big_endian_dest , value );
+	for( size_t inx=0; inx<sizeof(_Ty); ++inx )
+		{
+		EXPECT_EQ( big_endian_dest[inx] , expected[inx] );
+		}
+	}
+
+TEST( basic_tests , Test_endianness )
+	{
+	uint8_t big_endian[8] = { 0x12 , 0x34 , 0x56 , 0x78 , 0x9a , 0xbc , 0xde , 0xf0 };
+
+	EXPECT_EQ( value_from_bigendian<uint16_t>( big_endian ) , ((uint16_t)0x1234) );
+	EXPECT_EQ( value_from_bigendian<uint32_t>( big_endian ) , ((uint32_t)0x12345678) );
+	EXPECT_EQ( value_from_bigendian<uint64_t>( big_endian ) , ((uint64_t)0x123456789abcdef0) );
+
+	test_bigendian_from_value<uint16_t>( 0x1234 , big_endian );
+	test_bigendian_from_value<uint32_t>( 0x12345678 , big_endian );
+	test_bigendian_from_value<uint64_t>( 0x123456789abcdef0 , big_endian );
+
+	uint16_t sb16 = 0x1234;
+	swap_byte_order( &sb16 );
+	EXPECT_EQ( sb16 , (uint16_t)0x3412 );
+
+	uint32_t sb32 = 0x12345678;
+	swap_byte_order( &sb32 );
+	EXPECT_EQ( sb32 , (uint32_t)0x78563412 );
+
+	uint64_t sb64 = 0x123456789abcdef0;
+	swap_byte_order( &sb64 );
+	EXPECT_EQ( sb64 , (uint64_t)0xf0debc9a78563412 );
+	}
+
+TEST( basic_tests , Test_status )
+	{	
+	status res = status_code::ok;
+
+	EXPECT_TRUE( res == status_code::ok );
+	EXPECT_FALSE( res != status_code::ok );
+
+	EXPECT_TRUE( res != status_code::cant_allocate );
+	EXPECT_FALSE( res == status_code::cant_allocate );
+
+	EXPECT_TRUE( (res) );
+	EXPECT_FALSE( !(res) );
+
+	res = status_code::cant_write;
+
+	EXPECT_TRUE( res != status_code::ok );
+	EXPECT_FALSE( res == status_code::ok );
+
+	EXPECT_TRUE( res == status_code::cant_write );
+	EXPECT_FALSE( res != status_code::cant_write );
+
+	EXPECT_FALSE( (res) );
+	EXPECT_TRUE( !(res) );
+
+	EXPECT_EQ( (int)res.value() , -109 );
+	EXPECT_TRUE( res.name() == "cant_write" );
+	EXPECT_TRUE( res.description() == "cant write to file or handle" );
+	}
+
+TEST( basic_tests , Test_log )
+	{		
+	set_global_log_level( log_level::warning );
+	EXPECT_TRUE( get_global_log_level() == log_level::warning );
+	}
