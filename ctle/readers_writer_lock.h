@@ -77,7 +77,7 @@ namespace ctle
 				--this->numWriters;
 
 				// unlock the write lock, so anyone waiting (reader or writer) gets access again
-#ifdef __WIN32__
+#ifdef _MSC_VER
 				_Requires_lock_held_(this->writeMutex) // markup for VS SCA
 #endif
 				this->writeMutex.unlock();

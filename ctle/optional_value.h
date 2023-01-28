@@ -12,7 +12,7 @@ namespace ctle
 	class bad_optional_value_access : public std::runtime_error
 		{
 		public:
-			explicit bad_optional_value_access(const char* _Message) noexcept : std::runtime_error(_Message) {}
+			explicit bad_optional_value_access(char const* const _Message) noexcept : std::runtime_error(_Message) {}
 		};
 
 	template<class T> class optional_value
