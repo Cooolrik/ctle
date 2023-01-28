@@ -1,6 +1,6 @@
 # ctle
 
-C++ Template Library Extension classes
+C++ Template Library Extension classes - Extension classes for Windows and Linux STL
 
 ## Dependencies & Package Management
 
