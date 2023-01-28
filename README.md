@@ -1,5 +1,5 @@
 # ctle
-C++ Template Library Extension classes
+C++ Template Library Extension classes - Extension classes for Windows and Linux STL
 
 ## license
 Copyright (c) 2022 Ulrik Lindahl
