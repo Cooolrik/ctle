@@ -169,6 +169,10 @@ namespace ctle
 			// use as a bool
 			operator bool() const { return svalue == status_code::ok; }
 
+			// compare to status_code
+			bool operator == ( const status_code &_value ) const noexcept { return this->svalue == _value; }
+			bool operator != ( const status_code &_value ) const noexcept { return this->svalue != _value; }
+
 			// get the status_code value 
 			status_code value() const { return svalue; }
 
