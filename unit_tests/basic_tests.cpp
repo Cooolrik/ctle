@@ -503,6 +503,25 @@ TEST( basic_tests , Test_uuid )
 	str << id;
 	uuid id3 = hex_string_to_value<uuid>(str.str().c_str());
 	EXPECT_TRUE( id == id3 );
+
+	id2 = id3;
+	id = uuid(id2);
+	EXPECT_TRUE( id == id3 );
+
+	std::vector<uuid> a = { uuid::generate() , uuid::generate() };
+	std::vector<uuid> b;
+	EXPECT_FALSE( a == b );
+	EXPECT_TRUE( a != b );
+	EXPECT_TRUE( b.empty() );
+
+	b = std::move(a);
+	EXPECT_FALSE( a == b );
+	EXPECT_TRUE( a != b );
+	EXPECT_TRUE( a.empty() );
+
+	a = b;
+	EXPECT_TRUE( a == b );
+	EXPECT_FALSE( a != b );
 	}
 
 template<class _Ty> void test_bigendian_from_value( _Ty value , uint8_t *expected )
