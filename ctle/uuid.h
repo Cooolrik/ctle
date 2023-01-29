@@ -11,6 +11,7 @@
 namespace ctle
 	{
     // uuid implements a portable, variant 1, version 4 (RNG generated) of uuid
+    // stored big-endian on all platforms
     struct uuid
         {
             union
@@ -19,7 +20,13 @@ namespace ctle
                 uint8_t data[16];
                 };
             
+            // the constant nil object
             static const uuid nil;
+
+            // compare operators
+            bool operator==( const ctle::uuid &other ) const noexcept;
+            bool operator!=( const ctle::uuid &other ) const noexcept;
+            bool operator<( const ctle::uuid &other ) const noexcept;
 
             // generates an uuid using the mt19937 seeded from random_device
             // the call is thread-safe and uses a mutex to avoid collisions
@@ -28,24 +35,25 @@ namespace ctle
 
     template <> std::string value_to_hex_string<uuid>( uuid value );
     template <> uuid hex_string_to_value<uuid>( const char *hex_string );
+
+    inline bool uuid::operator<( const ctle::uuid &right ) const noexcept
+	    {
+        // uuid is stored big-endian, so the first byte is highest value
+	    return std::memcmp( this, &right, sizeof( ctle::uuid ) ) < 0;
+	    };
+
+    inline bool uuid::operator==( const ctle::uuid &right ) const noexcept
+	    {
+	    return (this->_data_q[0] == right._data_q[0]) 
+            && (this->_data_q[1] == right._data_q[1]);
+	    };
+
+    inline bool uuid::operator!=( const ctle::uuid &right ) const noexcept
+	    {
+	    return (this->_data_q[0] != right._data_q[0]) 
+            || (this->_data_q[1] != right._data_q[1]);
+	    };
     }
-
-inline bool operator<( const ctle::uuid &Left, const ctle::uuid &Right ) 
-	{
-	return std::memcmp( &Left, &Right, sizeof( ctle::uuid ) ) < 0;
-	};
-
-inline bool operator==( const ctle::uuid &Left, const ctle::uuid &Right ) 
-	{
-	return (Left._data_q[0] == Right._data_q[0]) 
-        && (Left._data_q[1] == Right._data_q[1]);
-	};
-
-inline bool operator!=( const ctle::uuid &Left, const ctle::uuid &Right ) 
-	{
-	return (Left._data_q[0] != Right._data_q[0]) 
-        || (Left._data_q[1] != Right._data_q[1]);
-	};
 
 template<>
 struct std::hash<ctle::uuid>
@@ -74,7 +82,7 @@ namespace ctle
         {
         std::string ret;
 
-        // format: 123e4567-e89b-12d3-a456-426614174000 , 36 characters long (32 hex + 4 dash)
+        // format: nnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn , 36 characters long (32 hex + 4 dash)
         ret += bytes_to_hex_string( &value.data[0] , 4 );
         ret += "-";
         ret += bytes_to_hex_string( &value.data[4] , 2 );
