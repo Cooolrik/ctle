@@ -33,7 +33,7 @@ namespace ctle
             static uuid generate();
         };
 
-    template <> std::string value_to_hex_string<uuid>( uuid value );
+    std::string value_to_hex_string( uuid value );
     template <> uuid hex_string_to_value<uuid>( const char *hex_string );
 
     inline bool uuid::operator<( const ctle::uuid &right ) const noexcept
@@ -78,7 +78,7 @@ namespace ctle
     {
     const uuid uuid::nil = {};
 
-    template <> std::string value_to_hex_string<uuid>( uuid value )
+    std::string value_to_hex_string( uuid value )
         {
         std::string ret;
 
