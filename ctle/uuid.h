@@ -55,18 +55,21 @@ namespace ctle
 	    };
     }
 
-template<>
-struct std::hash<ctle::uuid>
+namespace std
 	{
-	std::size_t operator()(ctle::uuid const& val) const noexcept
+	template<>
+	struct hash<ctle::uuid>
 		{
-		static_assert(sizeof( std::size_t ) == sizeof( std::uint64_t ), "The hashing code only works for 64bit size_t" );
-		static_assert(sizeof( ctle::uuid ) == 16, "The uuid must be 16 bytes in size" );
-		return val._data_q[0] ^ val._data_q[1];
-		}
-	};
+		std::size_t operator()(ctle::uuid const& val) const noexcept
+			{
+			static_assert(sizeof( std::size_t ) == sizeof( std::uint64_t ), "The hashing code only works for 64bit size_t" );
+			static_assert(sizeof( ctle::uuid ) == 16, "The uuid must be 16 bytes in size" );
+			return val._data_q[0] ^ val._data_q[1];
+			}
+		};
 
-std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
+    std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
+	}
 
 #ifdef CTLE_IMPLEMENTATION
 
@@ -154,10 +157,13 @@ namespace ctle
 
     }
 
-std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid )
+namespace std
     {
-    os << ctle::value_to_hex_string( _uuid );
-    return os;
+    std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid )
+        {
+        os << ctle::value_to_hex_string( _uuid );
+        return os;
+        }
     }
 
 #endif
