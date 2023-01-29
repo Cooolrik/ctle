@@ -139,9 +139,14 @@ namespace ctle
             }
 
         // generate random values
+        uint64_t v0 = (*generator.get())();
+        uint64_t v1 = (*generator.get())();
+        uint64_t v2 = (*generator.get())();
+        uint64_t v3 = (*generator.get())();
+
         uuid value;
-        value._data_q[0] = ((uint64_t)generator.get()) << 32 | ((uint64_t)generator.get());
-        value._data_q[1] = ((uint64_t)generator.get()) << 32 | ((uint64_t)generator.get());
+        value._data_q[0] = (v0 << 32 | v1);
+        value._data_q[1] = (v2 << 32 | v3);
 
         // set the version and variant values
         // version byte is: 0100xxxx , (version 4)
