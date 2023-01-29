@@ -487,6 +487,11 @@ TEST( basic_tests , Test_string_funcs )
 
 TEST( basic_tests , Test_uuid )
 	{
+	const uuid ido0 = hex_string_to_value<uuid>("00000000-0000-0000-0000-000000000000"); // lowest
+	const uuid ido1 = hex_string_to_value<uuid>("00000000-0000-0001-0000-000000000000");
+	const uuid ido2 = hex_string_to_value<uuid>("00000200-0000-0000-0000-000000000000");
+	const uuid ido3 = hex_string_to_value<uuid>("ffffffff-ffff-ffff-0000-000000000000"); // highest
+
 	uuid id = uuid::generate();
 
 	std::string idstr = value_to_hex_string(id);
@@ -522,6 +527,55 @@ TEST( basic_tests , Test_uuid )
 	a = b;
 	EXPECT_TRUE( a == b );
 	EXPECT_FALSE( a != b );
+
+	// test ordering
+	if( true )
+		{
+		EXPECT_TRUE( ido0._data_q[0] == 0 && ido0._data_q[1] == 0 );
+		EXPECT_TRUE( ido1._data_q[0] != 0 && ido1._data_q[1] == 0 );
+		EXPECT_TRUE( ido2._data_q[0] != 0 && ido2._data_q[1] == 0 );
+		EXPECT_TRUE( ido3._data_q[0] == 0xffffffffffffffff && ido3._data_q[1] == 0 );
+
+		EXPECT_TRUE( ido0 != ido1 );
+		EXPECT_TRUE( ido1 != ido0 );
+		EXPECT_TRUE( ido0 < ido1 );
+		EXPECT_FALSE( ido1 < ido0 );
+		EXPECT_FALSE( ido0 == ido1 );
+		EXPECT_FALSE( ido1 == ido0 );
+
+		EXPECT_TRUE( std::hash<uuid>{}(ido0) != std::hash<uuid>{}(ido1) );
+		EXPECT_TRUE( std::hash<uuid>{}(ido1) != std::hash<uuid>{}(ido0) );
+		}
+
+	// test lookup in map
+	if( true )
+		{
+		std::map<uuid,std::string> idstrmap;
+		idstrmap.insert( std::pair<uuid,std::string>(ido0,"ido0") );
+		idstrmap.insert( std::pair<uuid,std::string>(ido1,"ido1") );
+		idstrmap.insert( std::pair<uuid,std::string>(ido2,"ido2") );
+		idstrmap.insert( std::pair<uuid,std::string>(ido3,"ido3") );
+		EXPECT_EQ( idstrmap.size() , 4 );
+
+		EXPECT_EQ( idstrmap.find(ido0)->second , "ido0" );
+		EXPECT_EQ( idstrmap.find(ido1)->second , "ido1" );
+		EXPECT_EQ( idstrmap.find(ido2)->second , "ido2" );
+		EXPECT_EQ( idstrmap.find(ido3)->second , "ido3" );
+		}
+
+	// insert a number of generated values.
+	if( true )
+		{
+		std::map<uuid,uuid> idmap;
+		for( size_t inx=0; inx<1000; ++inx )
+			{
+			uuid id = uuid::generate();
+			idmap[id] = id;
+			}
+		EXPECT_EQ( idmap.size() , 1000 );
+		}
+
+
 	}
 
 template<class _Ty> void test_bigendian_from_value( _Ty value , uint8_t *expected )
