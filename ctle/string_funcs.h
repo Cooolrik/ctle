@@ -269,25 +269,6 @@ namespace ctle
 		return lex_t( dest, span.start, span.end, separators, quotes, whitespaces );
 		}
 
-	// creates a string from an array of bytes, in order
-	std::string bytes_to_hex_string( const void *bytes, size_t count );
-	template <class T> std::string value_to_hex_string( T value );
-	template <> std::string value_to_hex_string<uint8_t>( uint8_t value );
-	template <> std::string value_to_hex_string<uint16_t>( uint16_t value );
-	template <> std::string value_to_hex_string<uint32_t>( uint32_t value );
-	template <> std::string value_to_hex_string<uint64_t>( uint64_t value );
-	//template <> std::string value_to_hex_string<hash>( hash value );
-
-	// retrieves bytes from a hex string of known length.
-	// note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
-	void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count );
-	template <class T> T hex_string_to_value( const char *hex_string );
-	template <> uint8_t hex_string_to_value<uint8_t>( const char *hex_string );
-	template <> uint16_t hex_string_to_value<uint16_t>( const char *hex_string );
-	template <> uint32_t hex_string_to_value<uint32_t>( const char *hex_string );
-	template <> uint64_t hex_string_to_value<uint64_t>( const char *hex_string );
-	//template <> hash hex_string_to_value<hash>( const char *hex_string );
-
 	// writes array of bytes to string of hex values. the hex values will be
 	// in the same order as the bytes, so if you need to convert a litte-endian
 	// word into hex, be sure to flip the byte order before.
@@ -306,28 +287,37 @@ namespace ctle
 		return ret;
 		}
 
-	template <> inline std::string value_to_hex_string<uint8_t>( uint8_t value )
+	inline std::string value_to_hex_string( uint8_t value )
 		{
 		return bytes_to_hex_string( &value, sizeof( value ) );
 		}
 
-	template <> inline std::string value_to_hex_string<uint16_t>( uint16_t value )
+	inline std::string value_to_hex_string( uint16_t value )
 		{
 		bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
 		return bytes_to_hex_string( &value, sizeof( value ) );
 		}
 
-	template <> inline std::string value_to_hex_string<uint32_t>( uint32_t value )
+	inline std::string value_to_hex_string( uint32_t value )
 		{
 		bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
 		return bytes_to_hex_string( &value, sizeof( value ) );
 		}
 
-	template <> inline std::string value_to_hex_string<uint64_t>( uint64_t value )
+	inline std::string value_to_hex_string( uint64_t value )
 		{
 		bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
 		return bytes_to_hex_string( &value, sizeof( value ) );
 		}
+
+	// retrieves bytes from a hex string of known length.
+	// note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
+	void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count );
+	template <class T> T hex_string_to_value( const char *hex_string );
+	template <> uint8_t hex_string_to_value<uint8_t>( const char *hex_string );
+	template <> uint16_t hex_string_to_value<uint16_t>( const char *hex_string );
+	template <> uint32_t hex_string_to_value<uint32_t>( const char *hex_string );
+	template <> uint64_t hex_string_to_value<uint64_t>( const char *hex_string );
 
 	static inline uint8_t decode_hex_char( char c )
 		{
