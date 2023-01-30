@@ -71,6 +71,7 @@ target_include_directories(${CTLE_LIB_NAME}
 # public header file set
 set(PUBLIC_HEADER_SET
     ctle/bimap.h
+    ctle/endianness.h
     ctle/idx_vector.h
     ctle/log.h
     ctle/optional_idx_vector.h
@@ -81,6 +82,7 @@ set(PUBLIC_HEADER_SET
     ctle/status.h
     ctle/string_funcs.h
     ctle/thread_safe_map.h
+    ctle/uuid.h
 )
 
 # setup public headers
@@ -93,10 +95,6 @@ if(ENABLE_UNIT_TESTING)
   enable_testing()
   include(CTest)
   add_subdirectory(unit_tests)
-endif()
-
-if(ENABLE_PERFORMACE_TESTING)
-  add_subdirectory(perf_tests)
 endif()
 
 include(GNUInstallDirs)
