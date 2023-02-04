@@ -4,6 +4,7 @@
 #pragma once
 
 #include <vector>
+#include "optional_value.h"
 
 namespace ctle
 	{

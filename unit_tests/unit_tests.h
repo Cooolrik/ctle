@@ -12,20 +12,6 @@
 
 #define CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
 
-#include "../ctle/idx_vector.h"
-#include "../ctle/optional_idx_vector.h"
-#include "../ctle/optional_value.h"
-#include "../ctle/optional_vector.h"
-#include "../ctle/readers_writer_lock.h"
-#include "../ctle/thread_safe_map.h"
-#include "../ctle/bimap.h"
-#include "../ctle/string_funcs.h"
-#include "../ctle/status_return.h"
-#include "../ctle/status.h"
-#include "../ctle/uuid.h"
-#include "../ctle/endianness.h"
-#include "../ctle/log.h"
-
 #include <gtest/gtest.h>
 
 typedef uint8_t u8;
