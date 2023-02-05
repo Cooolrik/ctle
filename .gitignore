@@ -1,7 +1,14 @@
+# build folders
 .vs
 .vscode
-x64
 /build
 
-/perf_tests/*.user
-*.user
+# test folders and results
+/build_c++11
+/build_c++14
+/build_c++17
+/build_c++20
+/results_c++11
+/results_c++14
+/results_c++17
+/results_c++20
