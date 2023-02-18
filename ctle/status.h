@@ -25,6 +25,7 @@ namespace ctle
 		invalid                                = -108, // invalid file, wrong file format, or failed validation
 		cant_write                             = -109, // cant write to file or handle
 		not_found                              = -110, // one or multiple objects are missing or not found
+		not_ready                              = -111, // one or multiple objects are not ready, or out of sync
 		
 		// stl portable errors (from errc)
 		stl_unrecognized_error_code            = -1000, // unknown/unrecognized STL error, which could not be mapped to a specific error value
@@ -168,6 +169,7 @@ namespace ctle
 
 			// use as a bool
 			operator bool() const { return svalue == status_code::ok; }
+			bool operator !() const { return svalue != status_code::ok; }
 
 			// compare to status_code
 			bool operator == ( const status_code &_value ) const noexcept { return this->svalue == _value; }
@@ -208,6 +210,7 @@ namespace ctle
 			{ status_code::invalid, { "invalid","invalid file, wrong file format, or failed validation" } },
 			{ status_code::cant_write, { "cant_write","cant write to file or handle" } },
 			{ status_code::not_found, { "not_found","one or multiple objects are missing or not found" } },
+			{ status_code::not_ready, { "not_ready","one or multiple objects are not ready, or out of sync" } },
 
 			// stl portable errors (from errc)
 			{ status_code::stl_unrecognized_error_code, { "stl_unrecognized_error_code","unknown/unrecognized STL error, which could not be mapped to a specific error value" } },

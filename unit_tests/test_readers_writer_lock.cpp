@@ -48,5 +48,5 @@ TEST( readers_writer_lock , basic_test )
 		}
 
 	// make sure there were 100 values written (10 threads * 10 writes per thread)
-	ASSERT_EQ( ProtectedValue , 100 );
+	ASSERT_EQ( ProtectedValue , (uint32_t)100 );
 	}

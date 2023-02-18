@@ -30,6 +30,10 @@ namespace ctle
 			status_return( const _RetType &_value ) : svalue(_value) {}
 			status_return( _RetType &&_value ) noexcept : svalue(std::move(_value)) {}
 			
+			// returns the status as a bool, requires that status can be converted to a bool implicitly
+			operator bool() const { return this->sstatus; }
+			bool operator !() const { return !(this->sstatus); }
+
 			// get the status/result
 			_StatusType status() const { return this->sstatus; }
 			
@@ -53,6 +57,10 @@ namespace ctle
 			status_return( status_return &&other ) = default;
 
 			status_return( const _StatusType _status ) : sstatus(_status) {};
+
+			// returns the status as a bool, requires that status can be converted to a bool implicitly
+			operator bool() const { return this->sstatus; }
+			bool operator !() const { return !(this->sstatus); }
 
 			// get the status/result
 			_StatusType status() const { return this->sstatus; }
