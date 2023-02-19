@@ -12,3 +12,4 @@
 /results_c++14
 /results_c++17
 /results_c++20
+/code_gen/__pycache__/*.pyc
