@@ -11,4 +11,7 @@ TEST( log , basic_test )
 	{		
 	set_global_log_level( log_level::warning );
 	EXPECT_TRUE( get_global_log_level() == log_level::warning );
+
+	ctle_log_error << "log test" << ctle_log_end;
+
 	}

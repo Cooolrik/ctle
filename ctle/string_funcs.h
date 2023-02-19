@@ -15,10 +15,14 @@ namespace ctle
 		const _Ty *start = {}; // first char of span
 		const _Ty *end = {}; // the character after the last char of the span
 
-		// make a copy to a string
-		operator std::basic_string<_Ty>() { return std::basic_string<_Ty>( this->start, this->end ); }
+		// get the length of the span, returns 0 if the span is invalid
+		size_t length() const { return (end > start) ? end-start : 0; }
+
+		// make a copy to a string, returns empty string if the span is invalid (end<=start)
+		operator std::basic_string<_Ty>() { return (end > start) ? (std::basic_string<_Ty>( this->start, this->end )) : (std::basic_string<_Ty>()); }
 		};
 
+	// Get span of character set in string
 	// get length of span of characters between start and end, which are in the control list of chars
 	// Caveat: The chars in control are required to be in the lower set (not extended characters)
 	template<class _Ty> inline size_t strspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
@@ -39,10 +43,11 @@ namespace ctle
 					}
 				}
 
-			// if not found, we are at the end of the span
+			// if not found, we are at the end of the span, early out
 			if( !found )
 				{
-				break;
+				// return the span to before this pointer
+				return ptr - start;
 				}
 
 			// step
@@ -50,13 +55,14 @@ namespace ctle
 			}
 
 		// at the end
-		return ptr - start;
+		return end - start;
 		}
 	template<class _Ty> inline size_t strspn_t( const string_span<_Ty> &span, const _Ty *control )
 		{
 		return strspn_t( span.start, span.end, control );
 		}
 
+	// Get span until character in string
 	// get length of span of characters between start and end, until first occurance of a character from the control list
 	// Caveat: The chars in control are required to be in the lower set (not extended characters)
 	template<class _Ty> inline size_t strcspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
@@ -82,11 +88,44 @@ namespace ctle
 			}
 
 		// not found, return the full span from start to end
-		return ptr - start;
+		return end - start;
 		}
 	template<class _Ty> inline size_t strcspn_t( const string_span<_Ty> &span, const _Ty *control )
 		{
 		return strcspn_t( span.start, span.end, control );
+		}
+
+	// Get position of last occuring character in control list
+	// get length of span of characters between start and end, until last occurance of a character from the control list
+	// Caveat: The chars in control are required to be in the lower set (not extended characters)
+	template<class _Ty> inline size_t strcrspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
+		{
+		const _Ty *ptr = end-1;
+
+		// scan until end at maximum
+		while( ptr >= start )
+			{
+			// look through delimiters for a match
+			for( const _Ty *d = control; *d != _Ty( 0 ); ++d )
+				{
+				if( *d == *ptr )
+					{
+					// we have a match, early out
+					// return the span to before this pointer
+					return ptr - start;
+					}
+				}
+
+			// no match, step one
+			--ptr;
+			}
+
+		// not found, return the full span from start to end
+		return end - start;
+		}
+	template<class _Ty> inline size_t strcrspn_t( const string_span<_Ty> &span, const _Ty *control )
+		{
+		return strcrspn_t( span.start, span.end, control );
 		}
 
 	// given a start and end pointer to a string, and a list of deliminators, return the first token.
@@ -107,6 +146,62 @@ namespace ctle
 	template<class _Ty> inline string_span<_Ty> strtok_t( const string_span<_Ty> &span, const _Ty *delims )
 		{
 		return strtok_t( span.start, span.end, delims );
+		}
+
+	// Locate first occurrence of character in string
+	// get length of span of characters between start and end, until first occurance of a character from the control list
+	template<class _Ty> inline size_t strchr_t( const _Ty *start, const _Ty *end, _Ty character )
+		{
+		const _Ty *ptr = start;
+
+		// scan until end at maximum
+		while( ptr < end )
+			{
+			if( character == *ptr )
+				{
+				// we have a match, early out
+				// return the span to before this pointer
+				return ptr - start;
+				}
+
+			// no match, step one
+			++ptr;
+			}
+
+		// not found, return the full span from start to end
+		return end - start;
+		}
+	template<class _Ty> inline size_t strchr_t( const string_span<_Ty> &span, _Ty character )
+		{
+		return strchr_t( span.start, span.end, character );
+		}
+
+	// Locate last occurrence of character in string
+	// get length of span of characters between start and end, until first occurance of a character from the control list
+	template<class _Ty> inline size_t strrchr_t( const _Ty *start, const _Ty *end, _Ty character )
+		{
+		const _Ty *ptr = end-1;
+
+		// scan until start at maximum
+		while( ptr >= start )
+			{
+			if( character == *ptr )
+				{
+				// we have a match, early out
+				// return the span to before this pointer
+				return ptr - start;
+				}
+
+			// no match, step one
+			--ptr;
+			}
+
+		// not found, return the full span from start to end
+		return end - start;
+		}
+	template<class _Ty> inline size_t strrchr_t( const string_span<_Ty> &span, _Ty character )
+		{
+		return strrchr_t( span.start, span.end, character );
 		}
 
 	// given a start and end pointer to a string, parse an unsigned decimal number.

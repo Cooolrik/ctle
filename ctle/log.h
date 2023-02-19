@@ -7,6 +7,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "string_funcs.h"
+
 #ifdef CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
 
 #define ctle_log( msg_level )\
@@ -52,10 +54,7 @@ namespace ctle
 			const char* func_sig;
 
 			// enters the message into the log
-			void enter()
-				{
-				std::cout << get_log_level_as_string( this->level ) << " log: " << (func_sig?func_sig:"Global scope") << ": " << this->msg.str() << std::endl;
-				}
+			void enter_msg();
 
 		public:
 			log_msg( log_level _level , const char *_file_name = nullptr , int _file_line = 0, const char *_func_sig = nullptr ) noexcept : 
@@ -63,7 +62,7 @@ namespace ctle
 				{}
 			~log_msg()
 				{
-				this->enter();
+				this->enter_msg();
 				}
 
 			// access the message member to construct the message
@@ -92,5 +91,50 @@ namespace ctle
 			return nullptr;
 		return it->second;
 		}
+
+	inline bool trim_function_signature_span( string_span<char> &sig )
+		{
+		// try finding a '(', start of function
+		size_t rightTrim = strchr_t( sig , '(');
+		if( rightTrim < sig.length() )
+			{
+			sig.end = sig.start + rightTrim; // up to, but dont inclue the '('
+
+			// now, search back for the first whitespace
+			size_t leftTrim = strcrspn_t( sig , " \t\n\r" );
+			if( leftTrim < sig.length() )
+				{
+				sig.start = sig.start + leftTrim + 1; // up to, but dont inclue the whitespace
+				}
+
+			return true;
+			}
+
+		return false;
+		}
+
+
+	void log_msg::enter_msg()
+		{
+		std::string func_log;
+		if( this->func_sig )
+			{
+			// get the span of the function signature
+			string_span<char> sig = { this->func_sig, this->func_sig + strlen(this->func_sig) };
+
+			// try trimming the signature, just keep the function name (including namespaces & class)
+			if( trim_function_signature_span(sig) )
+				{
+				func_log = std::string(sig) + "()";
+				}
+			else
+				{
+				func_log = std::string(this->func_sig);
+				}
+			}
+
+		std::cout << get_log_level_as_string( this->level ) << " log: " << func_log << ": " << this->msg.str() << std::endl;
+		}
+
 #endif//CTLE_IMPLEMENTATION
 	}
