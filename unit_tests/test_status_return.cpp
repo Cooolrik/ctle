@@ -63,7 +63,7 @@ static status_return<status,std::unique_ptr<int>> TestStatusDontReturnUniquePtr(
 	}
 static status_return<status,void> TestStatusReturnJustStatus()
 	{
-	return status_code::stl_argument_out_of_domain;
+	return status::stl_argument_out_of_domain;
 	}
 
 TEST( status_return , interop_with_status_test )
