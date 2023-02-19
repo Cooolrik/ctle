@@ -11,102 +11,103 @@ namespace ctle
 	{
 	enum class status_code : int
 		{
-		ok                                     = 0, // ok, no error, successful
+		// no error, success
+		ok                                                  = 0, // ok, no error, successful
 
 		// general errors
-		undefined_error                        = -100, // undefined error
-		invalid_param                          = -101, // invalid parameter in method call
-		not_initialized                        = -102, // the system is not initialized
-		already_initialized                    = -103, // the system or class is already initialized or in a specific state
-		cant_allocate                          = -104, // cant allocate memory
-		cant_open                              = -105, // cant open file or handle
-		cant_read                              = -106, // cant read from file or handle
-		corrupted                              = -107, // a file, data or object is corrupted 
-		invalid                                = -108, // invalid file, wrong file format, or failed validation
-		cant_write                             = -109, // cant write to file or handle
-		not_found                              = -110, // one or multiple objects are missing or not found
-		not_ready                              = -111, // one or multiple objects are not ready, or out of sync
-		
+		undefined_error                                     = -100, // undefined error
+		invalid_param                                       = -101, // invalid parameter in method call
+		not_initialized                                     = -102, // the system is not initialized
+		already_initialized                                 = -103, // the system or class is already initialized or in a specific state
+		cant_allocate                                       = -104, // cant allocate memory
+		cant_open                                           = -105, // cant open file or handle
+		cant_read                                           = -106, // cant read from file or handle
+		corrupted                                           = -107, // a file, data or object is corrupted
+		invalid                                             = -108, // invalid file, wrong file format, or failed validation
+		cant_write                                          = -109, // cant write to file or handle
+		not_found                                           = -110, // one or multiple objects are missing or not found
+		not_ready                                           = -111, // one or multiple objects are not ready, or out of sync
+
 		// stl portable errors (from errc)
-		stl_unrecognized_error_code            = -1000, // unknown/unrecognized STL error, which could not be mapped to a specific error value
-		stl_address_family_not_supported       = -1001, // errc::address_family_not_supported
-		stl_address_in_use                     = -1002, // errc::address_in_use
-		stl_address_not_available              = -1003, // errc::address_not_available
-		stl_already_connected                  = -1004, // errc::already_connected
-		stl_argument_list_too_long             = -1005, // errc::argument_list_too_long
-		stl_argument_out_of_domain             = -1006, // errc::argument_out_of_domain
-		stl_bad_address                        = -1007, // errc::bad_address
-		stl_bad_file_descriptor                = -1008, // errc::bad_file_descriptor
-		stl_bad_message                        = -1009, // errc::bad_message
-		stl_broken_pipe                        = -1010, // errc::broken_pipe
-		stl_connection_aborted                 = -1011, // errc::connection_aborted
-		stl_connection_already_in_progress     = -1012, // errc::connection_already_in_progress
-		stl_connection_refused                 = -1013, // errc::connection_refused
-		stl_connection_reset                   = -1014, // errc::connection_reset
-		stl_cross_device_link                  = -1015, // errc::cross_device_link
-		stl_destination_address_required       = -1016, // errc::destination_address_required
-		stl_device_or_resource_busy            = -1017, // errc::device_or_resource_busy
-		stl_directory_not_empty                = -1018, // errc::directory_not_empty
-		stl_executable_format_error            = -1019, // errc::executable_format_error
-		stl_file_exists                        = -1020, // errc::file_exists
-		stl_file_too_large                     = -1021, // errc::file_too_large
-		stl_filename_too_long                  = -1022, // errc::filename_too_long
-		stl_function_not_supported             = -1023, // errc::function_not_supported
-		stl_host_unreachable                   = -1024, // errc::host_unreachable
-		stl_identifier_removed                 = -1025, // errc::identifier_removed
-		stl_illegal_byte_sequence              = -1026, // errc::illegal_byte_sequence
-		stl_inappropriate_io_control_operation = -1027, // errc::inappropriate_io_control_operation
-		stl_interrupted                        = -1028, // errc::interrupted
-		stl_invalid_argument                   = -1029, // errc::invalid_argument
-		stl_invalid_seek                       = -1030, // errc::invalid_seek
-		stl_io_error                           = -1031, // errc::io_error
-		stl_is_a_directory                     = -1032, // errc::is_a_directory
-		stl_message_size                       = -1033, // errc::message_size
-		stl_network_down                       = -1034, // errc::network_down
-		stl_network_reset                      = -1035, // errc::network_reset
-		stl_network_unreachable                = -1036, // errc::network_unreachable
-		stl_no_buffer_space                    = -1037, // errc::no_buffer_space
-		stl_no_child_process                   = -1038, // errc::no_child_process
-		stl_no_link                            = -1039, // errc::no_link
-		stl_no_lock_available                  = -1040, // errc::no_lock_available
-		stl_no_message_available               = -1041, // errc::no_message_available
-		stl_no_message                         = -1042, // errc::no_message
-		stl_no_protocol_option                 = -1043, // errc::no_protocol_option
-		stl_no_space_on_device                 = -1044, // errc::no_space_on_device
-		stl_no_stream_resources                = -1045, // errc::no_stream_resources
-		stl_no_such_device_or_address          = -1046, // errc::no_such_device_or_address
-		stl_no_such_device                     = -1047, // errc::no_such_device
-		stl_no_such_file_or_directory          = -1048, // errc::no_such_file_or_directory
-		stl_no_such_process                    = -1049, // errc::no_such_process
-		stl_not_a_directory                    = -1050, // errc::not_a_directory
-		stl_not_a_socket                       = -1051, // errc::not_a_socket
-		stl_not_a_stream                       = -1052, // errc::not_a_stream
-		stl_not_connected                      = -1053, // errc::not_connected
-		stl_not_enough_memory                  = -1054, // errc::not_enough_memory
-		stl_not_supported                      = -1055, // errc::not_supported
-		stl_operation_canceled                 = -1056, // errc::operation_canceled
-		stl_operation_in_progress              = -1057, // errc::operation_in_progress
-		stl_operation_not_permitted            = -1058, // errc::operation_not_permitted
-		stl_operation_not_supported            = -1059, // errc::operation_not_supported
-		stl_operation_would_block              = -1060, // errc::operation_would_block
-		stl_owner_dead                         = -1061, // errc::owner_dead
-		stl_permission_denied                  = -1062, // errc::permission_denied
-		stl_protocol_error                     = -1063, // errc::protocol_error
-		stl_protocol_not_supported             = -1064, // errc::protocol_not_supported
-		stl_read_only_file_system              = -1065, // errc::read_only_file_system
-		stl_resource_deadlock_would_occur      = -1066, // errc::resource_deadlock_would_occur
-		stl_resource_unavailable_try_again     = -1067, // errc::resource_unavailable_try_again
-		stl_result_out_of_range                = -1068, // errc::result_out_of_range
-		stl_state_not_recoverable              = -1069, // errc::state_not_recoverable
-		stl_stream_timeout                     = -1070, // errc::stream_timeout
-		stl_text_file_busy                     = -1071, // errc::text_file_busy
-		stl_timed_out                          = -1072, // errc::timed_out
-		stl_too_many_files_open_in_system      = -1073, // errc::too_many_files_open_in_system
-		stl_too_many_files_open                = -1074, // errc::too_many_files_open
-		stl_too_many_links                     = -1075, // errc::too_many_links
-		stl_too_many_symbolic_link_levels      = -1076, // errc::too_many_symbolic_link_levels
-		stl_value_too_large                    = -1077, // errc::value_too_large
-		stl_wrong_protocol_type                = -1078, // errc::wrong_protocol_type
+		stl_unrecognized_error_code                         = -1000, // unknown/unrecognized STL error, which could not be mapped to a specific error value
+		stl_address_family_not_supported                    = -1001, // stl error code: errc::address_family_not_supported
+		stl_address_in_use                                  = -1002, // stl error code: errc::address_in_use
+		stl_address_not_available                           = -1003, // stl error code: errc::address_not_available
+		stl_already_connected                               = -1004, // stl error code: errc::already_connected
+		stl_argument_list_too_long                          = -1005, // stl error code: errc::argument_list_too_long
+		stl_argument_out_of_domain                          = -1006, // stl error code: errc::argument_out_of_domain
+		stl_bad_address                                     = -1007, // stl error code: errc::bad_address
+		stl_bad_file_descriptor                             = -1008, // stl error code: errc::bad_file_descriptor
+		stl_bad_message                                     = -1009, // stl error code: errc::bad_message
+		stl_broken_pipe                                     = -1010, // stl error code: errc::broken_pipe
+		stl_connection_aborted                              = -1011, // stl error code: errc::connection_aborted
+		stl_connection_already_in_progress                  = -1012, // stl error code: errc::connection_already_in_progress
+		stl_connection_refused                              = -1013, // stl error code: errc::connection_refused
+		stl_connection_reset                                = -1014, // stl error code: errc::connection_reset
+		stl_cross_device_link                               = -1015, // stl error code: errc::cross_device_link
+		stl_destination_address_required                    = -1016, // stl error code: errc::destination_address_required
+		stl_device_or_resource_busy                         = -1017, // stl error code: errc::device_or_resource_busy
+		stl_directory_not_empty                             = -1018, // stl error code: errc::directory_not_empty
+		stl_executable_format_error                         = -1019, // stl error code: errc::executable_format_error
+		stl_file_exists                                     = -1020, // stl error code: errc::file_exists
+		stl_file_too_large                                  = -1021, // stl error code: errc::file_too_large
+		stl_filename_too_long                               = -1022, // stl error code: errc::filename_too_long
+		stl_function_not_supported                          = -1023, // stl error code: errc::function_not_supported
+		stl_host_unreachable                                = -1024, // stl error code: errc::host_unreachable
+		stl_identifier_removed                              = -1025, // stl error code: errc::identifier_removed
+		stl_illegal_byte_sequence                           = -1026, // stl error code: errc::illegal_byte_sequence
+		stl_inappropriate_io_control_operation              = -1027, // stl error code: errc::inappropriate_io_control_operation
+		stl_interrupted                                     = -1028, // stl error code: errc::interrupted
+		stl_invalid_argument                                = -1029, // stl error code: errc::invalid_argument
+		stl_invalid_seek                                    = -1030, // stl error code: errc::invalid_seek
+		stl_io_error                                        = -1031, // stl error code: errc::io_error
+		stl_is_a_directory                                  = -1032, // stl error code: errc::is_a_directory
+		stl_message_size                                    = -1033, // stl error code: errc::message_size
+		stl_network_down                                    = -1034, // stl error code: errc::network_down
+		stl_network_reset                                   = -1035, // stl error code: errc::network_reset
+		stl_network_unreachable                             = -1036, // stl error code: errc::network_unreachable
+		stl_no_buffer_space                                 = -1037, // stl error code: errc::no_buffer_space
+		stl_no_child_process                                = -1038, // stl error code: errc::no_child_process
+		stl_no_link                                         = -1039, // stl error code: errc::no_link
+		stl_no_lock_available                               = -1040, // stl error code: errc::no_lock_available
+		stl_no_message_available                            = -1041, // stl error code: errc::no_message_available
+		stl_no_message                                      = -1042, // stl error code: errc::no_message
+		stl_no_protocol_option                              = -1043, // stl error code: errc::no_protocol_option
+		stl_no_space_on_device                              = -1044, // stl error code: errc::no_space_on_device
+		stl_no_stream_resources                             = -1045, // stl error code: errc::no_stream_resources
+		stl_no_such_device_or_address                       = -1046, // stl error code: errc::no_such_device_or_address
+		stl_no_such_device                                  = -1047, // stl error code: errc::no_such_device
+		stl_no_such_file_or_directory                       = -1048, // stl error code: errc::no_such_file_or_directory
+		stl_no_such_process                                 = -1049, // stl error code: errc::no_such_process
+		stl_not_a_directory                                 = -1050, // stl error code: errc::not_a_directory
+		stl_not_a_socket                                    = -1051, // stl error code: errc::not_a_socket
+		stl_not_a_stream                                    = -1052, // stl error code: errc::not_a_stream
+		stl_not_connected                                   = -1053, // stl error code: errc::not_connected
+		stl_not_enough_memory                               = -1054, // stl error code: errc::not_enough_memory
+		stl_not_supported                                   = -1055, // stl error code: errc::not_supported
+		stl_operation_canceled                              = -1056, // stl error code: errc::operation_canceled
+		stl_operation_in_progress                           = -1057, // stl error code: errc::operation_in_progress
+		stl_operation_not_permitted                         = -1058, // stl error code: errc::operation_not_permitted
+		stl_operation_not_supported                         = -1059, // stl error code: errc::operation_not_supported
+		stl_operation_would_block                           = -1060, // stl error code: errc::operation_would_block
+		stl_owner_dead                                      = -1061, // stl error code: errc::owner_dead
+		stl_permission_denied                               = -1062, // stl error code: errc::permission_denied
+		stl_protocol_error                                  = -1063, // stl error code: errc::protocol_error
+		stl_protocol_not_supported                          = -1064, // stl error code: errc::protocol_not_supported
+		stl_read_only_file_system                           = -1065, // stl error code: errc::read_only_file_system
+		stl_resource_deadlock_would_occur                   = -1066, // stl error code: errc::resource_deadlock_would_occur
+		stl_resource_unavailable_try_again                  = -1067, // stl error code: errc::resource_unavailable_try_again
+		stl_result_out_of_range                             = -1068, // stl error code: errc::result_out_of_range
+		stl_state_not_recoverable                           = -1069, // stl error code: errc::state_not_recoverable
+		stl_stream_timeout                                  = -1070, // stl error code: errc::stream_timeout
+		stl_text_file_busy                                  = -1071, // stl error code: errc::text_file_busy
+		stl_timed_out                                       = -1072, // stl error code: errc::timed_out
+		stl_too_many_files_open_in_system                   = -1073, // stl error code: errc::too_many_files_open_in_system
+		stl_too_many_files_open                             = -1074, // stl error code: errc::too_many_files_open
+		stl_too_many_links                                  = -1075, // stl error code: errc::too_many_links
+		stl_too_many_symbolic_link_levels                   = -1076, // stl error code: errc::too_many_symbolic_link_levels
+		stl_value_too_large                                 = -1077, // stl error code: errc::value_too_large
+		stl_wrong_protocol_type                             = -1078, // stl error code: errc::wrong_protocol_type
 
 		// Vulkan errors
 		vulkan_unrecognized_error_code                      = -2000, // unknown/unrecognized Vulkan error, which could not be mapped to a specific error value
@@ -137,12 +138,143 @@ namespace ctle
 		vulkan_not_permitted_khr                            = -2025, // Vulkan error code VkResult::VK_ERROR_NOT_PERMITTED_KHR
 		vulkan_full_screen_exclusive_mode_lost_ext          = -2026, // Vulkan error code VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT
 		vulkan_compression_exhausted_ext                    = -2027, // Vulkan error code VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT
+
 		};
 
 	// status maps a number of error values into one error enum
 	// and has ctors which converts these error values into a status_code value
 	class status
 		{
+		public:
+
+			// no error, success
+			static const status ok;                                                   // ok, no error, successful
+
+			// general errors
+			static const status undefined_error;                                      // undefined error
+			static const status invalid_param;                                        // invalid parameter in method call
+			static const status not_initialized;                                      // the system is not initialized
+			static const status already_initialized;                                  // the system or class is already initialized or in a specific state
+			static const status cant_allocate;                                        // cant allocate memory
+			static const status cant_open;                                            // cant open file or handle
+			static const status cant_read;                                            // cant read from file or handle
+			static const status corrupted;                                            // a file, data or object is corrupted
+			static const status invalid;                                              // invalid file, wrong file format, or failed validation
+			static const status cant_write;                                           // cant write to file or handle
+			static const status not_found;                                            // one or multiple objects are missing or not found
+			static const status not_ready;                                            // one or multiple objects are not ready, or out of sync
+
+			// stl portable errors (from errc)
+			static const status stl_unrecognized_error_code;                          // unknown/unrecognized STL error, which could not be mapped to a specific error value
+			static const status stl_address_family_not_supported;                     // stl error code: errc::address_family_not_supported
+			static const status stl_address_in_use;                                   // stl error code: errc::address_in_use
+			static const status stl_address_not_available;                            // stl error code: errc::address_not_available
+			static const status stl_already_connected;                                // stl error code: errc::already_connected
+			static const status stl_argument_list_too_long;                           // stl error code: errc::argument_list_too_long
+			static const status stl_argument_out_of_domain;                           // stl error code: errc::argument_out_of_domain
+			static const status stl_bad_address;                                      // stl error code: errc::bad_address
+			static const status stl_bad_file_descriptor;                              // stl error code: errc::bad_file_descriptor
+			static const status stl_bad_message;                                      // stl error code: errc::bad_message
+			static const status stl_broken_pipe;                                      // stl error code: errc::broken_pipe
+			static const status stl_connection_aborted;                               // stl error code: errc::connection_aborted
+			static const status stl_connection_already_in_progress;                   // stl error code: errc::connection_already_in_progress
+			static const status stl_connection_refused;                               // stl error code: errc::connection_refused
+			static const status stl_connection_reset;                                 // stl error code: errc::connection_reset
+			static const status stl_cross_device_link;                                // stl error code: errc::cross_device_link
+			static const status stl_destination_address_required;                     // stl error code: errc::destination_address_required
+			static const status stl_device_or_resource_busy;                          // stl error code: errc::device_or_resource_busy
+			static const status stl_directory_not_empty;                              // stl error code: errc::directory_not_empty
+			static const status stl_executable_format_error;                          // stl error code: errc::executable_format_error
+			static const status stl_file_exists;                                      // stl error code: errc::file_exists
+			static const status stl_file_too_large;                                   // stl error code: errc::file_too_large
+			static const status stl_filename_too_long;                                // stl error code: errc::filename_too_long
+			static const status stl_function_not_supported;                           // stl error code: errc::function_not_supported
+			static const status stl_host_unreachable;                                 // stl error code: errc::host_unreachable
+			static const status stl_identifier_removed;                               // stl error code: errc::identifier_removed
+			static const status stl_illegal_byte_sequence;                            // stl error code: errc::illegal_byte_sequence
+			static const status stl_inappropriate_io_control_operation;               // stl error code: errc::inappropriate_io_control_operation
+			static const status stl_interrupted;                                      // stl error code: errc::interrupted
+			static const status stl_invalid_argument;                                 // stl error code: errc::invalid_argument
+			static const status stl_invalid_seek;                                     // stl error code: errc::invalid_seek
+			static const status stl_io_error;                                         // stl error code: errc::io_error
+			static const status stl_is_a_directory;                                   // stl error code: errc::is_a_directory
+			static const status stl_message_size;                                     // stl error code: errc::message_size
+			static const status stl_network_down;                                     // stl error code: errc::network_down
+			static const status stl_network_reset;                                    // stl error code: errc::network_reset
+			static const status stl_network_unreachable;                              // stl error code: errc::network_unreachable
+			static const status stl_no_buffer_space;                                  // stl error code: errc::no_buffer_space
+			static const status stl_no_child_process;                                 // stl error code: errc::no_child_process
+			static const status stl_no_link;                                          // stl error code: errc::no_link
+			static const status stl_no_lock_available;                                // stl error code: errc::no_lock_available
+			static const status stl_no_message_available;                             // stl error code: errc::no_message_available
+			static const status stl_no_message;                                       // stl error code: errc::no_message
+			static const status stl_no_protocol_option;                               // stl error code: errc::no_protocol_option
+			static const status stl_no_space_on_device;                               // stl error code: errc::no_space_on_device
+			static const status stl_no_stream_resources;                              // stl error code: errc::no_stream_resources
+			static const status stl_no_such_device_or_address;                        // stl error code: errc::no_such_device_or_address
+			static const status stl_no_such_device;                                   // stl error code: errc::no_such_device
+			static const status stl_no_such_file_or_directory;                        // stl error code: errc::no_such_file_or_directory
+			static const status stl_no_such_process;                                  // stl error code: errc::no_such_process
+			static const status stl_not_a_directory;                                  // stl error code: errc::not_a_directory
+			static const status stl_not_a_socket;                                     // stl error code: errc::not_a_socket
+			static const status stl_not_a_stream;                                     // stl error code: errc::not_a_stream
+			static const status stl_not_connected;                                    // stl error code: errc::not_connected
+			static const status stl_not_enough_memory;                                // stl error code: errc::not_enough_memory
+			static const status stl_not_supported;                                    // stl error code: errc::not_supported
+			static const status stl_operation_canceled;                               // stl error code: errc::operation_canceled
+			static const status stl_operation_in_progress;                            // stl error code: errc::operation_in_progress
+			static const status stl_operation_not_permitted;                          // stl error code: errc::operation_not_permitted
+			static const status stl_operation_not_supported;                          // stl error code: errc::operation_not_supported
+			static const status stl_operation_would_block;                            // stl error code: errc::operation_would_block
+			static const status stl_owner_dead;                                       // stl error code: errc::owner_dead
+			static const status stl_permission_denied;                                // stl error code: errc::permission_denied
+			static const status stl_protocol_error;                                   // stl error code: errc::protocol_error
+			static const status stl_protocol_not_supported;                           // stl error code: errc::protocol_not_supported
+			static const status stl_read_only_file_system;                            // stl error code: errc::read_only_file_system
+			static const status stl_resource_deadlock_would_occur;                    // stl error code: errc::resource_deadlock_would_occur
+			static const status stl_resource_unavailable_try_again;                   // stl error code: errc::resource_unavailable_try_again
+			static const status stl_result_out_of_range;                              // stl error code: errc::result_out_of_range
+			static const status stl_state_not_recoverable;                            // stl error code: errc::state_not_recoverable
+			static const status stl_stream_timeout;                                   // stl error code: errc::stream_timeout
+			static const status stl_text_file_busy;                                   // stl error code: errc::text_file_busy
+			static const status stl_timed_out;                                        // stl error code: errc::timed_out
+			static const status stl_too_many_files_open_in_system;                    // stl error code: errc::too_many_files_open_in_system
+			static const status stl_too_many_files_open;                              // stl error code: errc::too_many_files_open
+			static const status stl_too_many_links;                                   // stl error code: errc::too_many_links
+			static const status stl_too_many_symbolic_link_levels;                    // stl error code: errc::too_many_symbolic_link_levels
+			static const status stl_value_too_large;                                  // stl error code: errc::value_too_large
+			static const status stl_wrong_protocol_type;                              // stl error code: errc::wrong_protocol_type
+
+			// Vulkan errors
+			static const status vulkan_unrecognized_error_code;                       // unknown/unrecognized Vulkan error, which could not be mapped to a specific error value
+			static const status vulkan_out_of_host_memory;                            // Vulkan error code VkResult::VK_ERROR_OUT_OF_HOST_MEMORY
+			static const status vulkan_out_of_device_memory;                          // Vulkan error code VkResult::VK_ERROR_OUT_OF_DEVICE_MEMORY
+			static const status vulkan_initialization_failed;                         // Vulkan error code VkResult::VK_ERROR_INITIALIZATION_FAILED
+			static const status vulkan_device_lost;                                   // Vulkan error code VkResult::VK_ERROR_DEVICE_LOST
+			static const status vulkan_memory_map_failed;                             // Vulkan error code VkResult::VK_ERROR_MEMORY_MAP_FAILED
+			static const status vulkan_layer_not_present;                             // Vulkan error code VkResult::VK_ERROR_LAYER_NOT_PRESENT
+			static const status vulkan_extension_not_present;                         // Vulkan error code VkResult::VK_ERROR_EXTENSION_NOT_PRESENT
+			static const status vulkan_feature_not_present;                           // Vulkan error code VkResult::VK_ERROR_FEATURE_NOT_PRESENT
+			static const status vulkan_incompatible_driver;                           // Vulkan error code VkResult::VK_ERROR_INCOMPATIBLE_DRIVER
+			static const status vulkan_too_many_objects;                              // Vulkan error code VkResult::VK_ERROR_TOO_MANY_OBJECTS
+			static const status vulkan_format_not_supported;                          // Vulkan error code VkResult::VK_ERROR_FORMAT_NOT_SUPPORTED
+			static const status vulkan_fragmented_pool;                               // Vulkan error code VkResult::VK_ERROR_FRAGMENTED_POOL
+			static const status vulkan_unknown;                                       // Vulkan error code VkResult::VK_ERROR_UNKNOWN
+			static const status vulkan_out_of_pool_memory;                            // Vulkan error code VkResult::VK_ERROR_OUT_OF_POOL_MEMORY
+			static const status vulkan_invalid_external_handle;                       // Vulkan error code VkResult::VK_ERROR_INVALID_EXTERNAL_HANDLE
+			static const status vulkan_fragmentation;                                 // Vulkan error code VkResult::VK_ERROR_FRAGMENTATION
+			static const status vulkan_invalid_opaque_capture_address;                // Vulkan error code VkResult::VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS
+			static const status vulkan_surface_lost_khr;                              // Vulkan error code VkResult::VK_ERROR_SURFACE_LOST_KHR
+			static const status vulkan_native_window_in_use_khr;                      // Vulkan error code VkResult::VK_ERROR_NATIVE_WINDOW_IN_USE_KHR
+			static const status vulkan_out_of_date_khr;                               // Vulkan error code VkResult::VK_ERROR_OUT_OF_DATE_KHR
+			static const status vulkan_incompatible_display_khr;                      // Vulkan error code VkResult::VK_ERROR_INCOMPATIBLE_DISPLAY_KHR
+			static const status vulkan_validation_failed_ext;                         // Vulkan error code VkResult::VK_ERROR_VALIDATION_FAILED_EXT
+			static const status vulkan_invalid_shader_nv;                             // Vulkan error code VkResult::VK_ERROR_INVALID_SHADER_NV
+			static const status vulkan_invalid_drm_format_modifier_plane_layout_ext;  // Vulkan error code VkResult::VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT
+			static const status vulkan_not_permitted_khr;                             // Vulkan error code VkResult::VK_ERROR_NOT_PERMITTED_KHR
+			static const status vulkan_full_screen_exclusive_mode_lost_ext;           // Vulkan error code VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT
+			static const status vulkan_compression_exhausted_ext;                     // Vulkan error code VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT
+
 		private:
 			status_code svalue = status_code::ok;
 
@@ -168,8 +300,8 @@ namespace ctle
 #endif//VULKAN_CORE_H_
 
 			// use as a bool
-			operator bool() const { return svalue == status_code::ok; }
-			bool operator !() const { return svalue != status_code::ok; }
+			operator bool() const { return svalue >= status_code::ok; }
+			bool operator !() const { return svalue < status_code::ok; }
 
 			// compare to status_code
 			bool operator == ( const status_code &_value ) const noexcept { return this->svalue == _value; }
@@ -187,6 +319,134 @@ namespace ctle
 
 #ifdef CTLE_IMPLEMENTATION
 
+	// no error, success
+	const status status::ok = status_code::ok;
+
+	// general errors
+	const status status::undefined_error = status_code::undefined_error;
+	const status status::invalid_param = status_code::invalid_param;
+	const status status::not_initialized = status_code::not_initialized;
+	const status status::already_initialized = status_code::already_initialized;
+	const status status::cant_allocate = status_code::cant_allocate;
+	const status status::cant_open = status_code::cant_open;
+	const status status::cant_read = status_code::cant_read;
+	const status status::corrupted = status_code::corrupted;
+	const status status::invalid = status_code::invalid;
+	const status status::cant_write = status_code::cant_write;
+	const status status::not_found = status_code::not_found;
+	const status status::not_ready = status_code::not_ready;
+
+	// stl portable errors (from errc)
+	const status status::stl_unrecognized_error_code = status_code::stl_unrecognized_error_code;
+	const status status::stl_address_family_not_supported = status_code::stl_address_family_not_supported;
+	const status status::stl_address_in_use = status_code::stl_address_in_use;
+	const status status::stl_address_not_available = status_code::stl_address_not_available;
+	const status status::stl_already_connected = status_code::stl_already_connected;
+	const status status::stl_argument_list_too_long = status_code::stl_argument_list_too_long;
+	const status status::stl_argument_out_of_domain = status_code::stl_argument_out_of_domain;
+	const status status::stl_bad_address = status_code::stl_bad_address;
+	const status status::stl_bad_file_descriptor = status_code::stl_bad_file_descriptor;
+	const status status::stl_bad_message = status_code::stl_bad_message;
+	const status status::stl_broken_pipe = status_code::stl_broken_pipe;
+	const status status::stl_connection_aborted = status_code::stl_connection_aborted;
+	const status status::stl_connection_already_in_progress = status_code::stl_connection_already_in_progress;
+	const status status::stl_connection_refused = status_code::stl_connection_refused;
+	const status status::stl_connection_reset = status_code::stl_connection_reset;
+	const status status::stl_cross_device_link = status_code::stl_cross_device_link;
+	const status status::stl_destination_address_required = status_code::stl_destination_address_required;
+	const status status::stl_device_or_resource_busy = status_code::stl_device_or_resource_busy;
+	const status status::stl_directory_not_empty = status_code::stl_directory_not_empty;
+	const status status::stl_executable_format_error = status_code::stl_executable_format_error;
+	const status status::stl_file_exists = status_code::stl_file_exists;
+	const status status::stl_file_too_large = status_code::stl_file_too_large;
+	const status status::stl_filename_too_long = status_code::stl_filename_too_long;
+	const status status::stl_function_not_supported = status_code::stl_function_not_supported;
+	const status status::stl_host_unreachable = status_code::stl_host_unreachable;
+	const status status::stl_identifier_removed = status_code::stl_identifier_removed;
+	const status status::stl_illegal_byte_sequence = status_code::stl_illegal_byte_sequence;
+	const status status::stl_inappropriate_io_control_operation = status_code::stl_inappropriate_io_control_operation;
+	const status status::stl_interrupted = status_code::stl_interrupted;
+	const status status::stl_invalid_argument = status_code::stl_invalid_argument;
+	const status status::stl_invalid_seek = status_code::stl_invalid_seek;
+	const status status::stl_io_error = status_code::stl_io_error;
+	const status status::stl_is_a_directory = status_code::stl_is_a_directory;
+	const status status::stl_message_size = status_code::stl_message_size;
+	const status status::stl_network_down = status_code::stl_network_down;
+	const status status::stl_network_reset = status_code::stl_network_reset;
+	const status status::stl_network_unreachable = status_code::stl_network_unreachable;
+	const status status::stl_no_buffer_space = status_code::stl_no_buffer_space;
+	const status status::stl_no_child_process = status_code::stl_no_child_process;
+	const status status::stl_no_link = status_code::stl_no_link;
+	const status status::stl_no_lock_available = status_code::stl_no_lock_available;
+	const status status::stl_no_message_available = status_code::stl_no_message_available;
+	const status status::stl_no_message = status_code::stl_no_message;
+	const status status::stl_no_protocol_option = status_code::stl_no_protocol_option;
+	const status status::stl_no_space_on_device = status_code::stl_no_space_on_device;
+	const status status::stl_no_stream_resources = status_code::stl_no_stream_resources;
+	const status status::stl_no_such_device_or_address = status_code::stl_no_such_device_or_address;
+	const status status::stl_no_such_device = status_code::stl_no_such_device;
+	const status status::stl_no_such_file_or_directory = status_code::stl_no_such_file_or_directory;
+	const status status::stl_no_such_process = status_code::stl_no_such_process;
+	const status status::stl_not_a_directory = status_code::stl_not_a_directory;
+	const status status::stl_not_a_socket = status_code::stl_not_a_socket;
+	const status status::stl_not_a_stream = status_code::stl_not_a_stream;
+	const status status::stl_not_connected = status_code::stl_not_connected;
+	const status status::stl_not_enough_memory = status_code::stl_not_enough_memory;
+	const status status::stl_not_supported = status_code::stl_not_supported;
+	const status status::stl_operation_canceled = status_code::stl_operation_canceled;
+	const status status::stl_operation_in_progress = status_code::stl_operation_in_progress;
+	const status status::stl_operation_not_permitted = status_code::stl_operation_not_permitted;
+	const status status::stl_operation_not_supported = status_code::stl_operation_not_supported;
+	const status status::stl_operation_would_block = status_code::stl_operation_would_block;
+	const status status::stl_owner_dead = status_code::stl_owner_dead;
+	const status status::stl_permission_denied = status_code::stl_permission_denied;
+	const status status::stl_protocol_error = status_code::stl_protocol_error;
+	const status status::stl_protocol_not_supported = status_code::stl_protocol_not_supported;
+	const status status::stl_read_only_file_system = status_code::stl_read_only_file_system;
+	const status status::stl_resource_deadlock_would_occur = status_code::stl_resource_deadlock_would_occur;
+	const status status::stl_resource_unavailable_try_again = status_code::stl_resource_unavailable_try_again;
+	const status status::stl_result_out_of_range = status_code::stl_result_out_of_range;
+	const status status::stl_state_not_recoverable = status_code::stl_state_not_recoverable;
+	const status status::stl_stream_timeout = status_code::stl_stream_timeout;
+	const status status::stl_text_file_busy = status_code::stl_text_file_busy;
+	const status status::stl_timed_out = status_code::stl_timed_out;
+	const status status::stl_too_many_files_open_in_system = status_code::stl_too_many_files_open_in_system;
+	const status status::stl_too_many_files_open = status_code::stl_too_many_files_open;
+	const status status::stl_too_many_links = status_code::stl_too_many_links;
+	const status status::stl_too_many_symbolic_link_levels = status_code::stl_too_many_symbolic_link_levels;
+	const status status::stl_value_too_large = status_code::stl_value_too_large;
+	const status status::stl_wrong_protocol_type = status_code::stl_wrong_protocol_type;
+
+	// Vulkan errors
+	const status status::vulkan_unrecognized_error_code = status_code::vulkan_unrecognized_error_code;
+	const status status::vulkan_out_of_host_memory = status_code::vulkan_out_of_host_memory;
+	const status status::vulkan_out_of_device_memory = status_code::vulkan_out_of_device_memory;
+	const status status::vulkan_initialization_failed = status_code::vulkan_initialization_failed;
+	const status status::vulkan_device_lost = status_code::vulkan_device_lost;
+	const status status::vulkan_memory_map_failed = status_code::vulkan_memory_map_failed;
+	const status status::vulkan_layer_not_present = status_code::vulkan_layer_not_present;
+	const status status::vulkan_extension_not_present = status_code::vulkan_extension_not_present;
+	const status status::vulkan_feature_not_present = status_code::vulkan_feature_not_present;
+	const status status::vulkan_incompatible_driver = status_code::vulkan_incompatible_driver;
+	const status status::vulkan_too_many_objects = status_code::vulkan_too_many_objects;
+	const status status::vulkan_format_not_supported = status_code::vulkan_format_not_supported;
+	const status status::vulkan_fragmented_pool = status_code::vulkan_fragmented_pool;
+	const status status::vulkan_unknown = status_code::vulkan_unknown;
+	const status status::vulkan_out_of_pool_memory = status_code::vulkan_out_of_pool_memory;
+	const status status::vulkan_invalid_external_handle = status_code::vulkan_invalid_external_handle;
+	const status status::vulkan_fragmentation = status_code::vulkan_fragmentation;
+	const status status::vulkan_invalid_opaque_capture_address = status_code::vulkan_invalid_opaque_capture_address;
+	const status status::vulkan_surface_lost_khr = status_code::vulkan_surface_lost_khr;
+	const status status::vulkan_native_window_in_use_khr = status_code::vulkan_native_window_in_use_khr;
+	const status status::vulkan_out_of_date_khr = status_code::vulkan_out_of_date_khr;
+	const status status::vulkan_incompatible_display_khr = status_code::vulkan_incompatible_display_khr;
+	const status status::vulkan_validation_failed_ext = status_code::vulkan_validation_failed_ext;
+	const status status::vulkan_invalid_shader_nv = status_code::vulkan_invalid_shader_nv;
+	const status status::vulkan_invalid_drm_format_modifier_plane_layout_ext = status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext;
+	const status status::vulkan_not_permitted_khr = status_code::vulkan_not_permitted_khr;
+	const status status::vulkan_full_screen_exclusive_mode_lost_ext = status_code::vulkan_full_screen_exclusive_mode_lost_ext;
+	const status status::vulkan_compression_exhausted_ext = status_code::vulkan_compression_exhausted_ext;
+
 	struct status_code_string_description
 		{
 		const char *name;
@@ -195,133 +455,134 @@ namespace ctle
 
 	static const std::unordered_map<status_code, status_code_string_description> status_code_string_descriptions = 
 		{
-			// ok, no error
-			{ status_code::ok, { "ok","ok, no error, successful" } },
+			// no error, success
+			{ status_code::ok , { "ok", "ok, no error, successful" } } , 
 
 			// general errors
-			{ status_code::undefined_error, { "undefined_error","undefined error" } },
-			{ status_code::invalid_param, { "invalid_param","invalid parameter in method call" } },
-			{ status_code::not_initialized, { "not_initialized","the system is not initialized" } },
-			{ status_code::already_initialized, { "already_initialized","the system or class is already initialized or in a specific state" } },
-			{ status_code::cant_allocate, { "cant_allocate","cant allocate memory" } },
-			{ status_code::cant_open, { "cant_open","cant open file or handle" } },
-			{ status_code::cant_read, { "cant_read","cant read from file or handle" } },
-			{ status_code::corrupted, { "corrupted","a file, data or object is corrupted { " } },
-			{ status_code::invalid, { "invalid","invalid file, wrong file format, or failed validation" } },
-			{ status_code::cant_write, { "cant_write","cant write to file or handle" } },
-			{ status_code::not_found, { "not_found","one or multiple objects are missing or not found" } },
-			{ status_code::not_ready, { "not_ready","one or multiple objects are not ready, or out of sync" } },
+			{ status_code::undefined_error , { "undefined_error", "undefined error" } } , 
+			{ status_code::invalid_param , { "invalid_param", "invalid parameter in method call" } } , 
+			{ status_code::not_initialized , { "not_initialized", "the system is not initialized" } } , 
+			{ status_code::already_initialized , { "already_initialized", "the system or class is already initialized or in a specific state" } } , 
+			{ status_code::cant_allocate , { "cant_allocate", "cant allocate memory" } } , 
+			{ status_code::cant_open , { "cant_open", "cant open file or handle" } } , 
+			{ status_code::cant_read , { "cant_read", "cant read from file or handle" } } , 
+			{ status_code::corrupted , { "corrupted", "a file, data or object is corrupted" } } , 
+			{ status_code::invalid , { "invalid", "invalid file, wrong file format, or failed validation" } } , 
+			{ status_code::cant_write , { "cant_write", "cant write to file or handle" } } , 
+			{ status_code::not_found , { "not_found", "one or multiple objects are missing or not found" } } , 
+			{ status_code::not_ready , { "not_ready", "one or multiple objects are not ready, or out of sync" } } , 
 
 			// stl portable errors (from errc)
-			{ status_code::stl_unrecognized_error_code, { "stl_unrecognized_error_code","unknown/unrecognized STL error, which could not be mapped to a specific error value" } },
-			{ status_code::stl_address_family_not_supported, { "stl_address_family_not_supported","errc::address_family_not_supported" } },
-			{ status_code::stl_address_in_use, { "stl_address_in_use","errc::address_in_use" } },
-			{ status_code::stl_address_not_available, { "stl_address_not_available","errc::address_not_available" } },
-			{ status_code::stl_already_connected, { "stl_already_connected","errc::already_connected" } },
-			{ status_code::stl_argument_list_too_long, { "stl_argument_list_too_long","errc::argument_list_too_long" } },
-			{ status_code::stl_argument_out_of_domain, { "stl_argument_out_of_domain","errc::argument_out_of_domain" } },
-			{ status_code::stl_bad_address, { "stl_bad_address","errc::bad_address" } },
-			{ status_code::stl_bad_file_descriptor, { "stl_bad_file_descriptor","errc::bad_file_descriptor" } },
-			{ status_code::stl_bad_message, { "stl_bad_message","errc::bad_message" } },
-			{ status_code::stl_broken_pipe, { "stl_broken_pipe","errc::broken_pipe" } },
-			{ status_code::stl_connection_aborted, { "stl_connection_aborted","errc::connection_aborted" } },
-			{ status_code::stl_connection_already_in_progress, { "stl_connection_already_in_progress","errc::connection_already_in_progress" } },
-			{ status_code::stl_connection_refused, { "stl_connection_refused","errc::connection_refused" } },
-			{ status_code::stl_connection_reset, { "stl_connection_reset","errc::connection_reset" } },
-			{ status_code::stl_cross_device_link, { "stl_cross_device_link","errc::cross_device_link" } },
-			{ status_code::stl_destination_address_required, { "stl_destination_address_required","errc::destination_address_required" } },
-			{ status_code::stl_device_or_resource_busy, { "stl_device_or_resource_busy","errc::device_or_resource_busy" } },
-			{ status_code::stl_directory_not_empty, { "stl_directory_not_empty","errc::directory_not_empty" } },
-			{ status_code::stl_executable_format_error, { "stl_executable_format_error","errc::executable_format_error" } },
-			{ status_code::stl_file_exists, { "stl_file_exists","errc::file_exists" } },
-			{ status_code::stl_file_too_large, { "stl_file_too_large","errc::file_too_large" } },
-			{ status_code::stl_filename_too_long, { "stl_filename_too_long","errc::filename_too_long" } },
-			{ status_code::stl_function_not_supported, { "stl_function_not_supported","errc::function_not_supported" } },
-			{ status_code::stl_host_unreachable, { "stl_host_unreachable","errc::host_unreachable" } },
-			{ status_code::stl_identifier_removed, { "stl_identifier_removed","errc::identifier_removed" } },
-			{ status_code::stl_illegal_byte_sequence, { "stl_illegal_byte_sequence","errc::illegal_byte_sequence" } },
-			{ status_code::stl_inappropriate_io_control_operation, { "stl_inappropriate_io_control_operation","errc::inappropriate_io_control_operation" } },
-			{ status_code::stl_interrupted, { "stl_interrupted","errc::interrupted" } },
-			{ status_code::stl_invalid_argument, { "stl_invalid_argument","errc::invalid_argument" } },
-			{ status_code::stl_invalid_seek, { "stl_invalid_seek","errc::invalid_seek" } },
-			{ status_code::stl_io_error, { "stl_io_error","errc::io_error" } },
-			{ status_code::stl_is_a_directory, { "stl_is_a_directory","errc::is_a_directory" } },
-			{ status_code::stl_message_size, { "stl_message_size","errc::message_size" } },
-			{ status_code::stl_network_down, { "stl_network_down","errc::network_down" } },
-			{ status_code::stl_network_reset, { "stl_network_reset","errc::network_reset" } },
-			{ status_code::stl_network_unreachable, { "stl_network_unreachable","errc::network_unreachable" } },
-			{ status_code::stl_no_buffer_space, { "stl_no_buffer_space","errc::no_buffer_space" } },
-			{ status_code::stl_no_child_process, { "stl_no_child_process","errc::no_child_process" } },
-			{ status_code::stl_no_link, { "stl_no_link","errc::no_link" } },
-			{ status_code::stl_no_lock_available, { "stl_no_lock_available","errc::no_lock_available" } },
-			{ status_code::stl_no_message_available, { "stl_no_message_available","errc::no_message_available" } },
-			{ status_code::stl_no_message, { "stl_no_message","errc::no_message" } },
-			{ status_code::stl_no_protocol_option, { "stl_no_protocol_option","errc::no_protocol_option" } },
-			{ status_code::stl_no_space_on_device, { "stl_no_space_on_device","errc::no_space_on_device" } },
-			{ status_code::stl_no_stream_resources, { "stl_no_stream_resources","errc::no_stream_resources" } },
-			{ status_code::stl_no_such_device_or_address, { "stl_no_such_device_or_address","errc::no_such_device_or_address" } },
-			{ status_code::stl_no_such_device, { "stl_no_such_device","errc::no_such_device" } },
-			{ status_code::stl_no_such_file_or_directory, { "stl_no_such_file_or_directory","errc::no_such_file_or_directory" } },
-			{ status_code::stl_no_such_process, { "stl_no_such_process","errc::no_such_process" } },
-			{ status_code::stl_not_a_directory, { "stl_not_a_directory","errc::not_a_directory" } },
-			{ status_code::stl_not_a_socket, { "stl_not_a_socket","errc::not_a_socket" } },
-			{ status_code::stl_not_a_stream, { "stl_not_a_stream","errc::not_a_stream" } },
-			{ status_code::stl_not_connected, { "stl_not_connected","errc::not_connected" } },
-			{ status_code::stl_not_enough_memory, { "stl_not_enough_memory","errc::not_enough_memory" } },
-			{ status_code::stl_not_supported, { "stl_not_supported","errc::not_supported" } },
-			{ status_code::stl_operation_canceled, { "stl_operation_canceled","errc::operation_canceled" } },
-			{ status_code::stl_operation_in_progress, { "stl_operation_in_progress","errc::operation_in_progress" } },
-			{ status_code::stl_operation_not_permitted, { "stl_operation_not_permitted","errc::operation_not_permitted" } },
-			{ status_code::stl_operation_not_supported, { "stl_operation_not_supported","errc::operation_not_supported" } },
-			{ status_code::stl_operation_would_block, { "stl_operation_would_block","errc::operation_would_block" } },
-			{ status_code::stl_owner_dead, { "stl_owner_dead","errc::owner_dead" } },
-			{ status_code::stl_permission_denied, { "stl_permission_denied","errc::permission_denied" } },
-			{ status_code::stl_protocol_error, { "stl_protocol_error","errc::protocol_error" } },
-			{ status_code::stl_protocol_not_supported, { "stl_protocol_not_supported","errc::protocol_not_supported" } },
-			{ status_code::stl_read_only_file_system, { "stl_read_only_file_system","errc::read_only_file_system" } },
-			{ status_code::stl_resource_deadlock_would_occur, { "stl_resource_deadlock_would_occur","errc::resource_deadlock_would_occur" } },
-			{ status_code::stl_resource_unavailable_try_again, { "stl_resource_unavailable_try_again","errc::resource_unavailable_try_again" } },
-			{ status_code::stl_result_out_of_range, { "stl_result_out_of_range","errc::result_out_of_range" } },
-			{ status_code::stl_state_not_recoverable, { "stl_state_not_recoverable","errc::state_not_recoverable" } },
-			{ status_code::stl_stream_timeout, { "stl_stream_timeout","errc::stream_timeout" } },
-			{ status_code::stl_text_file_busy, { "stl_text_file_busy","errc::text_file_busy" } },
-			{ status_code::stl_timed_out, { "stl_timed_out","errc::timed_out" } },
-			{ status_code::stl_too_many_files_open_in_system, { "stl_too_many_files_open_in_system","errc::too_many_files_open_in_system" } },
-			{ status_code::stl_too_many_files_open, { "stl_too_many_files_open","errc::too_many_files_open" } },
-			{ status_code::stl_too_many_links, { "stl_too_many_links","errc::too_many_links" } },
-			{ status_code::stl_too_many_symbolic_link_levels, { "stl_too_many_symbolic_link_levels","errc::too_many_symbolic_link_levels" } },
-			{ status_code::stl_value_too_large, { "stl_value_too_large","errc::value_too_large" } },
-			{ status_code::stl_wrong_protocol_type, { "stl_wrong_protocol_type","errc::wrong_protocol_type" } },
+			{ status_code::stl_unrecognized_error_code , { "stl_unrecognized_error_code", "unknown/unrecognized STL error, which could not be mapped to a specific error value" } } , 
+			{ status_code::stl_address_family_not_supported , { "stl_address_family_not_supported", "stl error code: errc::address_family_not_supported" } } , 
+			{ status_code::stl_address_in_use , { "stl_address_in_use", "stl error code: errc::address_in_use" } } , 
+			{ status_code::stl_address_not_available , { "stl_address_not_available", "stl error code: errc::address_not_available" } } , 
+			{ status_code::stl_already_connected , { "stl_already_connected", "stl error code: errc::already_connected" } } , 
+			{ status_code::stl_argument_list_too_long , { "stl_argument_list_too_long", "stl error code: errc::argument_list_too_long" } } , 
+			{ status_code::stl_argument_out_of_domain , { "stl_argument_out_of_domain", "stl error code: errc::argument_out_of_domain" } } , 
+			{ status_code::stl_bad_address , { "stl_bad_address", "stl error code: errc::bad_address" } } , 
+			{ status_code::stl_bad_file_descriptor , { "stl_bad_file_descriptor", "stl error code: errc::bad_file_descriptor" } } , 
+			{ status_code::stl_bad_message , { "stl_bad_message", "stl error code: errc::bad_message" } } , 
+			{ status_code::stl_broken_pipe , { "stl_broken_pipe", "stl error code: errc::broken_pipe" } } , 
+			{ status_code::stl_connection_aborted , { "stl_connection_aborted", "stl error code: errc::connection_aborted" } } , 
+			{ status_code::stl_connection_already_in_progress , { "stl_connection_already_in_progress", "stl error code: errc::connection_already_in_progress" } } , 
+			{ status_code::stl_connection_refused , { "stl_connection_refused", "stl error code: errc::connection_refused" } } , 
+			{ status_code::stl_connection_reset , { "stl_connection_reset", "stl error code: errc::connection_reset" } } , 
+			{ status_code::stl_cross_device_link , { "stl_cross_device_link", "stl error code: errc::cross_device_link" } } , 
+			{ status_code::stl_destination_address_required , { "stl_destination_address_required", "stl error code: errc::destination_address_required" } } , 
+			{ status_code::stl_device_or_resource_busy , { "stl_device_or_resource_busy", "stl error code: errc::device_or_resource_busy" } } , 
+			{ status_code::stl_directory_not_empty , { "stl_directory_not_empty", "stl error code: errc::directory_not_empty" } } , 
+			{ status_code::stl_executable_format_error , { "stl_executable_format_error", "stl error code: errc::executable_format_error" } } , 
+			{ status_code::stl_file_exists , { "stl_file_exists", "stl error code: errc::file_exists" } } , 
+			{ status_code::stl_file_too_large , { "stl_file_too_large", "stl error code: errc::file_too_large" } } , 
+			{ status_code::stl_filename_too_long , { "stl_filename_too_long", "stl error code: errc::filename_too_long" } } , 
+			{ status_code::stl_function_not_supported , { "stl_function_not_supported", "stl error code: errc::function_not_supported" } } , 
+			{ status_code::stl_host_unreachable , { "stl_host_unreachable", "stl error code: errc::host_unreachable" } } , 
+			{ status_code::stl_identifier_removed , { "stl_identifier_removed", "stl error code: errc::identifier_removed" } } , 
+			{ status_code::stl_illegal_byte_sequence , { "stl_illegal_byte_sequence", "stl error code: errc::illegal_byte_sequence" } } , 
+			{ status_code::stl_inappropriate_io_control_operation , { "stl_inappropriate_io_control_operation", "stl error code: errc::inappropriate_io_control_operation" } } , 
+			{ status_code::stl_interrupted , { "stl_interrupted", "stl error code: errc::interrupted" } } , 
+			{ status_code::stl_invalid_argument , { "stl_invalid_argument", "stl error code: errc::invalid_argument" } } , 
+			{ status_code::stl_invalid_seek , { "stl_invalid_seek", "stl error code: errc::invalid_seek" } } , 
+			{ status_code::stl_io_error , { "stl_io_error", "stl error code: errc::io_error" } } , 
+			{ status_code::stl_is_a_directory , { "stl_is_a_directory", "stl error code: errc::is_a_directory" } } , 
+			{ status_code::stl_message_size , { "stl_message_size", "stl error code: errc::message_size" } } , 
+			{ status_code::stl_network_down , { "stl_network_down", "stl error code: errc::network_down" } } , 
+			{ status_code::stl_network_reset , { "stl_network_reset", "stl error code: errc::network_reset" } } , 
+			{ status_code::stl_network_unreachable , { "stl_network_unreachable", "stl error code: errc::network_unreachable" } } , 
+			{ status_code::stl_no_buffer_space , { "stl_no_buffer_space", "stl error code: errc::no_buffer_space" } } , 
+			{ status_code::stl_no_child_process , { "stl_no_child_process", "stl error code: errc::no_child_process" } } , 
+			{ status_code::stl_no_link , { "stl_no_link", "stl error code: errc::no_link" } } , 
+			{ status_code::stl_no_lock_available , { "stl_no_lock_available", "stl error code: errc::no_lock_available" } } , 
+			{ status_code::stl_no_message_available , { "stl_no_message_available", "stl error code: errc::no_message_available" } } , 
+			{ status_code::stl_no_message , { "stl_no_message", "stl error code: errc::no_message" } } , 
+			{ status_code::stl_no_protocol_option , { "stl_no_protocol_option", "stl error code: errc::no_protocol_option" } } , 
+			{ status_code::stl_no_space_on_device , { "stl_no_space_on_device", "stl error code: errc::no_space_on_device" } } , 
+			{ status_code::stl_no_stream_resources , { "stl_no_stream_resources", "stl error code: errc::no_stream_resources" } } , 
+			{ status_code::stl_no_such_device_or_address , { "stl_no_such_device_or_address", "stl error code: errc::no_such_device_or_address" } } , 
+			{ status_code::stl_no_such_device , { "stl_no_such_device", "stl error code: errc::no_such_device" } } , 
+			{ status_code::stl_no_such_file_or_directory , { "stl_no_such_file_or_directory", "stl error code: errc::no_such_file_or_directory" } } , 
+			{ status_code::stl_no_such_process , { "stl_no_such_process", "stl error code: errc::no_such_process" } } , 
+			{ status_code::stl_not_a_directory , { "stl_not_a_directory", "stl error code: errc::not_a_directory" } } , 
+			{ status_code::stl_not_a_socket , { "stl_not_a_socket", "stl error code: errc::not_a_socket" } } , 
+			{ status_code::stl_not_a_stream , { "stl_not_a_stream", "stl error code: errc::not_a_stream" } } , 
+			{ status_code::stl_not_connected , { "stl_not_connected", "stl error code: errc::not_connected" } } , 
+			{ status_code::stl_not_enough_memory , { "stl_not_enough_memory", "stl error code: errc::not_enough_memory" } } , 
+			{ status_code::stl_not_supported , { "stl_not_supported", "stl error code: errc::not_supported" } } , 
+			{ status_code::stl_operation_canceled , { "stl_operation_canceled", "stl error code: errc::operation_canceled" } } , 
+			{ status_code::stl_operation_in_progress , { "stl_operation_in_progress", "stl error code: errc::operation_in_progress" } } , 
+			{ status_code::stl_operation_not_permitted , { "stl_operation_not_permitted", "stl error code: errc::operation_not_permitted" } } , 
+			{ status_code::stl_operation_not_supported , { "stl_operation_not_supported", "stl error code: errc::operation_not_supported" } } , 
+			{ status_code::stl_operation_would_block , { "stl_operation_would_block", "stl error code: errc::operation_would_block" } } , 
+			{ status_code::stl_owner_dead , { "stl_owner_dead", "stl error code: errc::owner_dead" } } , 
+			{ status_code::stl_permission_denied , { "stl_permission_denied", "stl error code: errc::permission_denied" } } , 
+			{ status_code::stl_protocol_error , { "stl_protocol_error", "stl error code: errc::protocol_error" } } , 
+			{ status_code::stl_protocol_not_supported , { "stl_protocol_not_supported", "stl error code: errc::protocol_not_supported" } } , 
+			{ status_code::stl_read_only_file_system , { "stl_read_only_file_system", "stl error code: errc::read_only_file_system" } } , 
+			{ status_code::stl_resource_deadlock_would_occur , { "stl_resource_deadlock_would_occur", "stl error code: errc::resource_deadlock_would_occur" } } , 
+			{ status_code::stl_resource_unavailable_try_again , { "stl_resource_unavailable_try_again", "stl error code: errc::resource_unavailable_try_again" } } , 
+			{ status_code::stl_result_out_of_range , { "stl_result_out_of_range", "stl error code: errc::result_out_of_range" } } , 
+			{ status_code::stl_state_not_recoverable , { "stl_state_not_recoverable", "stl error code: errc::state_not_recoverable" } } , 
+			{ status_code::stl_stream_timeout , { "stl_stream_timeout", "stl error code: errc::stream_timeout" } } , 
+			{ status_code::stl_text_file_busy , { "stl_text_file_busy", "stl error code: errc::text_file_busy" } } , 
+			{ status_code::stl_timed_out , { "stl_timed_out", "stl error code: errc::timed_out" } } , 
+			{ status_code::stl_too_many_files_open_in_system , { "stl_too_many_files_open_in_system", "stl error code: errc::too_many_files_open_in_system" } } , 
+			{ status_code::stl_too_many_files_open , { "stl_too_many_files_open", "stl error code: errc::too_many_files_open" } } , 
+			{ status_code::stl_too_many_links , { "stl_too_many_links", "stl error code: errc::too_many_links" } } , 
+			{ status_code::stl_too_many_symbolic_link_levels , { "stl_too_many_symbolic_link_levels", "stl error code: errc::too_many_symbolic_link_levels" } } , 
+			{ status_code::stl_value_too_large , { "stl_value_too_large", "stl error code: errc::value_too_large" } } , 
+			{ status_code::stl_wrong_protocol_type , { "stl_wrong_protocol_type", "stl error code: errc::wrong_protocol_type" } } , 
 
 			// Vulkan errors
-			{ status_code::vulkan_unrecognized_error_code, { "vulkan_unrecognized_error_code","unknown/unrecognized Vulkan error, which could not be mapped to a specific error value" } },
-			{ status_code::vulkan_out_of_host_memory, { "vulkan_out_of_host_memory","Vulkan error code VK_ERROR_OUT_OF_HOST_MEMORY" } },
-			{ status_code::vulkan_out_of_device_memory, { "vulkan_out_of_device_memory","Vulkan error code VK_ERROR_OUT_OF_DEVICE_MEMORY" } },
-			{ status_code::vulkan_initialization_failed, { "vulkan_initialization_failed","Vulkan error code VK_ERROR_INITIALIZATION_FAILED" } },
-			{ status_code::vulkan_device_lost, { "vulkan_device_lost","Vulkan error code VK_ERROR_DEVICE_LOST" } },
-			{ status_code::vulkan_memory_map_failed, { "vulkan_memory_map_failed","Vulkan error code VK_ERROR_MEMORY_MAP_FAILED" } },
-			{ status_code::vulkan_layer_not_present, { "vulkan_layer_not_present","Vulkan error code VK_ERROR_LAYER_NOT_PRESENT" } },
-			{ status_code::vulkan_extension_not_present, { "vulkan_extension_not_present","Vulkan error code VK_ERROR_EXTENSION_NOT_PRESENT" } },
-			{ status_code::vulkan_feature_not_present, { "vulkan_feature_not_present","Vulkan error code VK_ERROR_FEATURE_NOT_PRESENT" } },
-			{ status_code::vulkan_incompatible_driver, { "vulkan_incompatible_driver","Vulkan error code VK_ERROR_INCOMPATIBLE_DRIVER" } },
-			{ status_code::vulkan_too_many_objects, { "vulkan_too_many_objects","Vulkan error code VK_ERROR_TOO_MANY_OBJECTS" } },
-			{ status_code::vulkan_format_not_supported, { "vulkan_format_not_supported","Vulkan error code VK_ERROR_FORMAT_NOT_SUPPORTED" } },
-			{ status_code::vulkan_fragmented_pool, { "vulkan_fragmented_pool","Vulkan error code VK_ERROR_FRAGMENTED_POOL" } },
-			{ status_code::vulkan_unknown, { "vulkan_unknown","Vulkan error code VK_ERROR_UNKNOWN" } },
-			{ status_code::vulkan_out_of_pool_memory, { "vulkan_out_of_pool_memory","Vulkan error code VK_ERROR_OUT_OF_POOL_MEMORY" } },
-			{ status_code::vulkan_invalid_external_handle, { "vulkan_invalid_external_handle","Vulkan error code VK_ERROR_INVALID_EXTERNAL_HANDLE" } },
-			{ status_code::vulkan_fragmentation, { "vulkan_fragmentation","Vulkan error code VK_ERROR_FRAGMENTATION" } },
-			{ status_code::vulkan_invalid_opaque_capture_address, { "vulkan_invalid_opaque_capture_address","Vulkan error code VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS" } },
-			{ status_code::vulkan_surface_lost_khr, { "vulkan_surface_lost_khr","Vulkan error code VK_ERROR_SURFACE_LOST_KHR" } },
-			{ status_code::vulkan_native_window_in_use_khr, { "vulkan_native_window_in_use_khr","Vulkan error code VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" } },
-			{ status_code::vulkan_out_of_date_khr, { "vulkan_out_of_date_khr","Vulkan error code VK_ERROR_OUT_OF_DATE_KHR" } },
-			{ status_code::vulkan_incompatible_display_khr, { "vulkan_incompatible_display_khr","Vulkan error code VK_ERROR_INCOMPATIBLE_DISPLAY_KHR" } },
-			{ status_code::vulkan_validation_failed_ext, { "vulkan_validation_failed_ext","Vulkan error code VK_ERROR_VALIDATION_FAILED_EXT" } },
-			{ status_code::vulkan_invalid_shader_nv, { "vulkan_invalid_shader_nv","Vulkan error code VK_ERROR_INVALID_SHADER_NV" } },
-			{ status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext, { "vulkan_invalid_drm_format_modifier_plane_layout_ext","Vulkan error code VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT" } },
-			{ status_code::vulkan_not_permitted_khr, { "vulkan_not_permitted_khr","Vulkan error code VK_ERROR_NOT_PERMITTED_KHR" } },
-			{ status_code::vulkan_full_screen_exclusive_mode_lost_ext, { "vulkan_full_screen_exclusive_mode_lost_ext","Vulkan error code VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT" } },
-			{ status_code::vulkan_compression_exhausted_ext, { "vulkan_compression_exhausted_ext","Vulkan error code VK_ERROR_COMPRESSION_EXHAUSTED_EXT" } },
+			{ status_code::vulkan_unrecognized_error_code , { "vulkan_unrecognized_error_code", "unknown/unrecognized Vulkan error, which could not be mapped to a specific error value" } } , 
+			{ status_code::vulkan_out_of_host_memory , { "vulkan_out_of_host_memory", "Vulkan error code VkResult::VK_ERROR_OUT_OF_HOST_MEMORY" } } , 
+			{ status_code::vulkan_out_of_device_memory , { "vulkan_out_of_device_memory", "Vulkan error code VkResult::VK_ERROR_OUT_OF_DEVICE_MEMORY" } } , 
+			{ status_code::vulkan_initialization_failed , { "vulkan_initialization_failed", "Vulkan error code VkResult::VK_ERROR_INITIALIZATION_FAILED" } } , 
+			{ status_code::vulkan_device_lost , { "vulkan_device_lost", "Vulkan error code VkResult::VK_ERROR_DEVICE_LOST" } } , 
+			{ status_code::vulkan_memory_map_failed , { "vulkan_memory_map_failed", "Vulkan error code VkResult::VK_ERROR_MEMORY_MAP_FAILED" } } , 
+			{ status_code::vulkan_layer_not_present , { "vulkan_layer_not_present", "Vulkan error code VkResult::VK_ERROR_LAYER_NOT_PRESENT" } } , 
+			{ status_code::vulkan_extension_not_present , { "vulkan_extension_not_present", "Vulkan error code VkResult::VK_ERROR_EXTENSION_NOT_PRESENT" } } , 
+			{ status_code::vulkan_feature_not_present , { "vulkan_feature_not_present", "Vulkan error code VkResult::VK_ERROR_FEATURE_NOT_PRESENT" } } , 
+			{ status_code::vulkan_incompatible_driver , { "vulkan_incompatible_driver", "Vulkan error code VkResult::VK_ERROR_INCOMPATIBLE_DRIVER" } } , 
+			{ status_code::vulkan_too_many_objects , { "vulkan_too_many_objects", "Vulkan error code VkResult::VK_ERROR_TOO_MANY_OBJECTS" } } , 
+			{ status_code::vulkan_format_not_supported , { "vulkan_format_not_supported", "Vulkan error code VkResult::VK_ERROR_FORMAT_NOT_SUPPORTED" } } , 
+			{ status_code::vulkan_fragmented_pool , { "vulkan_fragmented_pool", "Vulkan error code VkResult::VK_ERROR_FRAGMENTED_POOL" } } , 
+			{ status_code::vulkan_unknown , { "vulkan_unknown", "Vulkan error code VkResult::VK_ERROR_UNKNOWN" } } , 
+			{ status_code::vulkan_out_of_pool_memory , { "vulkan_out_of_pool_memory", "Vulkan error code VkResult::VK_ERROR_OUT_OF_POOL_MEMORY" } } , 
+			{ status_code::vulkan_invalid_external_handle , { "vulkan_invalid_external_handle", "Vulkan error code VkResult::VK_ERROR_INVALID_EXTERNAL_HANDLE" } } , 
+			{ status_code::vulkan_fragmentation , { "vulkan_fragmentation", "Vulkan error code VkResult::VK_ERROR_FRAGMENTATION" } } , 
+			{ status_code::vulkan_invalid_opaque_capture_address , { "vulkan_invalid_opaque_capture_address", "Vulkan error code VkResult::VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS" } } , 
+			{ status_code::vulkan_surface_lost_khr , { "vulkan_surface_lost_khr", "Vulkan error code VkResult::VK_ERROR_SURFACE_LOST_KHR" } } , 
+			{ status_code::vulkan_native_window_in_use_khr , { "vulkan_native_window_in_use_khr", "Vulkan error code VkResult::VK_ERROR_NATIVE_WINDOW_IN_USE_KHR" } } , 
+			{ status_code::vulkan_out_of_date_khr , { "vulkan_out_of_date_khr", "Vulkan error code VkResult::VK_ERROR_OUT_OF_DATE_KHR" } } , 
+			{ status_code::vulkan_incompatible_display_khr , { "vulkan_incompatible_display_khr", "Vulkan error code VkResult::VK_ERROR_INCOMPATIBLE_DISPLAY_KHR" } } , 
+			{ status_code::vulkan_validation_failed_ext , { "vulkan_validation_failed_ext", "Vulkan error code VkResult::VK_ERROR_VALIDATION_FAILED_EXT" } } , 
+			{ status_code::vulkan_invalid_shader_nv , { "vulkan_invalid_shader_nv", "Vulkan error code VkResult::VK_ERROR_INVALID_SHADER_NV" } } , 
+			{ status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext , { "vulkan_invalid_drm_format_modifier_plane_layout_ext", "Vulkan error code VkResult::VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT" } } , 
+			{ status_code::vulkan_not_permitted_khr , { "vulkan_not_permitted_khr", "Vulkan error code VkResult::VK_ERROR_NOT_PERMITTED_KHR" } } , 
+			{ status_code::vulkan_full_screen_exclusive_mode_lost_ext , { "vulkan_full_screen_exclusive_mode_lost_ext", "Vulkan error code VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT" } } , 
+			{ status_code::vulkan_compression_exhausted_ext , { "vulkan_compression_exhausted_ext", "Vulkan error code VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT" } } , 
+
 		};
 
 	// get the name of the status code as a string 
@@ -345,88 +606,88 @@ namespace ctle
 			}
 		return it->second.description;
 		}
-
+		
 #ifdef _SYSTEM_ERROR_
 	static const std::unordered_map<std::errc, status_code> errc_to_status_code_mapping =
 		{
-			{ std::errc::address_family_not_supported               , status_code::stl_address_family_not_supported },
-			{ std::errc::address_in_use                             , status_code::stl_address_in_use },
-			{ std::errc::address_not_available                      , status_code::stl_address_not_available },
-			{ std::errc::already_connected                          , status_code::stl_already_connected },
-			{ std::errc::argument_list_too_long                     , status_code::stl_argument_list_too_long },
-			{ std::errc::argument_out_of_domain                     , status_code::stl_argument_out_of_domain },
-			{ std::errc::bad_address                                , status_code::stl_bad_address },
-			{ std::errc::bad_file_descriptor                        , status_code::stl_bad_file_descriptor },
-			{ std::errc::bad_message                                , status_code::stl_bad_message },
-			{ std::errc::broken_pipe                                , status_code::stl_broken_pipe },
-			{ std::errc::connection_aborted                         , status_code::stl_connection_aborted },
-			{ std::errc::connection_already_in_progress             , status_code::stl_connection_already_in_progress },
-			{ std::errc::connection_refused                         , status_code::stl_connection_refused },
-			{ std::errc::connection_reset                           , status_code::stl_connection_reset },
-			{ std::errc::cross_device_link                          , status_code::stl_cross_device_link },
-			{ std::errc::destination_address_required               , status_code::stl_destination_address_required },
-			{ std::errc::device_or_resource_busy                    , status_code::stl_device_or_resource_busy },
-			{ std::errc::directory_not_empty                        , status_code::stl_directory_not_empty },
-			{ std::errc::executable_format_error                    , status_code::stl_executable_format_error },
-			{ std::errc::file_exists                                , status_code::stl_file_exists },
-			{ std::errc::file_too_large                             , status_code::stl_file_too_large },
-			{ std::errc::filename_too_long                          , status_code::stl_filename_too_long },
-			{ std::errc::function_not_supported                     , status_code::stl_function_not_supported },
-			{ std::errc::host_unreachable                           , status_code::stl_host_unreachable },
-			{ std::errc::identifier_removed                         , status_code::stl_identifier_removed },
-			{ std::errc::illegal_byte_sequence                      , status_code::stl_illegal_byte_sequence },
-			{ std::errc::inappropriate_io_control_operation         , status_code::stl_inappropriate_io_control_operation },
-			{ std::errc::interrupted                                , status_code::stl_interrupted },
-			{ std::errc::invalid_argument                           , status_code::stl_invalid_argument },
-			{ std::errc::invalid_seek                               , status_code::stl_invalid_seek },
-			{ std::errc::io_error                                   , status_code::stl_io_error },
-			{ std::errc::is_a_directory                             , status_code::stl_is_a_directory },
-			{ std::errc::message_size                               , status_code::stl_message_size },
-			{ std::errc::network_down                               , status_code::stl_network_down },
-			{ std::errc::network_reset                              , status_code::stl_network_reset },
-			{ std::errc::network_unreachable                        , status_code::stl_network_unreachable },
-			{ std::errc::no_buffer_space                            , status_code::stl_no_buffer_space },
-			{ std::errc::no_child_process                           , status_code::stl_no_child_process },
-			{ std::errc::no_link                                    , status_code::stl_no_link },
-			{ std::errc::no_lock_available                          , status_code::stl_no_lock_available },
-			{ std::errc::no_message_available                       , status_code::stl_no_message_available },
-			{ std::errc::no_message                                 , status_code::stl_no_message },
-			{ std::errc::no_protocol_option                         , status_code::stl_no_protocol_option },
-			{ std::errc::no_space_on_device                         , status_code::stl_no_space_on_device },
-			{ std::errc::no_stream_resources                        , status_code::stl_no_stream_resources },
-			{ std::errc::no_such_device_or_address                  , status_code::stl_no_such_device_or_address },
-			{ std::errc::no_such_device                             , status_code::stl_no_such_device },
-			{ std::errc::no_such_file_or_directory                  , status_code::stl_no_such_file_or_directory },
-			{ std::errc::no_such_process                            , status_code::stl_no_such_process },
-			{ std::errc::not_a_directory                            , status_code::stl_not_a_directory },
-			{ std::errc::not_a_socket                               , status_code::stl_not_a_socket },
-			{ std::errc::not_a_stream                               , status_code::stl_not_a_stream },
-			{ std::errc::not_connected                              , status_code::stl_not_connected },
-			{ std::errc::not_enough_memory                          , status_code::stl_not_enough_memory },
-			{ std::errc::not_supported                              , status_code::stl_not_supported },
-			{ std::errc::operation_canceled                         , status_code::stl_operation_canceled },
-			{ std::errc::operation_in_progress                      , status_code::stl_operation_in_progress },
-			{ std::errc::operation_not_permitted                    , status_code::stl_operation_not_permitted },
-			{ std::errc::operation_not_supported                    , status_code::stl_operation_not_supported },
-			{ std::errc::operation_would_block                      , status_code::stl_operation_would_block },
-			{ std::errc::owner_dead                                 , status_code::stl_owner_dead },
-			{ std::errc::permission_denied                          , status_code::stl_permission_denied },
-			{ std::errc::protocol_error                             , status_code::stl_protocol_error },
-			{ std::errc::protocol_not_supported                     , status_code::stl_protocol_not_supported },
-			{ std::errc::read_only_file_system                      , status_code::stl_read_only_file_system },
-			{ std::errc::resource_deadlock_would_occur              , status_code::stl_resource_deadlock_would_occur },
-			{ std::errc::resource_unavailable_try_again             , status_code::stl_resource_unavailable_try_again },
-			{ std::errc::result_out_of_range                        , status_code::stl_result_out_of_range },
-			{ std::errc::state_not_recoverable                      , status_code::stl_state_not_recoverable },
-			{ std::errc::stream_timeout                             , status_code::stl_stream_timeout },
-			{ std::errc::text_file_busy                             , status_code::stl_text_file_busy },
-			{ std::errc::timed_out                                  , status_code::stl_timed_out },
-			{ std::errc::too_many_files_open_in_system              , status_code::stl_too_many_files_open_in_system },
-			{ std::errc::too_many_files_open                        , status_code::stl_too_many_files_open },
-			{ std::errc::too_many_links                             , status_code::stl_too_many_links },
-			{ std::errc::too_many_symbolic_link_levels              , status_code::stl_too_many_symbolic_link_levels },
-			{ std::errc::value_too_large                            , status_code::stl_value_too_large },
-			{ std::errc::wrong_protocol_type                        , status_code::stl_wrong_protocol_type },
+			{ std::errc::address_family_not_supported , status_code::stl_address_family_not_supported } , 
+			{ std::errc::address_in_use , status_code::stl_address_in_use } , 
+			{ std::errc::address_not_available , status_code::stl_address_not_available } , 
+			{ std::errc::already_connected , status_code::stl_already_connected } , 
+			{ std::errc::argument_list_too_long , status_code::stl_argument_list_too_long } , 
+			{ std::errc::argument_out_of_domain , status_code::stl_argument_out_of_domain } , 
+			{ std::errc::bad_address , status_code::stl_bad_address } , 
+			{ std::errc::bad_file_descriptor , status_code::stl_bad_file_descriptor } , 
+			{ std::errc::bad_message , status_code::stl_bad_message } , 
+			{ std::errc::broken_pipe , status_code::stl_broken_pipe } , 
+			{ std::errc::connection_aborted , status_code::stl_connection_aborted } , 
+			{ std::errc::connection_already_in_progress , status_code::stl_connection_already_in_progress } , 
+			{ std::errc::connection_refused , status_code::stl_connection_refused } , 
+			{ std::errc::connection_reset , status_code::stl_connection_reset } , 
+			{ std::errc::cross_device_link , status_code::stl_cross_device_link } , 
+			{ std::errc::destination_address_required , status_code::stl_destination_address_required } , 
+			{ std::errc::device_or_resource_busy , status_code::stl_device_or_resource_busy } , 
+			{ std::errc::directory_not_empty , status_code::stl_directory_not_empty } , 
+			{ std::errc::executable_format_error , status_code::stl_executable_format_error } , 
+			{ std::errc::file_exists , status_code::stl_file_exists } , 
+			{ std::errc::file_too_large , status_code::stl_file_too_large } , 
+			{ std::errc::filename_too_long , status_code::stl_filename_too_long } , 
+			{ std::errc::function_not_supported , status_code::stl_function_not_supported } , 
+			{ std::errc::host_unreachable , status_code::stl_host_unreachable } , 
+			{ std::errc::identifier_removed , status_code::stl_identifier_removed } , 
+			{ std::errc::illegal_byte_sequence , status_code::stl_illegal_byte_sequence } , 
+			{ std::errc::inappropriate_io_control_operation , status_code::stl_inappropriate_io_control_operation } , 
+			{ std::errc::interrupted , status_code::stl_interrupted } , 
+			{ std::errc::invalid_argument , status_code::stl_invalid_argument } , 
+			{ std::errc::invalid_seek , status_code::stl_invalid_seek } , 
+			{ std::errc::io_error , status_code::stl_io_error } , 
+			{ std::errc::is_a_directory , status_code::stl_is_a_directory } , 
+			{ std::errc::message_size , status_code::stl_message_size } , 
+			{ std::errc::network_down , status_code::stl_network_down } , 
+			{ std::errc::network_reset , status_code::stl_network_reset } , 
+			{ std::errc::network_unreachable , status_code::stl_network_unreachable } , 
+			{ std::errc::no_buffer_space , status_code::stl_no_buffer_space } , 
+			{ std::errc::no_child_process , status_code::stl_no_child_process } , 
+			{ std::errc::no_link , status_code::stl_no_link } , 
+			{ std::errc::no_lock_available , status_code::stl_no_lock_available } , 
+			{ std::errc::no_message_available , status_code::stl_no_message_available } , 
+			{ std::errc::no_message , status_code::stl_no_message } , 
+			{ std::errc::no_protocol_option , status_code::stl_no_protocol_option } , 
+			{ std::errc::no_space_on_device , status_code::stl_no_space_on_device } , 
+			{ std::errc::no_stream_resources , status_code::stl_no_stream_resources } , 
+			{ std::errc::no_such_device_or_address , status_code::stl_no_such_device_or_address } , 
+			{ std::errc::no_such_device , status_code::stl_no_such_device } , 
+			{ std::errc::no_such_file_or_directory , status_code::stl_no_such_file_or_directory } , 
+			{ std::errc::no_such_process , status_code::stl_no_such_process } , 
+			{ std::errc::not_a_directory , status_code::stl_not_a_directory } , 
+			{ std::errc::not_a_socket , status_code::stl_not_a_socket } , 
+			{ std::errc::not_a_stream , status_code::stl_not_a_stream } , 
+			{ std::errc::not_connected , status_code::stl_not_connected } , 
+			{ std::errc::not_enough_memory , status_code::stl_not_enough_memory } , 
+			{ std::errc::not_supported , status_code::stl_not_supported } , 
+			{ std::errc::operation_canceled , status_code::stl_operation_canceled } , 
+			{ std::errc::operation_in_progress , status_code::stl_operation_in_progress } , 
+			{ std::errc::operation_not_permitted , status_code::stl_operation_not_permitted } , 
+			{ std::errc::operation_not_supported , status_code::stl_operation_not_supported } , 
+			{ std::errc::operation_would_block , status_code::stl_operation_would_block } , 
+			{ std::errc::owner_dead , status_code::stl_owner_dead } , 
+			{ std::errc::permission_denied , status_code::stl_permission_denied } , 
+			{ std::errc::protocol_error , status_code::stl_protocol_error } , 
+			{ std::errc::protocol_not_supported , status_code::stl_protocol_not_supported } , 
+			{ std::errc::read_only_file_system , status_code::stl_read_only_file_system } , 
+			{ std::errc::resource_deadlock_would_occur , status_code::stl_resource_deadlock_would_occur } , 
+			{ std::errc::resource_unavailable_try_again , status_code::stl_resource_unavailable_try_again } , 
+			{ std::errc::result_out_of_range , status_code::stl_result_out_of_range } , 
+			{ std::errc::state_not_recoverable , status_code::stl_state_not_recoverable } , 
+			{ std::errc::stream_timeout , status_code::stl_stream_timeout } , 
+			{ std::errc::text_file_busy , status_code::stl_text_file_busy } , 
+			{ std::errc::timed_out , status_code::stl_timed_out } , 
+			{ std::errc::too_many_files_open_in_system , status_code::stl_too_many_files_open_in_system } , 
+			{ std::errc::too_many_files_open , status_code::stl_too_many_files_open } , 
+			{ std::errc::too_many_links , status_code::stl_too_many_links } , 
+			{ std::errc::too_many_symbolic_link_levels , status_code::stl_too_many_symbolic_link_levels } , 
+			{ std::errc::value_too_large , status_code::stl_value_too_large } , 
+			{ std::errc::wrong_protocol_type , status_code::stl_wrong_protocol_type } , 
 		};
 
 	status_code status::to_status_code( std::errc value ) noexcept
@@ -442,33 +703,33 @@ namespace ctle
 #ifdef VULKAN_CORE_H_
 	static const std::unordered_map<VkResult, status_code> vkresult_to_status_code_mapping =
 		{
-			{ VkResult::VK_ERROR_OUT_OF_HOST_MEMORY                           , status_code::vulkan_out_of_host_memory                            }, 
-			{ VkResult::VK_ERROR_OUT_OF_DEVICE_MEMORY                         , status_code::vulkan_out_of_device_memory                          }, 
-			{ VkResult::VK_ERROR_INITIALIZATION_FAILED                        , status_code::vulkan_initialization_failed                         }, 
-			{ VkResult::VK_ERROR_DEVICE_LOST                                  , status_code::vulkan_device_lost                                   }, 
-			{ VkResult::VK_ERROR_MEMORY_MAP_FAILED                            , status_code::vulkan_memory_map_failed                             }, 
-			{ VkResult::VK_ERROR_LAYER_NOT_PRESENT                            , status_code::vulkan_layer_not_present                             }, 
-			{ VkResult::VK_ERROR_EXTENSION_NOT_PRESENT                        , status_code::vulkan_extension_not_present                         }, 
-			{ VkResult::VK_ERROR_FEATURE_NOT_PRESENT                          , status_code::vulkan_feature_not_present                           }, 
-			{ VkResult::VK_ERROR_INCOMPATIBLE_DRIVER                          , status_code::vulkan_incompatible_driver                           }, 
-			{ VkResult::VK_ERROR_TOO_MANY_OBJECTS                             , status_code::vulkan_too_many_objects                              }, 
-			{ VkResult::VK_ERROR_FORMAT_NOT_SUPPORTED                         , status_code::vulkan_format_not_supported                          }, 
-			{ VkResult::VK_ERROR_FRAGMENTED_POOL                              , status_code::vulkan_fragmented_pool                               }, 
-			{ VkResult::VK_ERROR_UNKNOWN                                      , status_code::vulkan_unknown                                       }, 
-			{ VkResult::VK_ERROR_OUT_OF_POOL_MEMORY                           , status_code::vulkan_out_of_pool_memory                            }, 
-			{ VkResult::VK_ERROR_INVALID_EXTERNAL_HANDLE                      , status_code::vulkan_invalid_external_handle                       }, 
-			{ VkResult::VK_ERROR_FRAGMENTATION                                , status_code::vulkan_fragmentation                                 }, 
-			{ VkResult::VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS               , status_code::vulkan_invalid_opaque_capture_address                }, 
-			{ VkResult::VK_ERROR_SURFACE_LOST_KHR                             , status_code::vulkan_surface_lost_khr                              }, 
-			{ VkResult::VK_ERROR_NATIVE_WINDOW_IN_USE_KHR                     , status_code::vulkan_native_window_in_use_khr                      }, 
-			{ VkResult::VK_ERROR_OUT_OF_DATE_KHR                              , status_code::vulkan_out_of_date_khr                               }, 
-			{ VkResult::VK_ERROR_INCOMPATIBLE_DISPLAY_KHR                     , status_code::vulkan_incompatible_display_khr                      }, 
-			{ VkResult::VK_ERROR_VALIDATION_FAILED_EXT                        , status_code::vulkan_validation_failed_ext                         }, 
-			{ VkResult::VK_ERROR_INVALID_SHADER_NV                            , status_code::vulkan_invalid_shader_nv                             }, 
-			{ VkResult::VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT , status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext  }, 
-			{ VkResult::VK_ERROR_NOT_PERMITTED_KHR                            , status_code::vulkan_not_permitted_khr                             }, 
-			{ VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT          , status_code::vulkan_full_screen_exclusive_mode_lost_ext           }, 
-			{ VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT                    , status_code::vulkan_compression_exhausted_ext                     }, 
+			{ VkResult::VK_ERROR_OUT_OF_HOST_MEMORY , status_code::vulkan_out_of_host_memory } , 
+			{ VkResult::VK_ERROR_OUT_OF_DEVICE_MEMORY , status_code::vulkan_out_of_device_memory } , 
+			{ VkResult::VK_ERROR_INITIALIZATION_FAILED , status_code::vulkan_initialization_failed } , 
+			{ VkResult::VK_ERROR_DEVICE_LOST , status_code::vulkan_device_lost } , 
+			{ VkResult::VK_ERROR_MEMORY_MAP_FAILED , status_code::vulkan_memory_map_failed } , 
+			{ VkResult::VK_ERROR_LAYER_NOT_PRESENT , status_code::vulkan_layer_not_present } , 
+			{ VkResult::VK_ERROR_EXTENSION_NOT_PRESENT , status_code::vulkan_extension_not_present } , 
+			{ VkResult::VK_ERROR_FEATURE_NOT_PRESENT , status_code::vulkan_feature_not_present } , 
+			{ VkResult::VK_ERROR_INCOMPATIBLE_DRIVER , status_code::vulkan_incompatible_driver } , 
+			{ VkResult::VK_ERROR_TOO_MANY_OBJECTS , status_code::vulkan_too_many_objects } , 
+			{ VkResult::VK_ERROR_FORMAT_NOT_SUPPORTED , status_code::vulkan_format_not_supported } , 
+			{ VkResult::VK_ERROR_FRAGMENTED_POOL , status_code::vulkan_fragmented_pool } , 
+			{ VkResult::VK_ERROR_UNKNOWN , status_code::vulkan_unknown } , 
+			{ VkResult::VK_ERROR_OUT_OF_POOL_MEMORY , status_code::vulkan_out_of_pool_memory } , 
+			{ VkResult::VK_ERROR_INVALID_EXTERNAL_HANDLE , status_code::vulkan_invalid_external_handle } , 
+			{ VkResult::VK_ERROR_FRAGMENTATION , status_code::vulkan_fragmentation } , 
+			{ VkResult::VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS , status_code::vulkan_invalid_opaque_capture_address } , 
+			{ VkResult::VK_ERROR_SURFACE_LOST_KHR , status_code::vulkan_surface_lost_khr } , 
+			{ VkResult::VK_ERROR_NATIVE_WINDOW_IN_USE_KHR , status_code::vulkan_native_window_in_use_khr } , 
+			{ VkResult::VK_ERROR_OUT_OF_DATE_KHR , status_code::vulkan_out_of_date_khr } , 
+			{ VkResult::VK_ERROR_INCOMPATIBLE_DISPLAY_KHR , status_code::vulkan_incompatible_display_khr } , 
+			{ VkResult::VK_ERROR_VALIDATION_FAILED_EXT , status_code::vulkan_validation_failed_ext } , 
+			{ VkResult::VK_ERROR_INVALID_SHADER_NV , status_code::vulkan_invalid_shader_nv } , 
+			{ VkResult::VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT , status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext } , 
+			{ VkResult::VK_ERROR_NOT_PERMITTED_KHR , status_code::vulkan_not_permitted_khr } , 
+			{ VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT , status_code::vulkan_full_screen_exclusive_mode_lost_ext } , 
+			{ VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT , status_code::vulkan_compression_exhausted_ext } , 
 		};
 	
 	status_code status::to_status_code( VkResult value ) noexcept
@@ -480,6 +741,7 @@ namespace ctle
 			return status_code::vulkan_unrecognized_error_code;
 		return it->second;
 		}
+
 #endif//VULKAN_CORE_H_
 
 #endif//CTLE_IMPLEMENTATION
@@ -492,3 +754,4 @@ inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 	os << _status.name() << std::string(" (\"") << _status.description() << std::string("\")");
 	return os;
 	}
+
