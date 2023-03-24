@@ -9,14 +9,14 @@ namespace ctle
 
 	// a ultralight-weight font render class. ascii, fixed width font only
 	// _Ty is the pixel type of the output image to render to
-	template<class _Ty, _Ty pixel_on, _Ty pixel_off = pixel_on> class bitmap_font
+	template<class _Ty> class bitmap_font
 		{
 		public:
 			// render to the output pixel buffer. 
 			// line_stride is the number of pixels to the next row
 			// txt is the character string to render
 			// if y_up is set, the pixel buffer is assumed to move up, and output points at the lower-left pixel
-			void render( _Ty *output, int line_stride, const char *txt, bool transparent = true, bool y_up = false )
+			void render( _Ty *output, int line_stride, const char *txt, _Ty pixel_on, _Ty pixel_off = {}, bool transparent = true, bool y_up = false )
 				{
 				// if y_up, flip the order of lines
 				if( y_up )

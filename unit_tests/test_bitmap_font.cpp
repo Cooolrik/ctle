@@ -11,7 +11,7 @@ TEST( status , bitmap_font_test )
 	{	
 	uint8_t pix[64];
 
-	bitmap_font<uint8_t,0xff> test_render;
+	bitmap_font<uint8_t> test_render;
 
-	test_render.render( pix, 8, "A" );
+	test_render.render( pix, 8, "A", 0xff );
 	}
