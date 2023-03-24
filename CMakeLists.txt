@@ -36,6 +36,7 @@ if(BUILD_TESTS)
         ./unit_tests/unit_tests.h
 
 		./unit_tests/test_bimap.cpp
+		./unit_tests/test_bitmap_font.cpp
 		./unit_tests/test_endianness.cpp
 		./unit_tests/test_idx_vector.cpp
 		./unit_tests/test_log.cpp
