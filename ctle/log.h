@@ -36,12 +36,18 @@ namespace ctle
 		verbose = 4		// log extra verbose debug info 
 		};
 
+	typedef void (*log_function)( log_level level , const char *function_name , const char *message );
+
 	// set/get the global log level, used to filter logs
 	void set_global_log_level( log_level level );
 	log_level get_global_log_level();
 
 	// get the log_level value as a string
 	const char *get_log_level_as_string( log_level level );
+
+	// set/get the global log function, which receives the log messages
+	void set_global_log_function( log_function func );
+	log_function get_global_log_function();
 
 	// log a message when the object goes out of scope
 	class log_msg
@@ -71,9 +77,25 @@ namespace ctle
 
 #ifdef CTLE_IMPLEMENTATION
 	static log_level global_log_level = log_level::info;
-
+	
 	void set_global_log_level( log_level level ) { global_log_level = level; }
 	log_level get_global_log_level() { return global_log_level; }
+
+	static void default_global_log_function( log_level level , const char *function_name , const char *message )
+		{
+		std::cout << get_log_level_as_string( level ) << " log: " << function_name << ": " << message << std::endl;
+		}
+
+	static log_function global_log_function = &default_global_log_function;
+
+	void set_global_log_function( log_function func )
+		{
+		global_log_function = func;
+		}
+	log_function get_global_log_function()
+		{
+		return global_log_function;
+		}
 
 	static const std::unordered_map<log_level, const char *> log_level_to_string
 		{
@@ -133,7 +155,8 @@ namespace ctle
 				}
 			}
 
-		std::cout << get_log_level_as_string( this->level ) << " log: " << func_log << ": " << this->msg.str() << std::endl;
+		// call the log function
+		(*global_log_function)( this->level , func_log.c_str() , this->msg.str().c_str() );
 		}
 
 #endif//CTLE_IMPLEMENTATION
