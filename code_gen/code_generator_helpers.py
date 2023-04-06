@@ -1,10 +1,58 @@
-# pds - Persistent data structure framework, Copyright (c) 2023 Ulrik Lindahl
+# ctle Copyright (c) 2023 Ulrik Lindahl
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 import copy
 import os
 from stat import S_IRUSR, S_IRGRP, S_IROTH, S_IWUSR
 import importlib
+import textwrap
+
+class formatted_output:
+	def __init__(self, indentation:int = 0, tab_str:str = '\t', indent_braces:bool = True, comment_wrap:int = 80 ) -> None:
+		self.lines = []
+		self.indent_braces = indent_braces
+		self.indentation = indentation
+		self.tab_str = tab_str
+		self.comment_wrap = comment_wrap
+
+	def begin_block(self):
+		st = self.tab_str * self.indentation
+		if self.indent_braces:
+			st += self.tab_str
+		st += '{'
+		self.lines.append(st)
+		self.indentation += 1	
+
+	def end_block(self, add_semicolon:bool = False ):
+		self.indentation -= 1
+		st = self.tab_str * self.indentation
+		if self.indent_braces:
+			st += self.tab_str 
+		st += '}'
+		if add_semicolon:
+			st += ';'
+		self.lines.append(st)
+
+	def ln(self, lin:str = None ):
+		if lin != None:
+			self.lines.append( self.tab_str * self.indentation + lin )
+		else:
+			self.lines.append('')
+
+	# single line indent, only applies to indented braces
+	def indented_ln(self, lin:str = None ):
+		if self.indent_braces:
+			self.ln( self.tab_str + lin )
+		else:
+			self.ln( lin )
+
+	def comment_ln(self, comm:str):
+		lines = textwrap.wrap( comm , width = self.comment_wrap )
+		for lin in lines:
+			self.ln('// ' + textwrap.dedent(lin) )
+
+	def get_lines(self) -> list[str]:
+		return self.lines
 
 # reads a file and output lines
 def inline_file( path ):
