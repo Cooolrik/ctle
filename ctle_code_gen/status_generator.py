@@ -1,7 +1,7 @@
 # ctle Copyright (c) 2022 Ulrik Lindahl
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-import code_generator_helpers as hlp
+from .formatted_output import formatted_output
 
 class error_value:
 	def __init__(self,name,value,mapped_value,description):
@@ -157,11 +157,14 @@ error_types = [
 	vulkan_errors ,
 	]
 
-lines = []
+def generate_status( path:str ):
 
-lines.extend( hlp.generate_header() )
+	out = formatted_output()
 
-lines.append( '''#pragma once
+	out.generate_license_header()
+	out.ln()
+
+	out.lines.append( '''#pragma once
 
 #include <string>
 #include <iostream>
@@ -172,13 +175,15 @@ namespace ctle
 	enum class status_code : int
 		{''')
 
-for type in error_types:
-	lines.append( f'		// {type.type_name}' )
-	for value in type.values:
-		lines.append( f'		{value.name.ljust(52)}= {value.value}, // {value.description}' )
-	lines.append('')
+	out.indentation = 2
 
-lines.append( '''		};
+	for type in error_types:
+		out.comment_ln( type.type_name )
+		for value in type.values:
+			out.ln( f'{value.name.ljust(52)}= {value.value}, // {value.description}' )
+		out.ln()
+
+	out.lines.append( '''		};
 
 	// status maps a number of error values into one error enum
 	// and has ctors which converts these error values into a status_code value
@@ -186,14 +191,16 @@ lines.append( '''		};
 		{
 		public:
 ''')
-	
-for type in error_types:
-	lines.append( f'			// {type.type_name}' )
-	for value in type.values:
-		lines.append( f'			static const status {(value.name + ";").ljust(53)} // {value.description}' )
-	lines.append('')
 
-lines.append( '''		private:
+	out.indentation = 3
+
+	for type in error_types:
+		out.comment_ln( type.type_name )
+		for value in type.values:
+			out.ln( f'static const status {(value.name + ";").ljust(53)} // {value.description}' )
+		out.ln()
+
+	out.lines.append( '''		private:
 			status_code svalue = status_code::ok;
 
 		public:
@@ -237,14 +244,16 @@ lines.append( '''		private:
 
 #ifdef CTLE_IMPLEMENTATION
 ''')
-		
-for type in error_types:
-	lines.append( f'	// {type.type_name}' )
-	for value in type.values:
-		lines.append( f'	const status status::{value.name} = status_code::{value.name};')
-	lines.append('')	
 
-lines.append('''	struct status_code_string_description
+	out.indentation = 1		
+
+	for type in error_types:
+		out.comment_ln( type.type_name )
+		for value in type.values:
+			out.ln( f'const status status::{value.name} = status_code::{value.name};')
+		out.ln()	
+
+	out.lines.append('''	struct status_code_string_description
 		{
 		const char *name;
 		const char *description;
@@ -252,14 +261,16 @@ lines.append('''	struct status_code_string_description
 
 	static const std::unordered_map<status_code, status_code_string_description> status_code_string_descriptions = 
 		{''')
-		
-for type in error_types:
-	lines.append( f'			// {type.type_name}' )
-	for value in type.values:
-		lines.append( f'			{{ status_code::{value.name} , {{ "{value.name}", "{value.description}" }} }} , ')
-	lines.append('')		
-		
-lines.append( '''		};
+			
+	out.indentation = 3
+
+	for type in error_types:
+		out.comment_ln( type.type_name )
+		for value in type.values:
+			out.ln( f'{{ status_code::{value.name} , {{ "{value.name}", "{value.description}" }} }} , ')
+		out.ln('')		
+			
+	out.lines.append( '''		};
 
 	// get the name of the status code as a string 
 	std::string status::name() const
@@ -286,12 +297,12 @@ lines.append( '''		};
 #ifdef _SYSTEM_ERROR_
 	static const std::unordered_map<std::errc, status_code> errc_to_status_code_mapping =
 		{''' )
-		
-for value in stl_errors.values:
-	if( value.mapped_value != None ):
-		lines.append( f'			{{ {value.mapped_value} , status_code::{value.name} }} , ')
-		
-lines.append( '''		};
+			
+	for value in stl_errors.values:
+		if( value.mapped_value != None ):
+			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
+			
+	out.lines.append( '''		};
 
 	status_code status::to_status_code( std::errc value ) noexcept
 		{
@@ -306,12 +317,12 @@ lines.append( '''		};
 #ifdef VULKAN_CORE_H_
 	static const std::unordered_map<VkResult, status_code> vkresult_to_status_code_mapping =
 		{''' )
-		
-for value in vulkan_errors.values:
-	if( value.mapped_value != None ):
-		lines.append( f'			{{ {value.mapped_value} , status_code::{value.name} }} , ')
-				
-lines.append('''		};
+			
+	for value in vulkan_errors.values:
+		if( value.mapped_value != None ):
+			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
+					
+	out.lines.append('''		};
 	
 	status_code status::to_status_code( VkResult value ) noexcept
 		{
@@ -336,5 +347,5 @@ inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 	return os;
 	}
 ''')	
-		
-hlp.write_lines_to_file( '../ctle/status.h' , lines )
+			
+	out.write_lines_to_file( path )

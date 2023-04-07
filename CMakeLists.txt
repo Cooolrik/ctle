@@ -1,10 +1,21 @@
 cmake_minimum_required(VERSION 3.21)
 project( ctle )
 
-option( BUILD_TESTS "Build the ctle tests" OFF )
+option( CTLE_BUILD_TESTS "Build the ctle tests" OFF )
+
+find_package(PythonInterp REQUIRED)
+find_package(Python REQUIRED)
+
+# generate needed code
+execute_process( 
+	COMMAND 			${PYTHON_EXECUTABLE} generate.py
+	WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}
+	RESULT_VARIABLE 	py_result
+)
+message(STATUS "Result of generate.py: ${py_result}")
 
 # if this is the main build of ctle, build the testing code
-if(BUILD_TESTS)			
+if(CTLE_BUILD_TESTS)			
 	
 	include(FetchContent)
 				
@@ -56,4 +67,4 @@ if(BUILD_TESTS)
 		)
 
 # testing
-endif(BUILD_TESTS)
+endif(CTLE_BUILD_TESTS)
