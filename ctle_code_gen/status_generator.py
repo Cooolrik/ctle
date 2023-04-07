@@ -35,6 +35,7 @@ general = error_type('general errors' , [
 	error_value( 'cant_write            ', -109, None, 'cant write to file or handle' ),
 	error_value( 'not_found             ', -110, None, 'one or multiple objects are missing or not found' ),
 	error_value( 'not_ready             ', -111, None, 'one or multiple objects are not ready, or out of sync' ),
+	error_value( 'cant_access           ', -112, None, 'access is not allowed' ),
 	] )
 
 stl_errors = error_type('stl portable errors (from errc)' , [ 

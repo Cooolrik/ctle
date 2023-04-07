@@ -61,13 +61,13 @@ def generate_enum_function_declarations( enm:enum_type, out:formatted_output ) -
 
     out.comment_ln('Write the enum: ' + enm.name + ' value into a string. Checks that the enum value is valid, and returns status::ok on success.' )
     out.comment_ln('The version which retuns a string, returns an empty string if the enum is not a valid value.' )
-    out.ln(f'ctle::status convert_enum_to_string( const std::string &dest , {enm.name} src );')
+    out.ln(f'ctle::status convert_enum_to_string( std::string &dest , {enm.name} src );')
     out.ln(f'std::string convert_enum_to_string( {enm.name} src );')
     out.ln()
 
     out.comment_ln('Get the description of the enum: ' + enm.name + ' value into as a string. Returns status::ok if a description is found.' )
     out.comment_ln('The version which retuns a string, returns an empty string if a description is not found.' )
-    out.ln(f'ctle::status get_enum_value_description( const std::string &dest , {enm.name} src );')
+    out.ln(f'ctle::status get_enum_value_description( std::string &dest , {enm.name} src );')
     out.ln(f'std::string get_enum_value_description( {enm.name} src );')
     out.ln()
 
@@ -84,25 +84,25 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
     with out.blk( add_semicolon=True ):
         for val in enm.values:
             if use_lowercase_strings:
-                out.blk_ln(f'{val.name} , "{val.name.lower()}"', add_comma=True )
+                out.blk_ln(f'{enm.name}::{val.name} , "{val.name.lower()}"', add_comma=True )
             else:
-                out.blk_ln(f'{val.name} , "{val.name}"', add_comma=True )
+                out.blk_ln(f'{enm.name}::{val.name} , "{val.name}"', add_comma=True )
     out.ln()
 
     out.ln(f'static const std::unordered_map<{enm.name}, const char *> enum_{enm.name}_to_description_mapping = ')
     with out.blk( add_semicolon=True ):
         for val in enm.values:
             if val.desc != None:
-                out.blk_ln(f'{val.name} , "{val.desc}"', add_comma=True )
+                out.blk_ln(f'{enm.name}::{val.name} , "{val.desc}"', add_comma=True )
     out.ln()    
 
     out.ln(f'static const std::unordered_map<std::string, {enm.name}> enum_string_to_{enm.name}_mapping = ')
     with out.blk( add_semicolon=True ):
         for val in enm.values:
             if use_lowercase_strings:
-                out.blk_ln(f'"{val.name.lower()}" , {val.name}', add_comma=True )
+                out.blk_ln(f'"{val.name.lower()}" , {enm.name}::{val.name}', add_comma=True )
             else:
-                out.blk_ln(f'"{val.name}" , {val.name}', add_comma=True )
+                out.blk_ln(f'"{val.name}" , {enm.name}::{val.name}', add_comma=True )
     out.ln()   
 
     out.ln(f'ctle::status convert_string_to_enum( {enm.name} &dest , const std::string &src )')
@@ -114,7 +114,7 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
             out.ln('return ctle::status::not_found;')
         out.ln()
         out.comment_ln('all ok, return value in dest')
-        out.ln('dest = it.second;')
+        out.ln('dest = it->second;')
         out.ln('return ctle::status::ok;')
     out.ln()
 
@@ -129,7 +129,7 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
         out.ln('return convert_string_to_enum( dest, std::string(src) );')
     out.ln()
 
-    out.ln(f'ctle::status convert_enum_to_string( const std::string &dest , {enm.name} src )')
+    out.ln(f'ctle::status convert_enum_to_string( std::string &dest , {enm.name} src )')
     with out.blk():
         out.comment_ln('look up enum value, check if found')
         out.ln(f'auto it = enum_{enm.name}_to_string_mapping.find(src);')
@@ -138,7 +138,7 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
             out.ln('return ctle::status::not_found;')
         out.ln()
         out.comment_ln('all ok, return name in dest')
-        out.ln('dest = std::string(it.second);')
+        out.ln('dest = std::string(it->second);')
         out.ln('return ctle::status::ok;')    
     out.ln()
 
@@ -151,10 +151,10 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
             out.ln('return ""; // not found')
         out.ln()
         out.comment_ln('all ok, return name string')
-        out.ln('return std::string(it.second);')    
+        out.ln('return std::string(it->second);')    
         out.ln()
 
-    out.ln(f'ctle::status get_enum_value_description( const std::string &dest , {enm.name} src )')
+    out.ln(f'ctle::status get_enum_value_description( std::string &dest , {enm.name} src )')
     with out.blk():
         out.comment_ln('look up enum value, check if found')
         out.ln(f'auto it = enum_{enm.name}_to_description_mapping.find(src);')
@@ -163,7 +163,7 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
             out.ln('return ctle::status::not_found;')
         out.ln()
         out.comment_ln('all ok, return description in dest')
-        out.ln('dest = std::string(it.second);')
+        out.ln('dest = std::string(it->second);')
         out.ln('return ctle::status::ok;')    
     out.ln()
 
@@ -176,13 +176,13 @@ def generate_enum_function_implementations( enm:enum_type, out:formatted_output,
             out.ln('return ""; // no description found')
         out.ln()
         out.comment_ln('all ok, return description string')
-        out.ln('return std::string(it.second);')    
+        out.ln('return std::string(it->second);')    
     out.ln()
 
     out.ln(f'bool is_valid_enum( {enm.name} value )')
     with out.blk():
         out.comment_ln('look up enum value, check if found')
-        out.ln(f'auto it = enum_{enm.name}_to_string_mapping.find(src);')
+        out.ln(f'auto it = enum_{enm.name}_to_string_mapping.find(value);')
         out.ln(f'if( it == enum_{enm.name}_to_string_mapping.end() )')
         with out.blk():
             out.ln('return false; // not found, not valid')

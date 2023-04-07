@@ -14,3 +14,4 @@
 /results_c++20
 /code_gen/__pycache__/*.pyc
 /ctle_code_gen/__pycache__
+/ctle/status.h

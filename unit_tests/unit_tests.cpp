@@ -12,6 +12,7 @@
 #include "../ctle/thread_safe_map.h"
 #include "../ctle/bimap.h"
 #include "../ctle/bitmap_font.h"
+#include "../ctle/file_funcs.h"
 #include "../ctle/string_funcs.h"
 #include "../ctle/status_return.h"
 #include "../ctle/status.h"

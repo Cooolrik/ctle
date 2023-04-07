@@ -10,8 +10,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
-
 #include <gtest/gtest.h>
 
 typedef uint8_t u8;

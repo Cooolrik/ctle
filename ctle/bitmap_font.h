@@ -3,6 +3,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string.h>
+
 namespace ctle
 	{
 	const uint16_t *get_fixed_9x16_font_glyph( uint8_t ch );

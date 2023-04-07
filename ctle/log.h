@@ -9,22 +9,6 @@
 
 #include "string_funcs.h"
 
-#ifdef CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
-
-#define ctle_log( msg_level )\
-	if( ctle::log_level::##msg_level <= ctle::get_global_log_level() ) {\
-		ctle::log_msg _ctle_log_entry(ctle::log_level::##msg_level,__FILE__,__LINE__,__FUNCSIG__); _ctle_log_entry.message()
-
-#define ctle_log_error ctle_log( error )
-#define ctle_log_warning ctle_log( warning )
-#define ctle_log_info ctle_log( info )
-#define ctle_log_debug ctle_log( debug )
-#define ctle_log_verbose ctle_log( verbose )
-
-#define ctle_log_end ""; }
-
-#endif//CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
-
 namespace ctle
 	{
 	enum class log_level : unsigned int
@@ -161,3 +145,25 @@ namespace ctle
 
 #endif//CTLE_IMPLEMENTATION
 	}
+
+#ifdef CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
+
+#if defined(_MSC_VER)
+#define LOG_FUNCTION_NAME __FUNCSIG__
+#elif defined(__GNUC__)
+#define LOG_FUNCTION_NAME __PRETTY_FUNCTION__
+#endif
+
+#define ctle_log( msg_level )\
+	if( ctle::log_level::msg_level <= ctle::get_global_log_level() ) {\
+		ctle::log_msg _ctle_log_entry(ctle::log_level::msg_level,__FILE__,__LINE__,LOG_FUNCTION_NAME); _ctle_log_entry.message()
+
+#define ctle_log_error ctle_log( error )
+#define ctle_log_warning ctle_log( warning )
+#define ctle_log_info ctle_log( info )
+#define ctle_log_debug ctle_log( debug )
+#define ctle_log_verbose ctle_log( verbose )
+
+#define ctle_log_end ""; }
+
+#endif//CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS

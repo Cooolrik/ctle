@@ -37,9 +37,6 @@ if(CTLE_BUILD_TESTS)
 		add_compile_options(-Wall -Wextra -pedantic -Werror)
 	endif()
 
-	# c++14
-	set (CMAKE_CXX_STANDARD 14)
-
 	# unit_tests
 	add_executable( 
         unit_tests
@@ -49,6 +46,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_bimap.cpp
 		./unit_tests/test_bitmap_font.cpp
 		./unit_tests/test_endianness.cpp
+		./unit_tests/test_file_funcs.cpp
 		./unit_tests/test_idx_vector.cpp
 		./unit_tests/test_log.cpp
 		./unit_tests/test_optional_idx_vector.cpp

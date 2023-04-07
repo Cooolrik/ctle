@@ -1,9 +1,9 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "unit_tests.h"
-
 #include "../ctle/readers_writer_lock.h"
+
+#include "unit_tests.h"
 #include <future>
 
 using namespace ctle;
