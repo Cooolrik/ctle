@@ -3,11 +3,12 @@
 
 #pragma once
 
-#include "string_funcs.h"
+#include "status.h"
 
 #include <utility>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 namespace ctle
 	{
@@ -83,15 +84,30 @@ namespace ctle
 			return status::undefined_error;
 		}
 
+	static std::wstring utf8string_to_wstringfullpath( std::string utf8str )
+		{
+		// convert utf-8 string to wstring
+		int req_chars = ::MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), -1, nullptr, 0); 
+		std::wstring wstr(req_chars,L'\0');
+		DWORD conv_chars = ::MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), -1, &wstr[0], req_chars);
+		wstr.resize(conv_chars);
+
+		// make wstring path into fullpath 
+		constexpr const DWORD max_path_len = 32768;
+		std::wstring wfullpath(max_path_len, L'\0');
+		DWORD actual_len = GetFullPathNameW( wstr.c_str(), max_path_len, &wfullpath[0], nullptr );
+		wfullpath.resize(actual_len);
+
+		return wfullpath;
+		}
+
 	status read_file( const std::string &filepath, std::vector<uint8_t> &dest )
 		{
-		// convert the utf8 string to wstring for the API call
-		auto wpath = utf8string_to_wstring( filepath );
-		if( !wpath.status() )
-			return wpath.status();
+		// convert the utf8 string to wstring fullpath for the API call
+		auto wpath = utf8string_to_wstringfullpath( filepath );
 
 		// open the file
-		HANDLE file_handle = ::CreateFileW( wpath.value().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr );
+		HANDLE file_handle = ::CreateFileW( wpath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr );
 		if( file_handle == INVALID_HANDLE_VALUE )
 			{
 			// failed to open the file
@@ -105,7 +121,7 @@ namespace ctle
 			// failed to get the size
 			return status::corrupted;
 			}
-		u64 total_bytes_to_read = dfilesize.QuadPart;
+		uint64_t total_bytes_to_read = dfilesize.QuadPart;
 
 		// read in all of the file
 		dest.resize( total_bytes_to_read );
@@ -147,14 +163,12 @@ namespace ctle
 		if( !src && src_size > 0 )
 			return status::invalid_param;
 
-		// convert the utf8 string to wstring for the API call
-		auto wpath = utf8string_to_wstring( filepath );
-		if( !wpath.status() )
-			return wpath.status();
+		// convert the utf8 string to wstring fullpath for the API call
+		auto wpath = utf8string_to_wstringfullpath( filepath );
 
 		// create the file
 		HANDLE fileHandle = ::CreateFileW( 
-			wpath.value().c_str(), 
+			wpath.c_str(), 
 			GENERIC_WRITE, 
 			FILE_SHARE_WRITE, 
 			nullptr, 
@@ -183,7 +197,7 @@ namespace ctle
 		while( bytesWritten < totalBytesToWrite )
 			{
 			// check how much to write, capped at UINT_MAX
-			uint64_t bytesToWrite = std::min<u64>( totalBytesToWrite - bytesWritten, UINT_MAX );
+			uint64_t bytesToWrite = std::min<uint64_t>( totalBytesToWrite - bytesWritten, UINT_MAX );
 
 			// write the bytes to file
 			DWORD numBytesWritten = 0;
@@ -206,10 +220,30 @@ namespace ctle
 
 #elif defined(__GNUC__)
 
+#include <unistd.h>
+
+namespace ctle
+	{
+	status file_access( const std::string &path , access_mode amode )
+		{
+		auto res = access(path.c_str(),(int)amode);
+		if( res == 0 )
+			return status::ok;
+		else if( res == EACCES )
+			return status::cant_access;
+		else if( res == ENOENT )
+			return status::not_found;
+		else if( res == EINVAL )
+			return status::invalid_param;
+		else
+			return status::undefined_error;
+		}
+
+
 	status read_file( const std::string &filepath, std::vector<uint8_t> &dest )
 		{
 		// open the file at the end
-		std::ifstream file( filePath.c_str(), std::ios::in | std::ios::binary | std::ios::ate );
+		std::ifstream file( filepath.c_str(), std::ios::in | std::ios::binary | std::ios::ate );
 		if( !file.is_open() )
 			{
 			// failed to open the file
@@ -217,7 +251,7 @@ namespace ctle
 			}
 
 		// get the size of the file, and move back to the beginning
-		u64 total_bytes_to_read = file.tellg();
+		uint64_t total_bytes_to_read = file.tellg();
 		file.seekg(0, std::ios::beg);
 
 		// allocate the data
@@ -230,7 +264,7 @@ namespace ctle
 
 		// read the data to the dest
 		file.read( (char*)dest.data(), total_bytes_to_read);
-		if( (u64)file.tellp() != total_bytes_to_read )
+		if( (uint64_t)file.tellg() != total_bytes_to_read )
 			{
 			// failed to read full file
 			return status::cant_read;
@@ -251,7 +285,7 @@ namespace ctle
 			return status::already_exists;
 
 		// create the file
-		std::ofstream file( filePath.c_str(), std::ios::out | std::ios::binary );
+		std::ofstream file( filepath.c_str(), std::ios::out | std::ios::binary );
 		if( !file.is_open() )
 			{
 			// failed to open the file
@@ -260,7 +294,7 @@ namespace ctle
 
 		// write the file
 		file.write( (const char*)src , src_size );
-		if( (u64)file.tellp() != src_size )
+		if( (size_t)file.tellp() != src_size )
 			{
 			// failed to write full file
 			return status::cant_write;
@@ -269,26 +303,6 @@ namespace ctle
 		// done
 		file.close();
 		return status::ok;
-		}
-
-
-#include <unistd.h>
-
-namespace ctle
-	{
-	status file_access( const std::string &path , access_mode amode )
-		{
-		auto res = access(path.c_str(),(int)amode);
-		if( res == 0 )
-			return status::ok;
-		else if( res == EACCES )
-			return status::cant_access;
-		else if( res == ENOENT )
-			return status::not_found;
-		else if( res == EINVAL )
-			return status::invalid_param;
-		else
-			return status::undefined_error;
 		}
 	};
 
