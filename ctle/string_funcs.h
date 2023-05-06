@@ -4,6 +4,9 @@
 #pragma once
 
 #include "endianness.h"
+#include "status.h"
+#include "status_return.h"
+
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -466,4 +469,40 @@ namespace ctle
 		return value_from_bigendian<uint64_t>( bytes );
 		}
 
+#ifdef _WIN32
+	// for windows, convert UTF-8 std::string into std::wstring, for use with wchar* versions of API calls
+	status_return<status,std::wstring> utf8string_to_wstring( std::string utf8str );
+#endif
+
 	};
+// namespace ctle
+
+#ifdef CTLE_IMPLEMENTATION
+
+namespace ctle
+	{
+
+#ifdef _WIN32
+
+// Include Windows.h in the implementation file if you want these functions to be defined.
+#ifdef _WINDOWS_
+
+	status_return<status,std::wstring> utf8string_to_wstring( std::string utf8str )
+		{
+		int req_chars = ::MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), -1, nullptr, 0); // w/ null terminator
+		std::wstring wstr(req_chars,L'\0');
+		int conv_chars = ::MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), -1, &wstr[0], req_chars);
+		if( conv_chars != req_chars )
+			return status::corrupted;
+		return wstr;
+		}
+
+#endif//_WINDOWS_
+
+#endif//_WIN32
+
+	}; 
+// namespace ctle
+
+
+#endif//CTLE_IMPLEMENTATION

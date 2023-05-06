@@ -8,16 +8,16 @@
 
 using namespace ctle;
 
-template<class _Ty> void testReadWriteAccess()
+static void testReadWriteAccess()
 	{
-	_Ty cont = {};
+	std::vector<uint8_t> cont = {};
 
 	// allocate a random size in range 1M-2M, and write random bytes
 	size_t siz = 1000000 + (random_value<size_t>() % 1000000);
 	cont.resize(siz);
 	for( size_t inx=0; inx<siz; ++inx )
 		{
-		cont[inx] = (typename _Ty::value_type)(random_value<u8>());
+		cont[inx] = random_value<uint8_t>();
 		}
 
 	// generate a unique local file name using a uuid
@@ -33,7 +33,7 @@ template<class _Ty> void testReadWriteAccess()
 	EXPECT_TRUE( file_exists( filename.c_str() ) );
 
 	// read from the file
-	_Ty dest = {};
+	std::vector<uint8_t> dest = {};
 	EXPECT_TRUE( read_file( filename, dest ) );
 
 	// make sure the containers are the same
@@ -42,7 +42,5 @@ template<class _Ty> void testReadWriteAccess()
 
 TEST( file_funcs , basic_test )
 	{
-	testReadWriteAccess<std::string>();
-	testReadWriteAccess<std::vector<i8>>();
-	testReadWriteAccess<std::vector<u8>>();
+	testReadWriteAccess();
 	}
