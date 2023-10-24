@@ -15,3 +15,4 @@
 /code_gen/__pycache__/*.pyc
 /ctle_code_gen/__pycache__
 /ctle/status.h
+/ctle/types.h

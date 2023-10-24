@@ -19,7 +19,7 @@ namespace ctle
 		center_vertically = 0x1,	// output points at the center pixel vertically
 		center_horizontally = 0x2,	// output points at the center pixel horizontally
 		render_off_pixels = 0x4,	// render 'off' pixels as well
-		flip_y = 0x8,				// flip the letters vertically, as y points up 
+		flip_y = 0x8,				// flip the letters vertically, for when y points up 
 		};
 
 	// render to the output pixel buffer. 

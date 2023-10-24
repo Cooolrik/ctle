@@ -15,6 +15,7 @@ execute_process(
 message(STATUS "Result of generate.py: ${py_result}")
 
 # if this is the main build of ctle, build the testing code
+# (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
 	
 	include(FetchContent)
@@ -25,14 +26,23 @@ if(CTLE_BUILD_TESTS)
 		GIT_REPOSITORY 	https://github.com/google/googletest.git
 		GIT_TAG			58d77fa8070e8cec2dc1ed015d66b454c8d78850 # 1.12.1 
 		)
+
+	# glm 
+	# (use a 0.9.9.9 from Aug-2020, because 0.9.9.8 triggers a deprecated feature warning in C++20 in GCC)
+	FetchContent_Declare(
+		glm
+		GIT_REPOSITORY https://github.com/g-truc/glm.git
+		GIT_TAG        6fdeff4d67f3db493d47c44da20aa1efaa6574ef # (2020 Aug 06)
+	)
 	
 	FetchContent_MakeAvailable( 
 		googletest 
+		glm
 		)
 		
 	# lots of warnings and all warnings as errors
 	if(MSVC)
-		add_compile_options(/W4 /WX)
+		add_compile_options(/W4)
 	else()
 		add_compile_options(-Wall -Wextra -pedantic -Werror)
 	endif()
@@ -42,6 +52,23 @@ if(CTLE_BUILD_TESTS)
         unit_tests
         ./unit_tests/unit_tests.cpp
         ./unit_tests/unit_tests.h
+
+		./ctle/bimap.h
+		./ctle/bitmap_font.h
+		./ctle/endianness.h
+		./ctle/file_funcs.h
+		./ctle/idx_vector.h
+		./ctle/log.h
+		./ctle/optional_idx_vector.h
+		./ctle/optional_value.h
+		./ctle/optional_vector.h
+		./ctle/readers_writer_lock.h
+		./ctle/status.h
+		./ctle/status_return.h
+		./ctle/string_funcs.h
+		./ctle/thread_safe_map.h
+		./ctle/types.h
+		./ctle/uuid.h
 
 		./unit_tests/test_bimap.cpp
 		./unit_tests/test_bitmap_font.cpp
@@ -57,8 +84,17 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_status_return.cpp
 		./unit_tests/test_string_funcs.cpp
 		./unit_tests/test_thread_safe_map.cpp
+		./unit_tests/test_types.cpp
 		./unit_tests/test_uuid.cpp
+
+		./ctle.natvis
 		)
+
+	target_include_directories( 
+		unit_tests 
+		PUBLIC ${glm_SOURCE_DIR}
+		)
+
 	target_link_libraries( 	
         unit_tests 
 		gtest_main 

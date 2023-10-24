@@ -40,10 +40,13 @@ class formatted_output:
 				st += ';'
 			self.lines.append(st)
 
-	def ln(self, lin:str = None ):
-		'''Add a single line, at current indentation'''
+	def ln(self, lin:str = None, no_indent = False ):
+		'''Add a single line, at current indentation, (or no indentation if no_indent is True).'''
 		if lin != None:
-			self.lines.append( self.tab_str * self.indentation + lin )
+			if no_indent:
+				self.lines.append( lin )
+			else:
+				self.lines.append( self.tab_str * self.indentation + lin )
 		else:
 			self.lines.append('')
 

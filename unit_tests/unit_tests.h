@@ -5,6 +5,7 @@
 #define PCH_H
 
 #ifdef WIN32
+#define NOMINMAX
 #include "Windows.h"
 #endif//WIN32
 

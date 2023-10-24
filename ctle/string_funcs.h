@@ -14,20 +14,23 @@ namespace ctle
 	// a span of characters, with start and end
 	template<class _Ty> struct string_span
 		{
+		string_span() = default;
+		string_span( const _Ty *_start, const _Ty *_end ) : start(_start), end(_end) {}
+
 		const _Ty *start = {}; // first char of span
 		const _Ty *end = {}; // the character after the last char of the span
 
 		// get the length of the span, returns 0 if the span is invalid
-		size_t length() const { return (end > start) ? end-start : 0; }
+		size_t length() const noexcept { return (end > start) ? end-start : 0; }
 
 		// make a copy to a string, returns empty string if the span is invalid (end<=start)
-		operator std::basic_string<_Ty>() { return (end > start) ? (std::basic_string<_Ty>( this->start, this->end )) : (std::basic_string<_Ty>()); }
+		operator std::basic_string<_Ty>() noexcept { return (end > start) ? (std::basic_string<_Ty>( this->start, this->end )) : (std::basic_string<_Ty>()); }
 		};
 
 	// Get span of character set in string
 	// get length of span of characters between start and end, which are in the control list of chars
 	// Caveat: The chars in control are required to be in the lower set (not extended characters)
-	template<class _Ty> inline size_t strspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
+	template<class _Ty> inline size_t strspn_t( const _Ty *start, const _Ty *end, const _Ty *control ) noexcept
 		{
 		const _Ty *ptr = start;
 
@@ -59,7 +62,7 @@ namespace ctle
 		// at the end
 		return end - start;
 		}
-	template<class _Ty> inline size_t strspn_t( const string_span<_Ty> &span, const _Ty *control )
+	template<class _Ty> inline size_t strspn_t( const string_span<_Ty> &span, const _Ty *control ) noexcept
 		{
 		return strspn_t( span.start, span.end, control );
 		}
@@ -67,7 +70,7 @@ namespace ctle
 	// Get span until character in string
 	// get length of span of characters between start and end, until first occurance of a character from the control list
 	// Caveat: The chars in control are required to be in the lower set (not extended characters)
-	template<class _Ty> inline size_t strcspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
+	template<class _Ty> inline size_t strcspn_t( const _Ty *start, const _Ty *end, const _Ty *control ) noexcept
 		{
 		const _Ty *ptr = start;
 
@@ -92,7 +95,7 @@ namespace ctle
 		// not found, return the full span from start to end
 		return end - start;
 		}
-	template<class _Ty> inline size_t strcspn_t( const string_span<_Ty> &span, const _Ty *control )
+	template<class _Ty> inline size_t strcspn_t( const string_span<_Ty> &span, const _Ty *control ) noexcept
 		{
 		return strcspn_t( span.start, span.end, control );
 		}
@@ -100,7 +103,7 @@ namespace ctle
 	// Get position of last occuring character in control list
 	// get length of span of characters between start and end, until last occurance of a character from the control list
 	// Caveat: The chars in control are required to be in the lower set (not extended characters)
-	template<class _Ty> inline size_t strcrspn_t( const _Ty *start, const _Ty *end, const _Ty *control )
+	template<class _Ty> inline size_t strcrspn_t( const _Ty *start, const _Ty *end, const _Ty *control ) noexcept
 		{
 		const _Ty *ptr = end-1;
 
@@ -125,7 +128,7 @@ namespace ctle
 		// not found, return the full span from start to end
 		return end - start;
 		}
-	template<class _Ty> inline size_t strcrspn_t( const string_span<_Ty> &span, const _Ty *control )
+	template<class _Ty> inline size_t strcrspn_t( const string_span<_Ty> &span, const _Ty *control ) noexcept
 		{
 		return strcrspn_t( span.start, span.end, control );
 		}
@@ -133,7 +136,7 @@ namespace ctle
 	// given a start and end pointer to a string, and a list of deliminators, return the first token.
 	// the implementation does not modify the input string, and does not hold any internal state.
 	// Caveat: The chars in delims are required to be in the lower set (not extended characters)
-	template<class _Ty> inline string_span<_Ty> strtok_t( const _Ty *start, const _Ty *end, const _Ty *delims )
+	template<class _Ty> inline string_span<_Ty> strtok_t( const _Ty *start, const _Ty *end, const _Ty *delims ) noexcept
 		{
 		// skip over initial delimiters
 		size_t span = strspn_t<_Ty>( start, end, delims );
@@ -145,14 +148,14 @@ namespace ctle
 
 		return {tokStart, tokEnd};
 		}
-	template<class _Ty> inline string_span<_Ty> strtok_t( const string_span<_Ty> &span, const _Ty *delims )
+	template<class _Ty> inline string_span<_Ty> strtok_t( const string_span<_Ty> &span, const _Ty *delims ) noexcept
 		{
 		return strtok_t( span.start, span.end, delims );
 		}
 
 	// Locate first occurrence of character in string
 	// get length of span of characters between start and end, until first occurance of a character from the control list
-	template<class _Ty> inline size_t strchr_t( const _Ty *start, const _Ty *end, _Ty character )
+	template<class _Ty> inline size_t strchr_t( const _Ty *start, const _Ty *end, _Ty character ) noexcept
 		{
 		const _Ty *ptr = start;
 
@@ -173,14 +176,14 @@ namespace ctle
 		// not found, return the full span from start to end
 		return end - start;
 		}
-	template<class _Ty> inline size_t strchr_t( const string_span<_Ty> &span, _Ty character )
+	template<class _Ty> inline size_t strchr_t( const string_span<_Ty> &span, _Ty character ) noexcept
 		{
 		return strchr_t( span.start, span.end, character );
 		}
 
 	// Locate last occurrence of character in string
 	// get length of span of characters between start and end, until first occurance of a character from the control list
-	template<class _Ty> inline size_t strrchr_t( const _Ty *start, const _Ty *end, _Ty character )
+	template<class _Ty> inline size_t strrchr_t( const _Ty *start, const _Ty *end, _Ty character ) noexcept
 		{
 		const _Ty *ptr = end-1;
 
@@ -201,7 +204,7 @@ namespace ctle
 		// not found, return the full span from start to end
 		return end - start;
 		}
-	template<class _Ty> inline size_t strrchr_t( const string_span<_Ty> &span, _Ty character )
+	template<class _Ty> inline size_t strrchr_t( const string_span<_Ty> &span, _Ty character ) noexcept
 		{
 		return strrchr_t( span.start, span.end, character );
 		}
@@ -209,7 +212,7 @@ namespace ctle
 	// given a start and end pointer to a string, parse an unsigned decimal number.
 	// if values other than numbers are found, the parsing stops and the value is returned, so trim any preceeding white space
 	// the implementation does not modify the input string, and does not hold any internal state.
-	template<class _Ty> inline uint64_t stou64_t( const _Ty *start, const _Ty *end )
+	template<class _Ty> inline uint64_t stou64_t( const _Ty *start, const _Ty *end ) noexcept
 		{
 		const _Ty *ptr = start;
 		uint64_t value = 0;
@@ -229,7 +232,7 @@ namespace ctle
 
 		return value;
 		}
-	template<class _Ty> inline uint64_t stou64_t( const string_span<_Ty> &span )
+	template<class _Ty> inline uint64_t stou64_t( const string_span<_Ty> &span ) noexcept
 		{
 		return stou64_t( span.start, span.end );
 		}
@@ -237,7 +240,7 @@ namespace ctle
 	// given a start and end pointer to a string, parse a signed decimal number.
 	// if values other than numbers are found, the parsing stops and the value is returned, so trim any preceeding white space
 	// the implementation does not modify the input string, and does not hold any internal state.
-	template<class _Ty> inline int64_t stoi64_t( const _Ty *start, const _Ty *end )
+	template<class _Ty> inline int64_t stoi64_t( const _Ty *start, const _Ty *end ) noexcept
 		{
 		const _Ty *ptr = start;
 		bool sign = false;
@@ -255,7 +258,7 @@ namespace ctle
 		int64_t value = int64_t( stou64_t( ptr, end ) );
 		return sign ? -value : value;
 		}
-	template<class _Ty> inline int64_t stoi64_t( const string_span<_Ty> &span )
+	template<class _Ty> inline int64_t stoi64_t( const string_span<_Ty> &span ) noexcept
 		{
 		return stoi64_t( span.start, span.end );
 		}

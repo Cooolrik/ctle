@@ -19,6 +19,7 @@
 #include "../ctle/uuid.h"
 #include "../ctle/endianness.h"
 #include "../ctle/log.h"
+#include "../ctle/types.h"
 
 // just some value
 const i64 global_random_seed = 12876123876;
