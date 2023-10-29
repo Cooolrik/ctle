@@ -28,6 +28,7 @@ def define_n_tuples( out:formatted_output ):
 		out.ln(f'template<class _Ty> class n_tup<_Ty,{d}>')
 		with out.blk( add_semicolon=True ):
 			out.ln('public:')
+			out.ln('using value_type = typename _Ty;')
 			out.ln()
 			out.ln('#ifdef CTLE_N_TUP_ONLY_XYZW', no_indent=True)
 			for td in range(d):

@@ -47,3 +47,6 @@ template <> u8 random_value<u8>() { return u8_rand() ; }
 template <> u16 random_value<u16>() { return u16_rand() ; }
 template <> u32 random_value<u32>() { return u32_rand() ; }
 template <> u64 random_value<u64>() { return u64_rand() ; }
+
+template <> float random_value<float>() { return (float)u64_rand() ; }
+template <> double random_value<double>() { return (double)u64_rand() ; }

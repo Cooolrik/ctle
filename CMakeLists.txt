@@ -14,7 +14,7 @@ execute_process(
 )
 message(STATUS "Result of generate.py: ${py_result}")
 
-# if this is the main build of ctle, build the testing code
+# if selected, build the testing code
 # (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
 	
@@ -69,6 +69,8 @@ if(CTLE_BUILD_TESTS)
 		./ctle/thread_safe_map.h
 		./ctle/types.h
 		./ctle/uuid.h
+		./ctle/_macros.inl
+		./ctle/_undef_macros.inl
 
 		./unit_tests/test_bimap.cpp
 		./unit_tests/test_bitmap_font.cpp
@@ -86,6 +88,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_thread_safe_map.cpp
 		./unit_tests/test_types.cpp
 		./unit_tests/test_uuid.cpp
+		./unit_tests/test_macros.cpp
 
 		./ctle.natvis
 		)

@@ -16,3 +16,5 @@
 /ctle_code_gen/__pycache__
 /ctle/status.h
 /ctle/types.h
+/ctle/_macros.inl
+/ctle/_undef_macros.inl
