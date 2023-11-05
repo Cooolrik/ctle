@@ -22,14 +22,33 @@ class person
 		const void *last_accessed_prop = nullptr;
 	};
 
-#define test_get_method [this]( const auto *prop ) -> const auto & { this->last_accessed_prop = prop; return prop->v; }
-#define test_set_method [this]( auto *prop, const auto &value ) -> void { this->last_accessed_prop = prop; prop->v = value; }
-
 person::person() : 
 
-	weight( 0, test_get_method, test_set_method ),
+	weight( 0,
+		[this]( const property_getcref_set_value<int,person> *prop ) -> const int & 
+			{ 
+			this->last_accessed_prop = prop; 
+			return prop->v; 
+			},
+		[this]( property_getcref_set_value<int,person> *prop, const auto &value ) -> void 
+			{ 
+			this->last_accessed_prop = prop; 
+			prop->v = value; 
+			}
+	),
 	
-	height( 0, test_get_method, test_set_method ),
+	height( 0,
+		[this]( const property_getcref_set_value<int,person> *prop ) -> const int & 
+			{ 
+			this->last_accessed_prop = prop; 
+			return prop->v; 
+			},
+		[this]( property_getcref_set_value<int,person> *prop, const auto &value ) -> void 
+			{ 
+			this->last_accessed_prop = prop; 
+			prop->v = value; 
+			}
+	),
 
 	height_in_meters( [this]( auto *prop, const auto &value ) -> void
 			{
