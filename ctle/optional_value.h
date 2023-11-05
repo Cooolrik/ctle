@@ -23,8 +23,8 @@ namespace ctle
 		public:
 			optional_value() = default;
 			optional_value( const T &_value ) : value_m( new T( _value ) ) {}
-			optional_value( const optional_value &other ) noexcept : value_m( other.value_m ? std::make_unique<T>( *other.value_m ) : nullptr ) {}
-			optional_value &operator = ( const optional_value &_other ) { this->value_m = _other.value_m ? std::make_unique<T>( *_other.value_m ) : nullptr; return *this; }
+			optional_value( const optional_value &other ) noexcept : value_m( other.value_m ? std::unique_ptr<T>( new T(*other.value_m) ) : nullptr ) {}
+			optional_value &operator = ( const optional_value &_other ) { this->value_m = _other.value_m ? std::unique_ptr<T>( new T(*_other.value_m) ) : nullptr; return *this; }
 			optional_value( optional_value &&other ) noexcept : value_m( std::move( other.value_m ) ) {}
 			optional_value &operator = ( optional_value &&_other ) { this->value_m = std::move( _other.value_m ); return *this; }
 
@@ -34,7 +34,7 @@ namespace ctle
 			bool operator!=( const optional_value &_other ) const;
 
 			void reset() { this->value_m.reset(); }
-			void set( const T &_value = {} ) { this->value_m = std::make_unique<T>( _value ); }
+			void set( const T &_value = {} ) { this->value_m = std::unique_ptr<T>( new T(_value) ); }
 			bool has_value() const noexcept { return bool( this->value_m ); }
 
 			T &value() { if( !this->has_value() ) { throw ctle::bad_optional_value_access("optional_value has no value"); } return *(this->value_m); }

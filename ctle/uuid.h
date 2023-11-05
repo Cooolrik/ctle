@@ -135,7 +135,7 @@ namespace ctle
             auto seed_data = std::array<int, std::mt19937::state_size> {};
             std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
             std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
-            generator = std::make_unique<std::mt19937>(seq);
+            generator = std::unique_ptr<std::mt19937>(new std::mt19937(seq) );
             }
 
         // generate random values
