@@ -79,7 +79,7 @@ namespace std
 
 namespace ctle
     {
-    const uuid uuid::nil = {};
+    const uuid uuid::nil;
 
     std::string value_to_hex_string( uuid value )
         {

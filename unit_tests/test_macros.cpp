@@ -96,7 +96,9 @@ TEST( macros , basic_test )
 	EXPECT_EQ( ChecksStatusReturnError() , status::already_exists );
 	EXPECT_EQ( ChecksStatusReturnErrorSuccessfulValue() , status::ok );
 
+#ifndef  NDEBUG
 	TestSanityCheck();
+#endif // ! NDEBUG
 
 	// check that the validation triggers when it should
 	EXPECT_EQ( TriggersValidation(true), status::invalid_param );	// should trigger
