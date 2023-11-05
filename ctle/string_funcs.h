@@ -422,11 +422,11 @@ namespace ctle
 	static inline uint8_t decode_hex_char( char c )
 		{
 		if( c >= '0' && c <= '9' )
-			return c - '0';
+			return uint8_t(c - '0');
 		else if( c >= 'a' && c <= 'f' )
-			return (c - 'a') + 10;
+			return uint8_t((c - 'a') + 10);
 		else if( c >= 'A' && c <= 'F' )
-			return (c - 'A') + 10;
+			return uint8_t((c - 'A') + 10);
 		throw std::runtime_error( "invalid hex character c" );
 		}
 
@@ -437,8 +437,9 @@ namespace ctle
 		uint8_t *p = (uint8_t *)bytes;
 		for( size_t i = 0; i < count; ++i )
 			{
-			p[i] = decode_hex_char( hex_string[i * 2 + 0] ) << 4 
-				 | decode_hex_char( hex_string[i * 2 + 1] );
+			uint8_t hn = uint8_t(decode_hex_char( hex_string[i * 2 + 0] ) << 4);
+			uint8_t ln = decode_hex_char( hex_string[i * 2 + 1] );
+			p[i] =  uint8_t(hn | ln);
 			}
 		}
 

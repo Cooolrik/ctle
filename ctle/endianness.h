@@ -16,7 +16,7 @@ namespace ctle
 	template <class T> T value_from_bigendian( const uint8_t *src );
 	template <> inline uint16_t value_from_bigendian<uint16_t>( const uint8_t *src ) 
         { 
-        return (uint16_t(src[0]) << 8) | uint16_t(src[1]); 
+        return (uint16_t) (uint16_t(uint16_t(src[0]) << 8) | uint16_t(src[1])); 
         }
 
 	template <> inline uint32_t value_from_bigendian<uint32_t>( const uint8_t *src ) 

@@ -30,7 +30,7 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 		out.ln('public:')
 		with out.tab():
 			if value_type:
-				out.ln('friend typename _Owner; // allow the owner of the property to directly modify the stored value v')
+				out.ln('friend _Owner; // allow the owner of the property to directly modify the stored value v')
 				out.ln()
 
 			# define ctor
@@ -80,12 +80,13 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			out.ln(f'const {prop_class} & operator= ( {prop_class} && ) = delete;')
 			out.ln();
 
+			if value_type:
+				out.ln('_Ty v; // the stored value')
 			if get_type != None:
 				out.ln(f'const std::function<{get_types[get_type]} (const {prop_class} *)> get_method;')
 			if set_type:
 				out.ln(f'const std::function<void({prop_class} *, const _Ty &)> set_method;')
-			if value_type:
-				out.ln('_Ty v; // the stored value')
+
 			out.ln()
 
 	out.ln()

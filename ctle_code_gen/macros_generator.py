@@ -63,7 +63,7 @@ def generate_macros( path:str, undef_path:str ):
 #if defined(_MSC_VER)
 #define _CTLE_FUNCTION_SIGNATURE __FUNCSIG__
 #elif defined(__GNUC__)
-#define _CTLE_FUNCTION_SIGNATURE __PRETTY_FUNCTION__ 
+#define _CTLE_FUNCTION_SIGNATURE __func__ 
 #endif		   
 ''' )
 	
