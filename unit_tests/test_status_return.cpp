@@ -20,7 +20,7 @@ enum class TestEnum : uint32_t
 	};
 static status_return<TestEnum,std::unique_ptr<int>> TestReturnUniquePtr()
 	{
-	auto ptr = std::make_unique<int>(100);
+	auto ptr = std::unique_ptr<int>(new int(100));
 	return { TestEnum::val242398723 , std::move(ptr) };
 	}
 static status_return<TestEnum,std::unique_ptr<int>> TestDontReturnUniquePtr()
@@ -54,7 +54,7 @@ static status_return<status,std::string> TestStatusReturnString()
 
 static status_return<status,std::unique_ptr<int>> TestStatusReturnUniquePtr()
 	{
-	auto ptr = std::make_unique<int>(1000);
+	auto ptr = std::unique_ptr<int>( new int(1000) );
 	return { status_code::invalid_param , std::move(ptr) };
 	}
 static status_return<status,std::unique_ptr<int>> TestStatusDontReturnUniquePtr()

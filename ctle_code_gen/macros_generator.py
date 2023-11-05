@@ -103,7 +103,8 @@ def generate_macros( path:str, undef_path:str ):
 #define ctSanityCheck( statement )\\
 	if( !(statement) ) {\\
 		ctLogError << "SanityCheck failed: " << std::string(#statement) << ctLogEnd;\\
-		throw std::runtime_error( "SanityCheck " #statement " failed in " __FILE__ " line " _CTLE_STRINGIZE(__LINE__) " function " _CTLE_STRINGIZE(_CTLE_FUNCTION_SIGNATURE) );\\
+		const std::string err_val = std::string("SanityCheck " #statement " failed in " __FILE__ " line " _CTLE_STRINGIZE(__LINE__) " function ") + _CTLE_FUNCTION_SIGNATURE;\\
+		throw std::runtime_error( err_val );\\
 	}
 #else
 #define ctSanityCheck( statement )
