@@ -30,7 +30,7 @@ person::person() :
 			this->last_accessed_prop = prop; 
 			return prop->v; 
 			},
-		[this]( property_getcref_set_value<int,person> *prop, const auto &value ) -> void 
+		[this]( property_getcref_set_value<int,person> *prop, const int &value ) -> void 
 			{ 
 			this->last_accessed_prop = prop; 
 			prop->v = value; 
@@ -43,21 +43,21 @@ person::person() :
 			this->last_accessed_prop = prop; 
 			return prop->v; 
 			},
-		[this]( property_getcref_set_value<int,person> *prop, const auto &value ) -> void 
+		[this]( property_getcref_set_value<int,person> *prop, const int &value ) -> void 
 			{ 
 			this->last_accessed_prop = prop; 
 			prop->v = value; 
 			}
 	),
 
-	height_in_meters( [this]( auto *prop, const auto &value ) -> void
+	height_in_meters( [this]( property_set<float> *prop, const float &value ) -> void
 			{
 			this->last_accessed_prop = prop; 
 			this->height.v = (int) (value * 100.f); // convert to centimeters, write directly to height.v, skip the height prop method
 			}
 		),
 
-	bmi( [this]( const auto *prop ) -> auto
+	bmi( [this]( const property_get<float> *prop ) -> float
 			{
 			this->last_accessed_prop = prop; 
 			float height_m = (float)this->height.v / 100.f;
