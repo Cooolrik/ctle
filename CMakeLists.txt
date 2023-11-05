@@ -62,6 +62,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/optional_idx_vector.h
 		./ctle/optional_value.h
 		./ctle/optional_vector.h
+		./ctle/property.h
 		./ctle/readers_writer_lock.h
 		./ctle/status.h
 		./ctle/status_return.h
@@ -81,6 +82,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_optional_idx_vector.cpp
 		./unit_tests/test_optional_value.cpp
 		./unit_tests/test_optional_vector.cpp
+		./unit_tests/test_property.cpp
 		./unit_tests/test_readers_writer_lock.cpp
 		./unit_tests/test_status.cpp
 		./unit_tests/test_status_return.cpp

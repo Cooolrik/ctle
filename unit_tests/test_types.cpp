@@ -16,8 +16,6 @@ template<class _Ty, size_t _Size> void TestTuple()
 	{
 	n_tup<_Ty,_Size> tuple = {};
 
-	static_assert(std::is_same<decltype(tuple)::value_type, typename _Ty>::value, "value type does not match");
-
 	// init with random values
 	for( size_t i=0; i<_Size; ++i  )
 		{

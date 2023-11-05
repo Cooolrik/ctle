@@ -18,3 +18,4 @@
 /ctle/types.h
 /ctle/_macros.inl
 /ctle/_undef_macros.inl
+/ctle/property.h

@@ -39,7 +39,7 @@ status ChecksStatusReturnError()
 
 status_return<status,std::string> ReturnsStatusReturnSuccessfulValue()
 	{
-	return "successful value";
+	return std::string("successful value");
 	}
 
 status ChecksStatusReturnErrorSuccessfulValue()
