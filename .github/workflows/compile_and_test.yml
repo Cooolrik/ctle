@@ -31,5 +31,5 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-#      - name: Run the projects setup.
-#        run: ./testall.sh
+      - name: Run the projects setup.
+        run: ./testall.sh
