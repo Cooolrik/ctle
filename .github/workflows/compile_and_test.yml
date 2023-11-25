@@ -23,9 +23,9 @@ jobs:
           - os: ubuntu-latest
             compiler: g++-10
             target: Linux
-#          - os: windows-latest
-#            compiler: cl
-#            target: Windows
+          - os: windows-latest
+            compiler: cl
+            target: Windows
   
     steps:
       - name: Checkout Repository
