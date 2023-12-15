@@ -31,7 +31,8 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 		with out.tab():
 			if value_type:
 				out.ln('friend _Owner; // allow the owner of the property to directly modify the stored value v')
-				out.ln()
+			out.ln('using value_type = _Ty;')
+			out.ln()
 
 			# define ctor
 			str = prop_class + '( '
@@ -42,7 +43,7 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			if set_type:
 				if get_type != None:
 					str += ', '
-				str += f'std::function<void({prop_class} *, const _Ty &)> _set'
+				str += f'std::function<status({prop_class} *, const _Ty &)> _set'
 			str += ' ) :'
 			out.ln(str)
 			with out.tab():
@@ -67,8 +68,14 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 
 			# define assign operator and set method
 			if set_type:
-				out.ln(f'void set(const _Ty &value) {{ this->set_method(this, value); }}')
-				out.ln(f'const {prop_class} & operator= (const _Ty &value) {{ this->set(value); return *this; }}')
+				out.ln(f'status set(const _Ty &value) {{ return this->set_method(this, value); }}')
+				out.ln(f'const {prop_class} & operator= (const _Ty &value)')
+				with out.blk(): 
+					out.ln('status result = this->set_method(this, value);')
+					out.ln('if( result != status::ok )')
+					with out.blk():
+						out.ln('throw std::runtime_error( result.description().c_str() );')
+					out.ln('return *this;')
 				out.ln()
 			
 		out.ln('private:')
@@ -85,7 +92,7 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			if get_type != None:
 				out.ln(f'const std::function<{get_types[get_type]} (const {prop_class} *)> get_method;')
 			if set_type:
-				out.ln(f'const std::function<void({prop_class} *, const _Ty &)> set_method;')
+				out.ln(f'const std::function<status({prop_class} *, const _Ty &)> set_method;')
 
 			out.ln()
 
@@ -100,6 +107,7 @@ def generate_property( path:str ):
 	out.ln('#pragma once')
 	out.ln()
 	out.ln('#include <functional>')
+	out.ln('#include "status.h"')
 	out.ln()
 
 	out.ln('namespace ctle')
