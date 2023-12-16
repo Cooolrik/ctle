@@ -24,7 +24,7 @@ class person
 
 person::person() : 
 
-	weight( 0,
+	weight( 
 		[this]( const property_getcref_set_value<int,person> *prop ) -> const int & 
 			{ 
 			this->last_accessed_prop = prop; 
@@ -86,4 +86,47 @@ TEST( property , basic_test )
 	float bmi = p.bmi;
 	EXPECT_EQ( p.last_accessed_prop , &p.bmi );
 	EXPECT_NEAR( bmi, 24.6913f, 0.0001f );	// 80kg / (1.8m * 1.8m) = 24.6913 kg/m^2
+	}
+
+class folks 
+	{
+	public:
+		folks();
+		
+		property_getcref_value<std::vector<std::unique_ptr<person>>, folks> persons;
+
+		property_getcref_value<int, folks> simple_int;
+
+		void init_persons()
+			{
+			persons.v.resize(60);
+			for (size_t i = 0; i < 60; ++i)
+				{
+				persons.v[i] = std::make_unique<person>();
+				
+				}
+			}
+
+	};
+
+folks::folks()
+	: persons( [this]( const auto *prop ) -> const auto & { return prop->v; } )
+	, simple_int( 23 , [this]( const auto *prop ) -> const auto & { return prop->v; } )
+	{
+	}
+
+TEST(property, complicated_property_test)
+	{
+	folks f;
+	f.init_persons();
+
+	EXPECT_EQ( (int)f.simple_int, 23 );
+
+	// make sure it is possible to access the values and that all values are set
+	EXPECT_EQ( f.persons.get().size(), 60 );
+	for( size_t inx=0; inx<f.persons.get().size(); ++inx )
+		{
+		EXPECT_NE( f.persons.get()[20].get(), nullptr );
+		}
+
 	}

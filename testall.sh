@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# if any of the tests return error, the script will exit, and return error
 set -e
 
 echo "Building & testing C++11"

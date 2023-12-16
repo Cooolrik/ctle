@@ -18,8 +18,49 @@ def property_name( get_type:str, set_type:bool, value_type:bool ):
 		str += '_value'
 	return str
 
+def output_ctor( out, prop_class:str, get_type:str, set_type:bool, value_param:bool, value_default_assign:bool ):
+	str = prop_class + '( '
+	if value_param:
+		str += 'const _Ty &value, '
+	if get_type != None:
+		str += f'_get_type _get'
+	if set_type:
+		if get_type != None:
+			str += ', '
+		str += f'_set_type _set'
+	str += ' ) :'
+	out.ln(str)
+	with out.tab():
+		str = ''
+		if value_param:
+			str += 'v(value), '
+		if get_type != None:
+			str += 'get_method(_get)'
+		if set_type:
+			if get_type != None:
+				str += ', '
+			str += 'set_method(_set)'
+		if value_default_assign:
+			str += ' { trivially_default_constructible_identity_assign(this->v); }'
+		else:
+			str += ' {}'
+		out.ln(str)
+	out.ln()
+    
+
 def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 	prop_class = property_name(get_type, set_type, value_type)
+
+	out.comment_ln(f'template class {prop_class}:')
+	if get_type != None:
+		str = 'a copy of the value' if get_type == 'get' else 'a const reference to the value.'
+		out.comment_ln(f' - has a .get() method and cast operator which return {str}' )
+	if set_type:
+		out.comment_ln(f' - has a .set() method and assignment operator which accepts a const reference to copy from' )
+	if value_type:
+		out.comment_ln(' - stores the value of the property in variable .v, which can be accessed directly by the _Owner type. ')
+		out.comment_ln('   The value is always initialized, either explicitly in the property ctor, using a default ctor')
+		out.comment_ln('   or if the value is trivially constructable, using the = {}.')
 
 	if value_type:
 		out.ln('template<typename _Ty, typename _Owner>')
@@ -27,38 +68,27 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 		out.ln('template<typename _Ty>')
 	out.ln(f'class {prop_class}' )
 	with out.blk(add_semicolon=True):
+		if value_type:
+			out.ln('protected:')
+			with out.tab():
+				out.ln('friend _Owner; // allow the owner of the property to directly modify the stored value v')
+			out.ln()
+        
 		out.ln('public:')
 		with out.tab():
-			if value_type:
-				out.ln('friend _Owner; // allow the owner of the property to directly modify the stored value v')
 			out.ln('using value_type = _Ty;')
-			out.ln()
-
-			# define ctor
-			str = prop_class + '( '
-			if value_type:
-				str += 'const _Ty &value, '
 			if get_type != None:
-				str += f'const std::function<{get_types[get_type]} ( const {prop_class} * )> _get'
+				out.ln(f'using _get_type = const std::function<{get_types[get_type]} (const {prop_class} *)>;')
 			if set_type:
-				if get_type != None:
-					str += ', '
-				str += f'std::function<status({prop_class} *, const _Ty &)> _set'
-			str += ' ) :'
-			out.ln(str)
-			with out.tab():
-				str = ''
-				if value_type:
-					str += 'v(value), '
-				if get_type != None:
-					str += 'get_method(_get)'
-				if set_type:
-					if get_type != None:
-						str += ', '
-					str += 'set_method(_set)'
-				str += ' {}'
-				out.ln(str)
+				out.ln(f'using _set_type = const std::function<status({prop_class} *, const _Ty &)>;')
 			out.ln()
+   
+			# define ctors
+			out.comment_ln('standard ctor with assignment(s) for the property')
+			output_ctor( out, prop_class, get_type, set_type, value_type, False )
+			if value_type:
+				out.comment_ln('ctor with default assignment of the value object')
+				output_ctor( out, prop_class, get_type, set_type, False, True )
 
 			# define convert to type operator and get method
 			if get_type != None:
@@ -90,11 +120,10 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			if value_type:
 				out.ln('_Ty v; // the stored value')
 			if get_type != None:
-				out.ln(f'const std::function<{get_types[get_type]} (const {prop_class} *)> get_method;')
+				out.ln(f'_get_type get_method;')
 			if set_type:
-				out.ln(f'const std::function<status({prop_class} *, const _Ty &)> set_method;')
+				out.ln(f'_set_type set_method;')
 
-			out.ln()
 
 	out.ln()
 
@@ -112,7 +141,13 @@ def generate_property( path:str ):
 
 	out.ln('namespace ctle')
 	with out.blk():
-		out.comment_ln('The property_[...] templates is a convenient way to implement properties in classes, where each property is accessed as normal variables, but can be made read-only, write-only, read/write, and let the owner override if a value is returned from a variable, or evaluated on-the-fly, etc.')
+		out.comment_ln('trivially_default_constructible_identity_assign is a conditional template function which initializes trivially constructable values using the = {} assignment. For all other types, the template is a noop and does nothing.')
+		out.ln('template<typename _Ty, std::enable_if_t<std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty &val ) { val = {}; }')
+		out.ln('template<typename _Ty, std::enable_if_t<!std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty & ) { /*noop*/ }')
+		out.ln()
+  
+		out.comment_ln('The property_[...] template classes are a convenient way to implement properties in classes, where each property can be accessed as a normal variable, but can also be made read-only, write-only, read/write, and let the owner class override if a value is returned from a variable, or evaluated on-the-fly, etc.')
+		out.ln()
 		for value_type in [False,True]:
 			for set_type in [True,False]:
 				for get_type in ['get','getcref',None]:
