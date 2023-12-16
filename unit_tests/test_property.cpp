@@ -104,7 +104,7 @@ class folks
 			persons.v.resize(nums);
 			for (size_t i = 0; i < (size_t)nums; ++i)
 				{
-				persons.v[i] = std::make_unique<person>();
+				persons.v[i] = std::unique_ptr<person>( new person() );
 				}
 			simple_int.v = nums;
 			}
@@ -112,7 +112,7 @@ class folks
 	};
 
 folks::folks()
-	: persons( [this]( const auto *prop, status &result ) -> const auto & 
+	: persons( [this]( const property_getcref_value<std::vector<std::unique_ptr<person>>, folks> *prop, status &result ) -> const std::vector<std::unique_ptr<person>> &
 		{ 
 		if( prop->v.size() < 30 ) 
 			{ 
@@ -123,7 +123,7 @@ folks::folks()
 		return prop->v; 
 		} 
 	)
-	, simple_int( 23 , [this]( const auto *prop, status & ) -> const auto & { return prop->v; } )
+	, simple_int( 23 , [this]( const property_getcref_value<int, folks> *prop, status & ) -> const int & { return prop->v; } )
 	{
 	}
 

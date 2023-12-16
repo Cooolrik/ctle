@@ -164,14 +164,15 @@ def generate_property( path:str ):
 	out.ln('#pragma once')
 	out.ln()
 	out.ln('#include <functional>')
+	out.ln('#include <type_traits>')
 	out.ln('#include "status.h"')
 	out.ln()
 
 	out.ln('namespace ctle')
 	with out.blk():
 		out.comment_ln('trivially_default_constructible_identity_assign is a conditional template function which initializes trivially constructable values using the = {} assignment. For all other types, the template is a noop and does nothing.')
-		out.ln('template<typename _Ty, std::enable_if_t<std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty &val ) { val = {}; }')
-		out.ln('template<typename _Ty, std::enable_if_t<!std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty & ) { /*noop*/ }')
+		out.ln('template<typename _Ty, typename std::enable_if<std::is_trivially_default_constructible<_Ty>{},bool>::type = true> void trivially_default_constructible_identity_assign( _Ty &val ) { val = {}; }')
+		out.ln('template<typename _Ty, typename std::enable_if<!std::is_trivially_default_constructible<_Ty>{},bool>::type = true> void trivially_default_constructible_identity_assign( _Ty & ) { /*noop*/ }')
 		out.ln()
 
 		out.comment_ln('The property_[...] template classes are a convenient way to implement properties in classes, where each property can be accessed as a normal variable, but can also be made read-only, write-only, read/write, and let the owner class override if a value is returned from a variable, or evaluated on-the-fly, etc.')
