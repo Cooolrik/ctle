@@ -344,7 +344,7 @@ namespace ctle
 		{
 		public:
 			status value;
-			explicit status_error( status _value, char const* const _Message = "" ) noexcept : value(_value), std::runtime_error(_Message) {}
+			explicit status_error( status _value, char const* const _Message = "" ) noexcept : std::runtime_error(_Message), value(_value) {}
 		};
 
 	}
