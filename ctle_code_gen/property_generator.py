@@ -78,7 +78,7 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 		with out.tab():
 			out.ln('using value_type = _Ty;')
 			if get_type != None:
-				out.ln(f'using _get_type = const std::function<{get_types[get_type]} (const {prop_class} *)>;')
+				out.ln(f'using _get_type = const std::function<{get_types[get_type]} (const {prop_class} *, status & )>;')
 			if set_type:
 				out.ln(f'using _set_type = const std::function<status({prop_class} *, const _Ty &)>;')
 			out.ln()
@@ -92,19 +92,47 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 
 			# define convert to type operator and get method
 			if get_type != None:
-				out.ln(f'{get_types[get_type]} get() const {{ return this->get_method(this); }}')
-				out.ln(f'operator {get_types[get_type]} () const {{ return this->get(); }}')
+				out.comment_ln('get method which returns the value. This version sets the status into a provided parameter, and does not throw any exception.')
+				out.ln(f'{get_types[get_type]} get(status &result) const noexcept')
+				with out.blk(): 
+					out.ln('result = status::ok;')
+					out.ln('return this->get_method(this, result);')
 				out.ln()
-
+				out.comment_ln('get method which returns the value. This version throws a std::status_error if there is an error.')
+				out.ln(f'{get_types[get_type]} get() const')
+				with out.blk(): 
+					out.ln('status result = status::ok;')
+					out.ln(f'{get_types[get_type]} ret_val = this->get_method(this, result);')
+					out.ln('if( result != status::ok )')
+					with out.blk():
+						out.ln('throw ctle::status_error( result );')
+					out.ln('return ret_val;')
+				out.ln()
+				out.comment_ln('operator which return the value. This operator throws std::status_error if there is an error.')
+				out.ln(f'operator {get_types[get_type]} () const')
+				with out.blk(): 
+					out.ln('status result = status::ok;')
+					out.ln(f'{get_types[get_type]} ret_val = this->get_method(this, result);')
+					out.ln('if( result != status::ok )')
+					with out.blk():
+						out.ln('throw ctle::status_error( result );')
+					out.ln('return ret_val;')
+				out.ln()
+        
 			# define assign operator and set method
 			if set_type:
-				out.ln(f'status set(const _Ty &value) {{ return this->set_method(this, value); }}')
+				out.comment_ln('set method which sets the property to the provided value. The status is returned from the method, and it does not throw any exception.')
+				out.ln(f'status set(const _Ty &value) noexcept')
+				with out.blk():
+					out.ln('return this->set_method(this, value);')
+				out.ln()
+				out.comment_ln('operator which sets the property to the provided value. This operator throws std::status_error if there is an error.')				
 				out.ln(f'const {prop_class} & operator= (const _Ty &value)')
 				with out.blk(): 
 					out.ln('status result = this->set_method(this, value);')
 					out.ln('if( result != status::ok )')
 					with out.blk():
-						out.ln('throw std::runtime_error( result.description().c_str() );')
+						out.ln('throw ctle::status_error( result );')
 					out.ln('return *this;')
 				out.ln()
 			
@@ -145,7 +173,7 @@ def generate_property( path:str ):
 		out.ln('template<typename _Ty, std::enable_if_t<std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty &val ) { val = {}; }')
 		out.ln('template<typename _Ty, std::enable_if_t<!std::is_trivially_default_constructible<_Ty>{},bool> = true> void trivially_default_constructible_identity_assign( _Ty & ) { /*noop*/ }')
 		out.ln()
-  
+
 		out.comment_ln('The property_[...] template classes are a convenient way to implement properties in classes, where each property can be accessed as a normal variable, but can also be made read-only, write-only, read/write, and let the owner class override if a value is returned from a variable, or evaluated on-the-fly, etc.')
 		out.ln()
 		for value_type in [False,True]:

@@ -2,6 +2,7 @@
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 #include "../ctle/property.h"
+#include "../ctle/status_return.h"
 
 #include "unit_tests.h"
 
@@ -25,7 +26,7 @@ class person
 person::person() : 
 
 	weight( 
-		[this]( const property_getcref_set_value<int,person> *prop ) -> const int & 
+		[this]( const property_getcref_set_value<int,person> *prop, status & ) -> const int &
 			{ 
 			this->last_accessed_prop = prop; 
 			return prop->v; 
@@ -39,7 +40,7 @@ person::person() :
 	),
 	
 	height( 0,
-		[this]( const property_getcref_set_value<int,person> *prop ) -> const int & 
+		[this]( const property_getcref_set_value<int,person> *prop, status & ) -> const int & 
 			{ 
 			this->last_accessed_prop = prop; 
 			return prop->v; 
@@ -60,7 +61,7 @@ person::person() :
 			}
 		),
 
-	bmi( [this]( const property_get<float> *prop ) -> float
+	bmi( [this]( const property_get<float> *prop, status & ) -> float
 			{
 			this->last_accessed_prop = prop; 
 			float height_m = (float)this->height.v / 100.f;
@@ -97,30 +98,61 @@ class folks
 
 		property_getcref_value<int, folks> simple_int;
 
-		void init_persons()
+		void init_persons( int nums )
 			{
-			persons.v.resize(60);
-			for (size_t i = 0; i < 60; ++i)
+			persons.v.clear();
+			persons.v.resize(nums);
+			for (size_t i = 0; i < (size_t)nums; ++i)
 				{
 				persons.v[i] = std::make_unique<person>();
-				
 				}
+			simple_int.v = nums;
 			}
 
 	};
 
 folks::folks()
-	: persons( [this]( const auto *prop ) -> const auto & { return prop->v; } )
-	, simple_int( 23 , [this]( const auto *prop ) -> const auto & { return prop->v; } )
+	: persons( [this]( const auto *prop, status &result ) -> const auto & 
+		{ 
+		if( prop->v.size() < 30 ) 
+			{ 
+			static const decltype(prop->v) noresult; // create a local static value with the same type as persons
+			result = status::invalid; // set invalid as result, and return the local static value which has no value
+			return noresult;
+			} 
+		return prop->v; 
+		} 
+	)
+	, simple_int( 23 , [this]( const auto *prop, status & ) -> const auto & { return prop->v; } )
 	{
 	}
 
 TEST(property, complicated_property_test)
 	{
 	folks f;
-	f.init_persons();
 
+	// simple_int should default to 23
 	EXPECT_EQ( (int)f.simple_int, 23 );
+
+	// initialize to a low value
+	f.init_persons(20);
+
+	// trigger invalid status
+	EXPECT_THROW( f.persons.get(), ctle::status_error );
+
+	// use status parameter instead 
+	status result;
+	auto &tm = f.persons.get(result);
+	EXPECT_EQ( result, status::invalid );
+
+	// make sure that the value returned is not the actual value, but rather an empty static stand-in
+	EXPECT_EQ( tm.size() , 0 );
+
+	// initialize, so we are not invalid anymore
+	f.init_persons(60);
+
+	// after init, simple_int should be 145
+	EXPECT_EQ( (int)f.simple_int, 60 );
 
 	// make sure it is possible to access the values and that all values are set
 	EXPECT_EQ( f.persons.get().size(), 60 );

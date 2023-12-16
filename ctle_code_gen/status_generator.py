@@ -339,8 +339,16 @@ namespace ctle
 #endif//VULKAN_CORE_H_
 
 #endif//CTLE_IMPLEMENTATION
+  
+	class status_error : public std::runtime_error
+		{
+		public:
+			status value;
+			explicit status_error( status _value, char const* const _Message = "" ) noexcept : value(_value), std::runtime_error(_Message) {}
+		};
 
 	}
+// namespace ctle
 
 // stream operator for writing a status to a stream
 inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
