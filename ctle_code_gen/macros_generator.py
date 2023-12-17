@@ -124,9 +124,9 @@ def generate_macros( path:str, undef_path:str ):
 
 	def_text.comment_ln('Calls a function which returns a ctle::status_return value, checks the status and reports/returns the status part if it is an error, along with a log output.')
 	def_text.comment_ln('If the call succeeds, the retval variable will receive the value part of the return value.')
+	def_text.comment_ln('Note that the receiving variable must exist before the call. To create the value, use ctStatusAutoReturnCall, below.')
 	add_macro( 'ctStatusReturnCall', '''
 #define ctStatusReturnCall( retval , scall )\\
-	decltype( scall )::value_type retval = {};\\
 	{\\
 	auto _ctle_call_statuspair = scall; \\
 	if( !_ctle_call_statuspair.status() ) {\\
@@ -136,6 +136,14 @@ def generate_macros( path:str, undef_path:str ):
 	retval = std::move(_ctle_call_statuspair.value());\\
 	}
 ''' )
+
+	def_text.comment_ln('Same as ctStatusReturnCall, above, but first creates the return value before the call, made the same type as the value_type of the status_return return value.')
+	def_text.comment_ln('Note that the receiving variable must NOT exist before the call. To use an existing value, use ctStatusReturnCall, above.')
+	add_macro( 'ctStatusAutoReturnCall', '''
+#define ctStatusAutoReturnCall( retval , scall )\\
+	decltype( scall )::value_type retval; ctStatusReturnCall( retval, scall )
+''' )
+
 
 	out = formatted_output()
 	out.lines.extend( header_text.lines )

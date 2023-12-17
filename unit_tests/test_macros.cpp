@@ -29,7 +29,7 @@ status_return<status,std::string> ReturnsStatusReturnError()
 
 status ChecksStatusReturnError()
 	{
-	ctStatusReturnCall( return_str , ReturnsStatusReturnError() );
+	ctStatusAutoReturnCall( return_str , ReturnsStatusReturnError() );
 	
 	// this should never happen:
 	if( return_str == "")
@@ -44,8 +44,9 @@ status_return<status,std::string> ReturnsStatusReturnSuccessfulValue()
 
 status ChecksStatusReturnErrorSuccessfulValue()
 	{
-	ctStatusReturnCall( return_str , ReturnsStatusReturnSuccessfulValue() );
-	if( return_str == "successful value" )
+	std::string my_return_string = "hello";
+	ctStatusReturnCall( my_return_string , ReturnsStatusReturnSuccessfulValue() );
+	if( my_return_string == "successful value" )
 		return status::ok;
 	return status::cant_read;
 	}
