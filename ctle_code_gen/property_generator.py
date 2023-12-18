@@ -2,6 +2,7 @@
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 from .formatted_output import formatted_output
+from enum import Enum
 
 get_types = { 
 	'get': '_Ty', 
@@ -18,21 +19,30 @@ def property_name( get_type:str, set_type:bool, value_type:bool ):
 		str += '_value'
 	return str
 
-def output_ctor( out, prop_class:str, get_type:str, set_type:bool, value_param:bool, value_default_assign:bool ):
+class ctor_value_type(Enum):
+	no_value_type = 0
+	value_default_assignment = 1
+	value_parameter = 2
+
+def output_ctor( out, prop_class:str, get_type:str, set_type:bool, value_type:ctor_value_type ):
 	str = prop_class + '( '
-	if value_param:
+	if value_type == ctor_value_type.value_parameter:
 		str += 'const _Ty &value, '
 	if get_type != None:
 		str += f'_get_type _get'
+		if value_type != ctor_value_type.no_value_type:
+			str += '= {}'
 	if set_type:
 		if get_type != None:
 			str += ', '
 		str += f'_set_type _set'
+		if value_type != ctor_value_type.no_value_type:
+			str += '= {}'		
 	str += ' ) :'
 	out.ln(str)
 	with out.tab():
 		str = ''
-		if value_param:
+		if value_type == ctor_value_type.value_parameter:
 			str += 'v(value), '
 		if get_type != None:
 			str += 'get_method(_get)'
@@ -40,7 +50,7 @@ def output_ctor( out, prop_class:str, get_type:str, set_type:bool, value_param:b
 			if get_type != None:
 				str += ', '
 			str += 'set_method(_set)'
-		if value_default_assign:
+		if value_type == ctor_value_type.value_default_assignment:
 			str += ' { trivially_default_constructible_identity_assign(this->v); }'
 		else:
 			str += ' {}'
@@ -84,23 +94,34 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			out.ln()
    
 			# define ctors
-			out.comment_ln('standard ctor with assignment(s) for the property')
-			output_ctor( out, prop_class, get_type, set_type, value_type, False )
 			if value_type:
-				out.comment_ln('ctor with default assignment of the value object')
-				output_ctor( out, prop_class, get_type, set_type, False, True )
-
+				out.comment_ln('default ctor with default initialized value')
+				output_ctor( out, prop_class, get_type, set_type, ctor_value_type.value_default_assignment )
+				out.comment_ln('ctor assignment for the value')
+				output_ctor( out, prop_class, get_type, set_type, ctor_value_type.value_parameter )
+			else:
+				out.comment_ln('ctor with explicit assignment(s) for the property')
+				output_ctor( out, prop_class, get_type, set_type, ctor_value_type.no_value_type )
+			
 			# define convert to type operator and get method
 			if get_type != None:
 				out.comment_ln('get method which returns the value. This version sets the status into a provided parameter, and does not throw any exception.')
 				out.ln(f'{get_types[get_type]} get(status &result) const noexcept')
 				with out.blk(): 
 					out.ln('result = status::ok;')
+					if value_type:
+						out.ln('if( !(this->get_method) )')
+						with out.blk():
+							out.ln('return this->v;') 
 					out.ln('return this->get_method(this, result);')
 				out.ln()
 				out.comment_ln('get method which returns the value. This version throws a std::status_error if there is an error.')
 				out.ln(f'{get_types[get_type]} get() const')
 				with out.blk(): 
+					if value_type:
+						out.ln('if( !(this->get_method) )')
+						with out.blk():
+							out.ln('return this->v;') 
 					out.ln('status result = status::ok;')
 					out.ln(f'{get_types[get_type]} ret_val = this->get_method(this, result);')
 					out.ln('if( result != status::ok )')
@@ -111,6 +132,10 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 				out.comment_ln('operator which return the value. This operator throws std::status_error if there is an error.')
 				out.ln(f'operator {get_types[get_type]} () const')
 				with out.blk(): 
+					if value_type:
+						out.ln('if( !(this->get_method) )')
+						with out.blk():
+							out.ln('return this->v;') 
 					out.ln('status result = status::ok;')
 					out.ln(f'{get_types[get_type]} ret_val = this->get_method(this, result);')
 					out.ln('if( result != status::ok )')
@@ -124,11 +149,20 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 				out.comment_ln('set method which sets the property to the provided value. The status is returned from the method, and it does not throw any exception.')
 				out.ln(f'status set(const _Ty &value) noexcept')
 				with out.blk():
+					if value_type:
+						out.ln('if( !(this->set_method) )')
+						with out.blk():
+							out.ln('this->v = value;')
+							out.ln('return status::ok;') 
 					out.ln('return this->set_method(this, value);')
 				out.ln()
 				out.comment_ln('operator which sets the property to the provided value. This operator throws std::status_error if there is an error.')				
 				out.ln(f'const {prop_class} & operator= (const _Ty &value)')
 				with out.blk(): 
+					if value_type:
+						out.ln('if( !(this->set_method) )')
+						with out.blk():
+							out.ln('this->v = value;')					
 					out.ln('status result = this->set_method(this, value);')
 					out.ln('if( result != status::ok )')
 					with out.blk():
@@ -138,7 +172,8 @@ def write_property_class( out, get_type:str, set_type:bool, value_type:bool ):
 			
 		out.ln('private:')
 		with out.tab():
-			out.ln(f'{prop_class}() = delete;')
+			if not value_type:
+				out.ln(f'{prop_class}() = delete;')
 			out.ln(f'{prop_class}( const {prop_class} & ) = delete;')
 			out.ln(f'const {prop_class} & operator= ( const {prop_class} & ) = delete;')
 			out.ln(f'{prop_class}( {prop_class} && ) = delete;')
