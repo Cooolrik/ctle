@@ -62,7 +62,7 @@ class folks
 	{
 	private:
 		std::vector<std::unique_ptr<person>> _persons;
-		int _simple_int = 23;
+		int _simple_int;
 
 	public:
 		folks();
@@ -95,7 +95,7 @@ folks::folks()
 		return this->_persons; 
 		} 
 	)
-	, simple_int( _simple_int )
+	, simple_int( _simple_int, 23 )
 	{
 	}
 

@@ -275,7 +275,19 @@ class class_def:
 				out.ln( name + '(' )
 				match self.storageType:
 					case storage_type.value:
-						out.ln( ' _Ty &_value ) : value(_value) {}', append = True )
+						out.ln( ' _Ty &_value ) : value(_value)', append = True )
+						with out.blk():
+							out.comment_ln('set a default value IF the value type does not automatically set a default value')
+							out.ln('identity_assign_if_trivially_default_constructible<_Ty>( _value );')
+						out.ln()
+
+						# add a second ctor with default value assignment
+						out.comment_ln('property standard ctor with specific assignment of default value')
+						out.ln( name + '( _Ty &_value, const _Ty &_initial_value ) : value(_value)' )
+						with out.blk():
+							out.comment_ln('set an initial value to the object')
+							out.ln('this->value = _initial_value;')
+
 					case storage_type.ptr:
 						out.ln( ' std::unique_ptr<_Ty> &_value ) : value(_value) {}', append = True )
 					case storage_type.atomic:
