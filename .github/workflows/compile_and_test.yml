@@ -19,6 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         compiler: [ g++-10 ]
+        python-version: [ "3.11" ]
         include:
           - os: ubuntu-latest
             compiler: g++-10
