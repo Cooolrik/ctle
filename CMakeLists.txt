@@ -70,6 +70,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/thread_safe_map.h
 		./ctle/types.h
 		./ctle/uuid.h
+		./ctle/util.h
 		./ctle/_macros.inl
 		./ctle/_undef_macros.inl
 
@@ -89,6 +90,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_string_funcs.cpp
 		./unit_tests/test_thread_safe_map.cpp
 		./unit_tests/test_types.cpp
+		./unit_tests/test_util.cpp
 		./unit_tests/test_uuid.cpp
 		./unit_tests/test_macros.cpp
 

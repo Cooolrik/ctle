@@ -4,22 +4,7 @@
 
 #include "unit_tests.h"
 
-#include "../ctle/idx_vector.h"
-#include "../ctle/optional_idx_vector.h"
-#include "../ctle/optional_value.h"
-#include "../ctle/optional_vector.h"
-#include "../ctle/readers_writer_lock.h"
-#include "../ctle/thread_safe_map.h"
-#include "../ctle/bimap.h"
-#include "../ctle/bitmap_font.h"
-#include "../ctle/file_funcs.h"
-#include "../ctle/string_funcs.h"
-#include "../ctle/status_return.h"
-#include "../ctle/status.h"
-#include "../ctle/uuid.h"
-#include "../ctle/endianness.h"
-#include "../ctle/log.h"
-#include "../ctle/types.h"
+#include "../ctle/ctle.h"
 
 // just some value
 const i64 global_random_seed = 12876123876;

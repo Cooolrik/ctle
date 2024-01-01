@@ -41,25 +41,31 @@ class formatted_output:
 			self.lines.append(st)
 
 	@contextmanager
-	def tab(self):
+	def tab(self, prefix_ln:str = None):
 		'''Add an indented block of code, only indent, no braces'''
 		try:
+			if prefix_ln:
+				self.ln(prefix_ln)
 			self.indentation += 1	
 			yield self
 
 		finally:
 			self.indentation -= 1
 
-	def ln(self, lin:str = None, no_indent = False ):
+	def ln(self, lin:str = None, no_indent = False, append = False ):
 		'''Add a single line, at current indentation, (or no indentation if no_indent is True).'''
-		if lin != None:
-			if no_indent:
-				self.lines.append( lin )
+		if append:
+			if lin:
+				self.lines[-1] += lin
+		else:				
+			if lin != None:
+				if no_indent:
+					self.lines.append( lin )
+				else:
+					self.lines.append( self.tab_str * self.indentation + lin )
 			else:
-				self.lines.append( self.tab_str * self.indentation + lin )
-		else:
-			self.lines.append('')
-
+				self.lines.append('')
+   
 	# single line block
 	def blk_ln(self, lin:str, add_comma:bool = False ):
 		'''Add a single-line block, at the current indentation. Optionally add a comma at the end.'''
