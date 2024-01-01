@@ -426,6 +426,7 @@ def generate_property( path:str ):
 	out.ln()
 	out.ln('#include <functional>')
 	out.ln('#include "status.h"')
+	out.ln('#include "util.h"')
 	out.ln()
 
 	props = []
