@@ -238,20 +238,21 @@ class class_def:
 			for gm in self.setMethods:
 				gm.storageType = storageType
 
-	def get_name( self ):
+	def get_name( self, includeParameters:bool = False ):
 		str = 'prop'
 		if self.getMethods:
 			str += '_get'
 		if self.setMethods:
 			str += '_set'
-		str += '<_Ty,prop::'
-		if self.getMethods:
-			str += self.mainPassType.name + '_'
-		str += self.storageType.name + '>'
+		if includeParameters:
+			str += '<_Ty,prop::'
+			if self.getMethods:
+				str += self.mainPassType.name + '_'
+			str += self.storageType.name + '>'
 		return str
 
 	def generate_declaration( self, out ):
-		name = self.get_name()
+		name = self.get_name( includeParameters = True )
 		out.ln('template<class _Ty>')
 		out.ln(f'class {name}')
 
