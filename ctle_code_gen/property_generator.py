@@ -257,8 +257,6 @@ class class_def:
 
 	def generate_class( self, out ):
 		name = self.get_name()
-		print(name)
-		#self.generate_description( out )
 		self.generate_declaration( out )
 		with out.blk( add_semicolon=True ):
 			with out.tab('public:'):
@@ -424,7 +422,10 @@ def generate_property( path:str ):
 	out.ln()
 	out.ln('#pragma once')
 	out.ln()
+	out.ln('#include <memory>')
+	out.ln('#include <atomic>')
 	out.ln('#include <functional>')
+	out.ln()
 	out.ln('#include "status.h"')
 	out.ln('#include "util.h"')
 	out.ln()
