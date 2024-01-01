@@ -14,6 +14,7 @@ else
 	./Debug/unit_tests > ../results_c++11
 fi 
 cd ..
+tail results_c++11
 
 echo "Building & testing C++14"
 mkdir -p build_c++14
@@ -26,6 +27,7 @@ else
 	./Debug/unit_tests > ../results_c++14
 fi 
 cd ..
+tail results_c++14
 
 echo "Building & testing C++17"
 mkdir -p build_c++17
@@ -38,6 +40,8 @@ else
 	./Debug/unit_tests > ../results_c++17
 fi 
 cd ..
+tail results_c++17
+
 
 echo "Building & testing C++20"
 mkdir -p build_c++20
@@ -50,3 +54,4 @@ else
 	./Debug/unit_tests > ../results_c++20
 fi 
 cd ..
+tail results_c++20
