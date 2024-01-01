@@ -42,7 +42,7 @@ person::person()
 			})
 	{}
 
-TEST( property , basic_test )
+TEST( prop , basic_test )
 	{
 	person p;
 
@@ -58,181 +58,78 @@ TEST( property , basic_test )
 	EXPECT_NEAR( bmi, 24.6913f, 0.0001f );	// 80kg / (1.8m * 1.8m) = 24.6913 kg/m^2
 	}
 
-//class folks 
-//	{
-//	public:
-//		folks();
-//		
-//		property_getcref_value<std::vector<std::unique_ptr<person>>, folks> persons;
-//
-//		property_getcref_value<int, folks> simple_int;
-//
-//		void init_persons( int nums )
-//			{
-//			persons.v.clear();
-//			persons.v.resize(nums);
-//			for (size_t i = 0; i < (size_t)nums; ++i)
-//				{
-//				persons.v[i] = std::unique_ptr<person>( new person() );
-//				}
-//			simple_int.v = nums;
-//			}
-//
-//	};
-//
-//folks::folks()
-//	: persons( [this]( const property_getcref_value<std::vector<std::unique_ptr<person>>, folks> *prop, status &result ) -> const std::vector<std::unique_ptr<person>> &
-//		{ 
-//		if( prop->v.size() < 30 ) 
-//			{ 
-//			static const decltype(prop->v) noresult; // create a local static value with the same type as persons
-//			result = status::invalid; // set invalid as result, and return the local static value which has no value
-//			return noresult;
-//			} 
-//		return prop->v; 
-//		} 
-//	)
-//	, simple_int( 23 , [this]( const property_getcref_value<int, folks> *prop, status & ) -> const int & { return prop->v; } )
-//	{
-//	}
-//
-//TEST(property, complicated_property_test)
-//	{
-//	folks f;
-//
-//	// simple_int should default to 23
-//	EXPECT_EQ( (int)f.simple_int, 23 );
-//
-//	// initialize to a low value
-//	f.init_persons(20);
-//
-//	// trigger invalid status
-//	EXPECT_THROW( f.persons.get(), ctle::status_error );
-//
-//	// use status parameter instead 
-//	status result;
-//	auto &tm = f.persons.get(result);
-//	EXPECT_EQ( result, status::invalid );
-//
-//	// make sure that the value returned is not the actual value, but rather an empty static stand-in
-//	EXPECT_EQ( tm.size() , 0 );
-//
-//	// initialize, so we are not invalid anymore
-//	f.init_persons(60);
-//
-//	// after init, simple_int should be 145
-//	EXPECT_EQ( (int)f.simple_int, 60 );
-//
-//	// make sure it is possible to access the values and that all values are set
-//	EXPECT_EQ( f.persons.get().size(), 60 );
-//	for( size_t inx=0; inx<f.persons.get().size(); ++inx )
-//		{
-//		EXPECT_NE( f.persons.get()[20].get(), nullptr );
-//		}
-//
-//	}
-//
-//template<typename _Ty>
-//class copy
-//	{
-//	public:
-//		using get_set =  ctle::property_get_set<_Ty>;
-//	
-//	};
-//
-//template<typename _Ty>
-//class cref
-//	{
-//	public:
-//		using get_set =  ctle::property_getcref_set<_Ty>;
-//	
-//	};
-//
-//template<typename _Ty>
-//class copy_f
-//	{
-//	public:
-//		using get_set =  ctle::property_get_set<_Ty>;
-//	
-//	};
-//
-//template<typename _Ty>
-//class cref_f
-//	{
-//	public:
-//		using get_set =  ctle::property_getcref_set<_Ty>;
-//	
-//	};
-//
-//template<typename _Ty, template<typename> class _Tmp = copy> 
-//class prop_get_set : public _Tmp<_Ty>::get_set
-//	{
-//	public:
-//		using value_type = _Ty;
-//	};
-//
-//class test
-//	{
-//	public:
-//		prop_get_set<int> int_prop;
-//		prop_get_set<int, cref_f> int_prop2;
-//
-//	};
-//
-//#include "../ctle/util.h"
-//
-//class p
-//	{
-//	private:
-//		std::unique_ptr<std::vector<int>> &href;
-//		
-//	public:
-//		p( std::unique_ptr<std::vector<int>> &_href ) : href(_href) {}
-//
-//		// pointer operator which returns const _Ty &
-//		// - note: sets the result of the call in the result status parameter
-//		// - note: does not raise any exceptions
-//		const std::vector<int> & get() const noexcept
-//			{
-//			if( !(this->href) )
-//				{
-//				return nil_object::ref<const std::vector<int>>();
-//				}
-//			return *(this->href.get());
-//			}
-//	};
-//
-//class t
-//	{
-//	private:
-//		std::unique_ptr<std::vector<int>> h;
-//
-//	public:
-//		p prop;
-//
-//		t() : prop(h) 
-//			{
-//			//h = std::make_unique<int>();
-//			//*(h.get()) = 1243;
-//			}
-//	};
-//
-//
-//TEST(property, testest)
-//	{
-//	//test f; 
-//	//
-//	//f.int_prop.get();
-//	//f.int_prop2.get();
-//	//
-//
-//	t tm;
-//
-//	const std::vector<int> &val = tm.prop.get();
-//
-//	if( nil_object::is_nil(val) )
-//		{
-//		std::cout << "match";
-//		}
-//
-//	}
+class folks 
+	{
+	private:
+		std::vector<std::unique_ptr<person>> _persons;
+		int _simple_int = 23;
+
+	public:
+		folks();
+		
+		prop_get<std::vector<std::unique_ptr<person>>, prop::custom> persons;
+
+		prop_get<int> simple_int;
+
+		void init_persons( int nums )
+			{
+			_persons.clear();
+			_persons.resize(nums);
+			for (size_t i = 0; i < (size_t)nums; ++i)
+				{
+				_persons[i] = std::unique_ptr<person>( new person() );
+				}
+			_simple_int = nums;
+			}
+
+	};
+
+folks::folks()
+	: persons( [this]( const prop_get<std::vector<std::unique_ptr<person>>, prop::custom> *, status &result ) -> const std::vector<std::unique_ptr<person>> &
+		{ 
+		if( this->_persons.size() < 30 ) 
+			{ 
+			result = status::invalid; // set invalid as result, and return the local static value which has no value
+			return nil_object::ref<std::vector<std::unique_ptr<person>>>();
+			} 
+		return this->_persons; 
+		} 
+	)
+	, simple_int( _simple_int )
+	{
+	}
+
+TEST(prop, complicated_property_test)
+	{
+	folks f;
+
+	// simple_int should default to 23
+	EXPECT_EQ( (int)f.simple_int, 23 );
+
+	// initialize to a low value
+	f.init_persons(20);
+
+	// trigger invalid status
+	EXPECT_THROW( f.persons.get(), ctle::status_error );
+
+	// use status parameter instead 
+	status result;
+	auto &tm = f.persons.get(result);
+	EXPECT_EQ( result, status::invalid );
+
+	// make sure that the value returned is not the actual value, but rather an empty static stand-in
+	EXPECT_TRUE( nil_object::is_nil(tm) );
+
+	// initialize, so we are not invalid anymore
+	f.init_persons(60);
+
+	// after init, simple_int should be 145
+	EXPECT_EQ( (int)f.simple_int, 60 );
+
+	// make sure it is possible to access the values and that all values are set
+	EXPECT_EQ( f.persons.get().size(), 60 );
+	for( size_t inx=0; inx<f.persons.get().size(); ++inx )
+		{
+		EXPECT_NE( f.persons.get()[20].get(), nullptr );
+		}
+	}
