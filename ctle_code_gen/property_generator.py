@@ -492,9 +492,3 @@ def generate_property( path:str ):
 			out.ln()
 			
 	out.write_lines_to_file( path )
-
-if __name__ == "__main__":
-    generate_property( './ctle/property.h' )
-
-
-

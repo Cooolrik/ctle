@@ -1,7 +1,7 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "../ctle/property.h"
+#include "../ctle/prop.h"
 #include "../ctle/status_return.h"
 
 #include "unit_tests.h"

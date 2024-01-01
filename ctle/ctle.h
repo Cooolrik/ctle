@@ -13,7 +13,7 @@
 #include "../ctle/optional_value.h"
 #include "../ctle/optional_vector.h"
 #include "../ctle/readers_writer_lock.h"
-#include "../ctle/property.h"
+#include "../ctle/prop.h"
 #include "../ctle/status.h"
 #include "../ctle/status_return.h"
 #include "../ctle/string_funcs.h"

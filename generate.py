@@ -4,7 +4,7 @@ import ctle_code_gen
 print('ctle code generation running...')
 
 # generate property.h 
-ctle_code_gen.property_generator.generate_property('./ctle/property.h')
+ctle_code_gen.property_generator.generate_property('./ctle/prop.h')
 
 # generate status.h 
 ctle_code_gen.status_generator.generate_status('./ctle/status.h')
