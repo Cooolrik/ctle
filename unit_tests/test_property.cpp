@@ -28,13 +28,13 @@ class person
 person::person() 
 	: weight( _weight )
 	, height( _height )
-	, height_in_meters( [this]( const auto *prop, const float &value ) -> status
+	, height_in_meters( [this]( const prop_set<float,prop::custom> *prop, const float &value ) -> status
 			{
 			this->last_accessed_custom_prop = prop; 
 			this->_height = (int) (value * 100.f); // convert to centimeters, write directly to height.v, skip the height prop method
 			return status::ok;
 			})
-	, bmi( [this]( const auto *prop, status & ) -> float
+	, bmi( [this]( const prop_get<float,prop::cpy_custom> *prop, status & ) -> float
 			{
 			this->last_accessed_custom_prop = prop; 
 			float height_m = (float)this->_height / 100.f;
