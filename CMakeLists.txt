@@ -59,6 +59,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/file_funcs.h
 		./ctle/idx_vector.h
 		./ctle/log.h
+		./ctle/multithread_pool.h
 		./ctle/optional_idx_vector.h
 		./ctle/optional_value.h
 		./ctle/optional_vector.h
@@ -80,6 +81,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_file_funcs.cpp
 		./unit_tests/test_idx_vector.cpp
 		./unit_tests/test_log.cpp
+		./unit_tests/test_multithread_pool.cpp
 		./unit_tests/test_optional_idx_vector.cpp
 		./unit_tests/test_optional_value.cpp
 		./unit_tests/test_optional_vector.cpp
