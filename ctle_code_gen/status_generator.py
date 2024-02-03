@@ -173,9 +173,9 @@ def generate_status( path:str ):
 #include <unordered_map>
 
 namespace ctle
-	{
+{
 	enum class status_code : int
-		{''')
+	{''')
 
 	out.indentation = 2
 
@@ -185,16 +185,16 @@ namespace ctle
 			out.ln( f'{value.name.ljust(52)}= {value.value}, // {value.description}' )
 		out.ln()
 
-	out.lines.append( '''		};
+	out.lines.append( '''	};
 
 	// status maps a number of error values into one error enum
 	// and has ctors which converts these error values into a status_code value
 	class status
-		{
-		public:
+	{
+	public:
 ''')
 
-	out.indentation = 3
+	out.indentation = 2
 
 	for type in error_types:
 		out.comment_ln( type.type_name )
@@ -202,47 +202,47 @@ namespace ctle
 			out.ln( f'static const status {(value.name + ";").ljust(53)} // {value.description}' )
 		out.ln()
 
-	out.lines.append( '''		private:
-			status_code svalue = status_code::ok;
+	out.lines.append( '''	private:
+		status_code svalue = status_code::ok;
 
-		public:
-			status() = default;
-			status( const status &other ) = default;
+	public:
+		status() = default;
+		status( const status &other ) = default;
 
-			status( const status_code &_value ) noexcept : svalue( _value ) {}
-			const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
+		status( const status_code &_value ) noexcept : svalue( _value ) {}
+		const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
 
 #ifdef _SYSTEM_ERROR_
-			// convert from STL std::errc
-			static status_code to_status_code( std::errc _value ) noexcept;
-			status( const std::errc &_value ) noexcept : svalue( to_status_code(_value) ) {}
-			const status &operator = ( const std::errc &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
+		// convert from STL std::errc
+		static status_code to_status_code( std::errc _value ) noexcept;
+		status( const std::errc &_value ) noexcept : svalue( to_status_code(_value) ) {}
+		const status &operator = ( const std::errc &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
 #endif//_SYSTEM_ERROR_
 
 #ifdef VULKAN_CORE_H_
-			// convert from Vulkan error: VkResult
-			static status_code to_status_code( VkResult _value ) noexcept;
-			status( const VkResult &_value ) noexcept : svalue( to_status_code(_value) ) {}
-			const status &operator = ( const VkResult &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
+		// convert from Vulkan error: VkResult
+		static status_code to_status_code( VkResult _value ) noexcept;
+		status( const VkResult &_value ) noexcept : svalue( to_status_code(_value) ) {}
+		const status &operator = ( const VkResult &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
 #endif//VULKAN_CORE_H_
 
-			// use as a bool
-			operator bool() const { return svalue >= status_code::ok; }
-			bool operator !() const { return svalue < status_code::ok; }
+		// use as a bool
+		operator bool() const { return svalue >= status_code::ok; }
+		bool operator !() const { return svalue < status_code::ok; }
 
-			// compare to status_code
-			bool operator == ( const status_code &_value ) const noexcept { return this->svalue == _value; }
-			bool operator != ( const status_code &_value ) const noexcept { return this->svalue != _value; }
+		// compare to status_code
+		bool operator == ( const status_code &_value ) const noexcept { return this->svalue == _value; }
+		bool operator != ( const status_code &_value ) const noexcept { return this->svalue != _value; }
 
-			// get the status_code value 
-			status_code value() const { return svalue; }
+		// get the status_code value 
+		status_code value() const { return svalue; }
 
-			// get the name of the status code as a string 
-			std::string name() const;
+		// get the name of the status code as a string 
+		std::string name() const;
 
-			// get a description of the status code value
-			std::string description() const;
-		};
+		// get a description of the status code value
+		std::string description() const;
+	};
 
 #ifdef CTLE_IMPLEMENTATION
 ''')
@@ -256,15 +256,15 @@ namespace ctle
 		out.ln()	
 
 	out.lines.append('''	struct status_code_string_description
-		{
+	{
 		const char *name;
 		const char *description;
-		};
+	};
 
 	static const std::unordered_map<status_code, status_code_string_description> status_code_string_descriptions = 
-		{''')
+	{''')
 			
-	out.indentation = 3
+	out.indentation = 2
 
 	for type in error_types:
 		out.comment_ln( type.type_name )
@@ -272,90 +272,90 @@ namespace ctle
 			out.ln( f'{{ status_code::{value.name} , {{ "{value.name}", "{value.description}" }} }} , ')
 		out.ln('')		
 			
-	out.lines.append( '''		};
+	out.lines.append( '''	};
 
 	// get the name of the status code as a string 
 	std::string status::name() const
-		{
+	{
 		auto it = status_code_string_descriptions.find( this->svalue );
 		if( it == status_code_string_descriptions.end() )
-			{
+		{
 			return "";
-			}
-		return it->second.name;
 		}
+		return it->second.name;
+	}
 	
 	// get a description of the status code value
 	std::string status::description() const
-		{
+	{
 		auto it = status_code_string_descriptions.find( this->svalue );
 		if( it == status_code_string_descriptions.end() )
-			{
+		{
 			return "";
-			}
-		return it->second.description;
 		}
+		return it->second.description;
+	}
 		
 #ifdef _SYSTEM_ERROR_
 	static const std::unordered_map<std::errc, status_code> errc_to_status_code_mapping =
-		{''' )
+	{''' )
 			
 	for value in stl_errors.values:
 		if( value.mapped_value != None ):
 			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
 			
-	out.lines.append( '''		};
+	out.lines.append( '''	};
 
 	status_code status::to_status_code( std::errc value ) noexcept
-		{
+	{
 		auto it = errc_to_status_code_mapping.find( value );
 		if( it == errc_to_status_code_mapping.end() )
 			return status_code::stl_unrecognized_error_code;
 		return it->second;
-		}
+	}
 
 #endif//_SYSTEM_ERROR_
 
 #ifdef VULKAN_CORE_H_
 	static const std::unordered_map<VkResult, status_code> vkresult_to_status_code_mapping =
-		{''' )
+	{''' )
 			
 	for value in vulkan_errors.values:
 		if( value.mapped_value != None ):
 			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
 					
-	out.lines.append('''		};
+	out.lines.append('''	};
 	
 	status_code status::to_status_code( VkResult value ) noexcept
-		{
+	{
 		if( value >= VK_SUCCESS )	
 			return status_code::ok;
 		auto it = vkresult_to_status_code_mapping.find( value );
 		if( it == vkresult_to_status_code_mapping.end() )
 			return status_code::vulkan_unrecognized_error_code;
 		return it->second;
-		}
+	}
 
 #endif//VULKAN_CORE_H_
 
 #endif//CTLE_IMPLEMENTATION
   
 	class status_error : public std::runtime_error
-		{
+	{
 		public:
 			status value;
 			explicit status_error( status _value, char const* const _Message = "" ) noexcept : std::runtime_error(_Message), value(_value) {}
-		};
+	};
 
-	}
+}
 // namespace ctle
 
 // stream operator for writing a status to a stream
 inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
-	{
+{
 	os << _status.name() << std::string(" (\\"") << _status.description() << std::string("\\")");
 	return os;
-	}
+}
 ''')	
 			
 	out.write_lines_to_file( path )

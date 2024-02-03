@@ -7,17 +7,17 @@
 
 using namespace ctle;
 
-TEST( util , basic_test )
-	{
+TEST( util, basic_test )
+{
 	auto val = nil_object::ptr();
-	EXPECT_EQ( nil_object::ptr() , val );
-	auto pt = (int*)val;
-	EXPECT_TRUE( nil_object::is_nil(val) );
-	EXPECT_TRUE( nil_object::is_nil(pt) );
+	EXPECT_EQ( nil_object::ptr(), val );
+	auto pt = (int *)val;
+	EXPECT_TRUE( nil_object::is_nil( val ) );
+	EXPECT_TRUE( nil_object::is_nil( pt ) );
 
 	auto &ref = nil_object::ref<int>();
-	EXPECT_TRUE( nil_object::is_nil(ref) );
+	EXPECT_TRUE( nil_object::is_nil( ref ) );
 
 	auto &ref2 = nil_object::ref<std::vector<std::unique_ptr<int>>>();
-	EXPECT_TRUE( nil_object::is_nil(ref2) );
-	}
+	EXPECT_TRUE( nil_object::is_nil( ref2 ) );
+}

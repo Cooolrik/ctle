@@ -11,7 +11,7 @@ from contextlib import contextmanager
 class formatted_output:
 	'''formatted_output defined a class which can be used to more easily generate formatted output of C/C++ files. The class supports different kinds of indentation, and wraps comments.'''
 
-	def __init__(self, indentation:int = 0, tab_str:str = '\t', indent_braces:bool = True, comment_wrap:int = 120 ) -> None:
+	def __init__(self, indentation:int = 0, tab_str:str = '\t', indent_braces:bool = False, comment_wrap:int = 120 ) -> None:
 		self.lines = []
 		self.indent_braces = indent_braces
 		self.indentation = indentation

@@ -450,47 +450,46 @@ def generate_property( path:str ):
 
 	out.ln('namespace ctle')
 	with out.blk():
-		out.ln( '''
-    // The prop_[...] template classes are a convenient way to implement properties in classes, where each property can be accessed as a 
+		out.ln( '''    // The prop_[...] template classes are a convenient way to implement properties in classes, where each property can be accessed as a 
     // normal variable, but can also be made read-only, write-only, read/write, and let the owner class override if a value is returned 
     // from a variable, or evaluated on-the-fly, etc.     
          
 	class prop
+	{
+	public:
+		// types of property specializations
+		enum class type
 		{
-		public:
-			// types of property specializations
-			enum class type
-				{
-				cpy_value,		// return a copy, direct stored value
-				cref_value,		// return a const ref, direct stored value
-				cpy_atomic,		// return a copy, atomic-access value
-				cref_atomic,	// return a const ref, atomic-access value
-				cpy_ptr,		// return a copy, value stored as a unique ptr
-				cref_ptr,		// return a const ref, value stored as a unique ptr
-				cptr_ptr,		// return a const pointer, value stored as a unique ptr
-				cpy_custom,		// return a copy, custom value handled by the owner 
-				cref_custom,	// return a const ref, custom value handled by the owner 
-				cptr_custom,	// return a const pointer, custom value handled by the owner 
-				};
-			
-			// const aliases, to directly use enum value
-			static constexpr const type cpy_value = type::cpy_value;		// return a copy, direct stored value
-			static constexpr const type cref_value = type::cref_value;		// return a const ref, direct stored value
-			static constexpr const type cpy_atomic = type::cpy_atomic;		// return a copy, atomic-access value
-			static constexpr const type cref_atomic = type::cref_atomic;	// return a const ref, atomic-access value
-			static constexpr const type cpy_ptr = type::cpy_ptr;			// return a copy, value stored as a unique ptr
-			static constexpr const type cref_ptr = type::cref_ptr;			// return a const ref, value stored as a unique ptr
-			static constexpr const type cptr_ptr = type::cptr_ptr;			// return a const pointer, value stored as a unique ptr
-			static constexpr const type cpy_custom = type::cpy_custom;		// return a copy, custom value handled by the owner 
-			static constexpr const type cref_custom = type::cref_custom;	// return a const ref, custom value handled by the owner 
-			static constexpr const type cptr_custom = type::cptr_custom;	// return a const pointer, custom value handled by the owner 
-
-			// default types for when return type is not defined. defaults to const ref'd, and should be used as parameter by all set-only templates. 
-			static constexpr const type value = type::cref_value;
-			static constexpr const type atomic = type::cref_atomic;
-			static constexpr const type ptr = type::cref_ptr;
-			static constexpr const type custom = type::cref_custom;
+			cpy_value,		// return a copy, direct stored value
+			cref_value,		// return a const ref, direct stored value
+			cpy_atomic,		// return a copy, atomic-access value
+			cref_atomic,	// return a const ref, atomic-access value
+			cpy_ptr,		// return a copy, value stored as a unique ptr
+			cref_ptr,		// return a const ref, value stored as a unique ptr
+			cptr_ptr,		// return a const pointer, value stored as a unique ptr
+			cpy_custom,		// return a copy, custom value handled by the owner 
+			cref_custom,	// return a const ref, custom value handled by the owner 
+			cptr_custom,	// return a const pointer, custom value handled by the owner 
 		};
+		
+		// const aliases, to directly use enum value
+		static constexpr const type cpy_value = type::cpy_value;		// return a copy, direct stored value
+		static constexpr const type cref_value = type::cref_value;		// return a const ref, direct stored value
+		static constexpr const type cpy_atomic = type::cpy_atomic;		// return a copy, atomic-access value
+		static constexpr const type cref_atomic = type::cref_atomic;	// return a const ref, atomic-access value
+		static constexpr const type cpy_ptr = type::cpy_ptr;			// return a copy, value stored as a unique ptr
+		static constexpr const type cref_ptr = type::cref_ptr;			// return a const ref, value stored as a unique ptr
+		static constexpr const type cptr_ptr = type::cptr_ptr;			// return a const pointer, value stored as a unique ptr
+		static constexpr const type cpy_custom = type::cpy_custom;		// return a copy, custom value handled by the owner 
+		static constexpr const type cref_custom = type::cref_custom;	// return a const ref, custom value handled by the owner 
+		static constexpr const type cptr_custom = type::cptr_custom;	// return a const pointer, custom value handled by the owner 
+
+		// default types for when return type is not defined. defaults to const ref'd, and should be used as parameter by all set-only templates. 
+		static constexpr const type value = type::cref_value;
+		static constexpr const type atomic = type::cref_atomic;
+		static constexpr const type ptr = type::cref_ptr;
+		static constexpr const type custom = type::cref_custom;
+	};
 
 	// prop_[...] base templates, get, get/set or set types. defaults to const ref'd direct values if no _type parameter is specified
 	template<class _Ty, prop::type _type=prop::value> class prop_get;

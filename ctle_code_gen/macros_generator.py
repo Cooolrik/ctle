@@ -113,11 +113,12 @@ def generate_macros( path:str, undef_path:str ):
 
 	def_text.comment_ln('Calls a function which returns a ctle::status value, checks the value and reports/returns the value if it is an error, along with a log output')
 	add_macro( 'ctStatusCall', '''
-#define ctStatusCall( s ) {\\
-	ctle::status _ctle_call_status = s; \\
-	if( !_ctle_call_status ) {\\
-		ctLogError << "Call: " << #s << " failed, returned status_code: " << _ctle_call_status << ctLogEnd;\\
-		return _ctle_call_status;\\
+#define ctStatusCall( s ) \\
+	{\\
+		ctle::status _ctle_call_status = s; \\
+		if( !_ctle_call_status ) {\\
+			ctLogError << "Call: " << #s << " failed, returned status_code: " << _ctle_call_status << ctLogEnd;\\
+			return _ctle_call_status;\\
 		}\\
 	}
 ''' )
@@ -126,14 +127,14 @@ def generate_macros( path:str, undef_path:str ):
 	def_text.comment_ln('If the call succeeds, the retval variable will receive the value part of the return value.')
 	def_text.comment_ln('Note that the receiving variable must exist before the call. To create the value, use ctStatusAutoReturnCall, below.')
 	add_macro( 'ctStatusReturnCall', '''
-#define ctStatusReturnCall( retval , scall )\\
-	{\\
-	auto _ctle_call_statuspair = scall; \\
-	if( !_ctle_call_statuspair.status() ) {\\
-		ctLogError << "Call: " << #scall << " failed, returned status_code: " << _ctle_call_statuspair.status() << ctLogEnd;\\
-		return _ctle_call_statuspair.status();\\
+#define ctStatusReturnCall( retval , scall ) \\
+    {\\
+		auto _ctle_call_statuspair = scall; \\
+		if( !_ctle_call_statuspair.status() ) {\\
+			ctLogError << "Call: " << #scall << " failed, returned status_code: " << _ctle_call_statuspair.status() << ctLogEnd;\\
+			return _ctle_call_statuspair.status();\\
 		}\\
-	retval = std::move(_ctle_call_statuspair.value());\\
+		retval = std::move(_ctle_call_statuspair.value());\\
 	}
 ''' )
 

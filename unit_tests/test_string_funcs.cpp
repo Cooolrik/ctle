@@ -8,12 +8,12 @@
 using namespace ctle;
 
 template<class _Ty> string_span<_Ty> get_span( const std::basic_string<_Ty> &str )
-	{
-	return {str.data(), str.data() + str.size()};
-	}
-	
-TEST( string_funcs , basic_test )
-	{
+{
+	return { str.data(), str.data() + str.size() };
+}
+
+TEST( string_funcs, basic_test )
+{
 	const char *testString1_start = "123456789";
 	const char *testString1_end = &testString1_start[strlen( testString1_start )];
 	const char *testString2_start = " A BCD EFF GH 123 ";
@@ -26,23 +26,23 @@ TEST( string_funcs , basic_test )
 	const size_t random_vals_count = 30000;
 	std::vector<i64> random_vals( random_vals_count );
 	for( size_t i = 0; i < random_vals_count; ++i )
-		{
+	{
 		random_vals[i] = random_value<i64>();
-		}
+	}
 	// generate some random deliminator strings 
 	const std::string source_delims = ",afgejsbdASDGes_ \t\r\n";
 	const size_t random_delims_count = 300;
 	std::vector<std::string> random_delims( random_delims_count );
 	for( size_t i = 0; i < random_delims_count; ++i )
-		{
+	{
 		std::string delim_string;
-		const size_t len = (rand() % 10) + 1;
+		const size_t len = ( rand() % 10 ) + 1;
 		for( size_t q = 0; q < len; ++q )
-			{
+		{
 			delim_string += source_delims[rand() % source_delims.size()];
-			}
-		random_delims[i] = delim_string;
 		}
+		random_delims[i] = delim_string;
+	}
 	std::vector<string_span<char>> lexed_tokens;
 	// we should never hit the char, so span all string
 	EXPECT_TRUE( strcspn_t( testString1_start, testString1_end, "abcdeFGH, " ) == 9 );
@@ -104,16 +104,16 @@ TEST( string_funcs , basic_test )
 	// write random vals to string
 	std::stringstream ss;
 	for( size_t i = 0; i < random_vals_count; ++i )
-		{
+	{
 		ss << random_vals[i];
 		ss << random_delims[i % random_delims_count];
-		}
+	}
 	const std::string tokens = ss.str();
 	// tokenize and read back
 	auto current_span = get_span( tokens );
 	size_t token_index = 0;
 	while( current_span.start < current_span.end )
-		{
+	{
 		// get the next token in the remaining span
 		auto token = strtok_t( current_span, source_delims.c_str() );
 		if( token.start == token.end )
@@ -123,7 +123,7 @@ TEST( string_funcs , basic_test )
 		// move the span to beyond the token
 		current_span.start = token.end;
 		++token_index;
-		}
+	}
 	EXPECT_TRUE( token_index == random_vals_count );
 	// test simple lexing
 	std::string lexTest1 = " \thej,salvan hur mfds det ?! ";
@@ -166,4 +166,4 @@ TEST( string_funcs , basic_test )
 	EXPECT_TRUE( lex_t( &lexed_tokens, get_span<char>( lexTest6 ) ) );
 	EXPECT_TRUE( lexed_tokens.size() == 3 );
 	EXPECT_TRUE( std::string( lexed_tokens[2] ) == "this string does end well" );
-	}
+}

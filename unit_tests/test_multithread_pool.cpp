@@ -8,14 +8,14 @@
 
 using namespace ctle;
 
-TEST( multithread_pool , basic_test )
-	{
+TEST( multithread_pool, basic_test )
+{
 	multithread_pool<int> mypool;
 
 	std::vector<std::unique_ptr<int>> objlist;
-	objlist.push_back( std::unique_ptr<int>( new int(1) ));
-	objlist.push_back( std::unique_ptr<int>( new int(2) ));
-	objlist.push_back( std::unique_ptr<int>( new int(3) ));
+	objlist.push_back( std::unique_ptr<int>( new int( 1 ) ) );
+	objlist.push_back( std::unique_ptr<int>( new int( 2 ) ) );
+	objlist.push_back( std::unique_ptr<int>( new int( 3 ) ) );
 
 	mypool.initialize( objlist );
 	EXPECT_TRUE( objlist.empty() );
@@ -44,4 +44,4 @@ TEST( multithread_pool , basic_test )
 
 	mypool.deinitialize( objlist );
 	EXPECT_EQ( objlist.size(), 3 );
-	}
+}

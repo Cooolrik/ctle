@@ -9,19 +9,19 @@
 using namespace ctle;
 
 static void testReadWriteAccess()
-	{
+{
 	std::vector<uint8_t> cont = {};
 
 	// allocate a random size in range 1M-2M, and write random bytes
-	size_t siz = 1000000 + (random_value<size_t>() % 1000000);
-	cont.resize(siz);
-	for( size_t inx=0; inx<siz; ++inx )
-		{
+	size_t siz = 1000000 + ( random_value<size_t>() % 1000000 );
+	cont.resize( siz );
+	for( size_t inx = 0; inx < siz; ++inx )
+	{
 		cont[inx] = random_value<uint8_t>();
-		}
+	}
 
 	// generate a unique local file name using a uuid
-	std::string filename = value_to_hex_string(uuid::generate());
+	std::string filename = value_to_hex_string( uuid::generate() );
 
 	// make sure file does not exists 
 	EXPECT_FALSE( file_exists( filename.c_str() ) );
@@ -38,9 +38,9 @@ static void testReadWriteAccess()
 
 	// make sure the containers are the same
 	EXPECT_TRUE( cont == dest );
-	}
+}
 
-TEST( file_funcs , basic_test )
-	{
+TEST( file_funcs, basic_test )
+{
 	testReadWriteAccess();
-	}
+}

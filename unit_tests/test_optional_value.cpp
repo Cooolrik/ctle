@@ -7,8 +7,8 @@
 
 using namespace ctle;
 
-TEST( optional_value , basic_test )
-	{
+TEST( optional_value, basic_test )
+{
 	optional_value<int> opt( 0x1337 );
 	EXPECT_TRUE( opt.has_value() );
 	EXPECT_TRUE( opt == 0x1337 );
@@ -46,4 +46,4 @@ TEST( optional_value , basic_test )
 	opt.reset();
 	opt2.reset();
 	EXPECT_TRUE( opt == opt2 );
-	}
+}

@@ -10,10 +10,10 @@
 const i64 global_random_seed = 12876123876;
 
 inline void setup_random_seed()
-	{
+{
 	i64 seed = (global_random_seed == -1) ? i64( time( nullptr ) ) : global_random_seed;
 	srand(u32( seed & 0xffffffff ));
-	}
+}
 
 // add headers that you want to pre-compile here
 inline u8 u8_rand() { return (u8)(rand() & 0xff); } 
