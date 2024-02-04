@@ -19,7 +19,7 @@ class formatted_output:
 		self.comment_wrap = comment_wrap
 
 	@contextmanager
-	def blk(self, add_semicolon:bool = False):
+	def blk(self, add_semicolon:bool = False, no_indent = False):
 		'''Add an indented block of code'''
 		try:
 			st = self.tab_str * self.indentation
@@ -27,11 +27,13 @@ class formatted_output:
 				st += self.tab_str
 			st += '{'
 			self.lines.append(st)
-			self.indentation += 1	
+			if not no_indent:
+				self.indentation += 1	
 			yield self
 
 		finally:
-			self.indentation -= 1
+			if not no_indent:
+				self.indentation -= 1
 			st = self.tab_str * self.indentation
 			if self.indent_braces:
 				st += self.tab_str 
@@ -52,7 +54,7 @@ class formatted_output:
 		finally:
 			self.indentation -= 1
 
-	def ln(self, lin:str = None, no_indent = False, append = False ):
+	def ln(self, lin:str = None, no_indent = False, append = False, intent_adjust = 0 ):
 		'''Add a single line, at current indentation, (or no indentation if no_indent is True).'''
 		if append:
 			if lin:
@@ -62,7 +64,7 @@ class formatted_output:
 				if no_indent:
 					self.lines.append( lin )
 				else:
-					self.lines.append( self.tab_str * self.indentation + lin )
+					self.lines.append( self.tab_str * (self.indentation + intent_adjust) + lin )
 			else:
 				self.lines.append('')
    

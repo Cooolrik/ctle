@@ -33,6 +33,19 @@ template<class _Ty> struct string_span
 	}
 };
 
+// Parse types from strings. 
+// The versions which includes a bool &success parameter do not throw any exception if the conversion fails, but resets the success parameter to false. 
+// Note! The success parameter must be set to true before calling the functions!
+template<class _Ty> _Ty from_string( const string_span<char> &str, bool &success ) noexcept;
+template<class _Ty> _Ty from_string( const string_span<char> &str );
+template<class _Ty> inline _Ty from_string( const char *start, const char *end, bool &success ) noexcept { return from_string<_Ty>( string_span<char>(start,end), success ); }
+template<class _Ty> inline _Ty from_string( const char *start, const char *end ) { return from_string<_Ty>( string_span<char>(start,end) ); }
+template<class _Ty> inline _Ty from_string( const std::basic_string<char> &str, bool &success ) noexcept { return from_string<_Ty>( string_span<char>(str.data(), str.data() + str.size()), success ); }
+template<class _Ty> inline _Ty from_string( const std::basic_string<char> &str ) { return from_string<_Ty>( string_span<char>(str.data(), str.data() + str.size()) ); }
+
+// Print types to strings.
+template<class _Ty> std::string to_string( const _Ty &val );
+
 // Get span of character set in string
 // get length of span of characters between start and end, which are in the control list of chars
 // Caveat: The chars in control are required to be in the lower set (not extended characters)

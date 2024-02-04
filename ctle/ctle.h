@@ -9,6 +9,7 @@
 #include "../ctle/file_funcs.h"
 #include "../ctle/idx_vector.h"
 #include "../ctle/log.h"
+#include "../ctle/ntup.h"
 #include "../ctle/optional_idx_vector.h"
 #include "../ctle/optional_value.h"
 #include "../ctle/optional_vector.h"
