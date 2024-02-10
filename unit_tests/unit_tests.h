@@ -15,7 +15,24 @@
 #include <stdlib.h>
 #include <time.h>
 
+// include external headers
+// silence warning we can't control
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4456 )
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#endif
+
 #include <gtest/gtest.h>
+#include <picosha2.h>
+
+// re-enable warnings again
+#ifdef _MSC_VER
+#pragma warning( pop )
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 typedef uint8_t u8;
 typedef uint16_t u16;

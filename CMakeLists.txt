@@ -35,9 +35,17 @@ if(CTLE_BUILD_TESTS)
 		GIT_TAG        6fdeff4d67f3db493d47c44da20aa1efaa6574ef # (2020 Aug 06)
 	)
 	
+	# picosha2 - used by hash.h to calculate sha256 hashes
+	FetchContent_Declare( 
+		picosha2
+		GIT_REPOSITORY https://github.com/okdshin/PicoSHA2.git
+		GIT_TAG		   27fcf6979298949e8a462e16d09a0351c18fcaf2 # (2022 Aug 08)
+	)
+
 	FetchContent_MakeAvailable( 
 		googletest 
 		glm
+		picosha2
 		)
 		
 	# lots of warnings and all warnings as errors
@@ -71,6 +79,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/thread_safe_map.h
 		./ctle/types.h
 		./ctle/uuid.h
+		./ctle/hash.h
 		./ctle/util.h
 		./ctle/_macros.inl
 		./ctle/_undef_macros.inl
@@ -94,6 +103,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_types.cpp
 		./unit_tests/test_util.cpp
 		./unit_tests/test_uuid.cpp
+		./unit_tests/test_hash.cpp
 		./unit_tests/test_macros.cpp
 
 		./ctle.natvis
@@ -102,6 +112,7 @@ if(CTLE_BUILD_TESTS)
 	target_include_directories( 
 		unit_tests 
 		PUBLIC ${glm_SOURCE_DIR}
+		PUBLIC ${picosha2_SOURCE_DIR}
 		)
 
 	target_link_libraries( 	

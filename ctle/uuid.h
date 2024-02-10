@@ -70,10 +70,8 @@ inline bool uuid::operator!=( const ctle::uuid &right ) const noexcept
 }
 //namespace ctle
 
-namespace std
-{
 template <>
-struct hash<ctle::uuid>
+struct std::hash<ctle::uuid>
 {
 	std::size_t operator()( ctle::uuid const &val ) const noexcept
 	{
@@ -84,7 +82,7 @@ struct hash<ctle::uuid>
 };
 
 std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
-}
+
 //namespace std
 
 #ifdef CTLE_IMPLEMENTATION
@@ -100,7 +98,7 @@ namespace ctle
 {
 const uuid uuid::nil;
 
-template <> inline std::string value_to_hex_string( const uuid &value )
+template <> std::string value_to_hex_string( const uuid &value )
 {
 	std::string ret;
 
@@ -182,14 +180,10 @@ uuid uuid::generate()
 }
 //namespace ctle
 
-namespace std
-{
 std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid )
 {
 	os << ctle::value_to_hex_string( _uuid );
 	return os;
 }
-}
-//namespace std
 
 #endif

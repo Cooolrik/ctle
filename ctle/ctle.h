@@ -22,3 +22,4 @@
 #include "../ctle/types.h"
 #include "../ctle/util.h"
 #include "../ctle/uuid.h"
+#include "../ctle/hash.h"
