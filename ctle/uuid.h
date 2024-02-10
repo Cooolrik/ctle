@@ -2,11 +2,9 @@
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
 
-#include <mutex>
-#include <cstring>
-#include <array>
-
-#include "string_funcs.h"
+#include <cstdint>
+#include <functional>
+#include <iosfwd>
 
 namespace ctle
 {
@@ -33,13 +31,28 @@ struct uuid
 	static uuid generate();
 };
 
-std::string value_to_hex_string( uuid value );
-template <> uuid hex_string_to_value<uuid>( const char *hex_string );
-
 inline bool uuid::operator<( const ctle::uuid &right ) const noexcept
 {
-	// uuid is stored big-endian, so the first byte is highest value
-	return std::memcmp( this, &right, sizeof( ctle::uuid ) ) < 0;
+	const uint8_t *u1 = this->data;
+	const uint8_t *u2 = right.data;
+
+	// uuid is stored big-endian, so MSB is first byte, LSB is last byte
+	size_t n = 16;
+	do
+	{
+		if( *u1 != *u2 )	// not equal, early exit, check if more or less than
+		{
+			if( *u1 < *u2 )
+				return true;	// less than
+			else
+				return false;	// more than
+		}
+		++u1;
+		++u2;
+		--n;
+	} while( n>0 );
+
+	return false; // equal, so not less
 };
 
 inline bool uuid::operator==( const ctle::uuid &right ) const noexcept
@@ -79,12 +92,15 @@ std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
 #include <random>
 #include <algorithm>
 #include <memory>
+#include <array>
+
+#include "string_funcs.h"
 
 namespace ctle
 {
 const uuid uuid::nil;
 
-std::string value_to_hex_string( uuid value )
+template <> inline std::string value_to_hex_string( const uuid &value )
 {
 	std::string ret;
 

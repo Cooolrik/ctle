@@ -3,6 +3,7 @@
 
 #include "../ctle/file_funcs.h"
 #include "../ctle/uuid.h"
+#include "../ctle/string_funcs.h"
 
 #include "unit_tests.h"
 

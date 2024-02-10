@@ -4,10 +4,6 @@
 #pragma once
 
 #include <sstream>
-#include <iostream>
-#include <unordered_map>
-
-#include "string_funcs.h"
 
 namespace ctle
 {
@@ -67,7 +63,18 @@ public:
 	}
 };
 
+}
+// namespace ctle
+
 #ifdef CTLE_IMPLEMENTATION
+
+#include <unordered_map>
+
+#include "string_funcs.h"
+
+namespace ctle
+{
+
 static log_level global_log_level = log_level::info;
 
 void set_global_log_level( log_level level )
@@ -157,8 +164,10 @@ void log_msg::enter_msg()
 	( *global_log_function )( this->level, func_log.c_str(), this->msg.str().c_str() );
 }
 
-#endif//CTLE_IMPLEMENTATION
 }
+// namespace ctle
+
+#endif//CTLE_IMPLEMENTATION
 
 #ifdef CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
 

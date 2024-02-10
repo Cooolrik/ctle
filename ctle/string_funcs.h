@@ -406,24 +406,26 @@ std::string inline bytes_to_hex_string( const void *bytes, size_t count )
 	return ret;
 }
 
-inline std::string value_to_hex_string( uint8_t value )
+template <class T> std::string value_to_hex_string( const T &value );
+
+template <> inline std::string value_to_hex_string( const uint8_t &value )
 {
 	return bytes_to_hex_string( &value, sizeof( value ) );
 }
 
-inline std::string value_to_hex_string( uint16_t value )
-{
-	bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
-	return bytes_to_hex_string( &value, sizeof( value ) );
-}
-
-inline std::string value_to_hex_string( uint32_t value )
+template <> inline std::string value_to_hex_string( const uint16_t &value )
 {
 	bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
 	return bytes_to_hex_string( &value, sizeof( value ) );
 }
 
-inline std::string value_to_hex_string( uint64_t value )
+template <> inline std::string value_to_hex_string( const uint32_t &value )
+{
+	bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
+	return bytes_to_hex_string( &value, sizeof( value ) );
+}
+
+template <> inline std::string value_to_hex_string( const uint64_t &value )
 {
 	bigendian_from_value( (uint8_t *)&value, value ); // in-place make sure big endian
 	return bytes_to_hex_string( &value, sizeof( value ) );
