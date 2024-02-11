@@ -69,6 +69,7 @@ public:
 #ifdef CTLE_IMPLEMENTATION
 
 #include <unordered_map>
+#include <iostream>
 
 #include "string_funcs.h"
 
