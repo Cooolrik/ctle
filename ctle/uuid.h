@@ -91,6 +91,7 @@ std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
 #include <algorithm>
 #include <memory>
 #include <array>
+#include <mutex>
 
 #include "string_funcs.h"
 
