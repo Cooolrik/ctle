@@ -267,8 +267,8 @@ def define_n_tuples( out:formatted_output ):
 			out.comment_ln('data access')
 			out.ln('const _Ty *data() const noexcept { return &this->x; }')
 			out.ln('_Ty *data() noexcept { return &this->x; }')
-			out.ln('const _Ty *operator&() const noexcept { return &this->x; }')
-			out.ln('_Ty *operator&() noexcept { return &this->x; }')
+			#out.ln('const _Ty *operator&() const noexcept { return &this->x; }')
+			#out.ln('_Ty *operator&() noexcept { return &this->x; }')
 			out.ln()
 
 			# index access of values
@@ -393,8 +393,8 @@ def define_n_tuples( out:formatted_output ):
 			out.comment_ln('data access')
 			out.ln('const _Ty *data() const noexcept { return this->values; }')
 			out.ln('_Ty *data() noexcept { return this->values; }')
-			out.ln('const _Ty *operator&() const noexcept { return this->values; }')
-			out.ln('_Ty *operator&() noexcept { return this->values; }')
+			#out.ln('const _Ty *operator&() const noexcept { return this->values; }')
+			#out.ln('_Ty *operator&() noexcept { return this->values; }')
 			out.ln()
 
 			# index access of values
