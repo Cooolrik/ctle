@@ -17,6 +17,11 @@ TEST( uuid, basic_test )
 
 	uuid id = uuid::generate();
 
+	std::stringstream sts;
+	sts << id;
+	uuid idfromstring = from_string<uuid>(sts.str());
+	EXPECT_TRUE( id == idfromstring );
+
 	std::string idstr = value_to_hex_string( id );
 	uuid id2 = hex_string_to_value<uuid>( idstr.c_str() );
 	EXPECT_TRUE( id == id2 );

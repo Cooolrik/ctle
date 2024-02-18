@@ -432,15 +432,21 @@ template <> inline std::string value_to_hex_string( const uint64_t &value )
 }
 
 // retrieves bytes from a hex string of known length.
+// versions which does not throw instead clears the success flag if the conversion fails. 
 // note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
-void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count );
-template <class T> T hex_string_to_value( const char *hex_string );
-template <> uint8_t hex_string_to_value<uint8_t>( const char *hex_string );
-template <> uint16_t hex_string_to_value<uint16_t>( const char *hex_string );
-template <> uint32_t hex_string_to_value<uint32_t>( const char *hex_string );
-template <> uint64_t hex_string_to_value<uint64_t>( const char *hex_string );
+// Note: The flag must be set before calling the function
+template <class T> T hex_string_to_value( const char *hex_string, bool &success ) noexcept;
+template <class T> T hex_string_to_value( const char *hex_string )
+{
+	bool success = true;
+	auto value = hex_string_to_value<T>( hex_string, success );
+	if( !success )
+		throw std::runtime_error("Could not convert hex string to bytes, the string contains invalid (non-hex) characters.");
+	return value;
+}
 
-static inline uint8_t decode_hex_char( char c )
+// Note: The flag must be set before calling the function
+static inline uint8_t decode_hex_char( char c, bool &success ) noexcept
 {
 	if( c >= '0' && c <= '9' )
 		return uint8_t( c - '0' );
@@ -448,47 +454,57 @@ static inline uint8_t decode_hex_char( char c )
 		return uint8_t( ( c - 'a' ) + 10 );
 	else if( c >= 'A' && c <= 'F' )
 		return uint8_t( ( c - 'A' ) + 10 );
-	throw std::runtime_error( "invalid hex character c" );
+
+	success = false;
+	return 0;
 }
 
 // retrieves bytes from a hex string of known length.
 // note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
-inline void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count )
+inline void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count, bool &success ) noexcept
 {
 	uint8_t *p = (uint8_t *)bytes;
 	for( size_t i = 0; i < count; ++i )
 	{
-		uint8_t hn = uint8_t( decode_hex_char( hex_string[i * 2 + 0] ) << 4 );
-		uint8_t ln = decode_hex_char( hex_string[i * 2 + 1] );
+		uint8_t hn = uint8_t( decode_hex_char( hex_string[i * 2 + 0], success ) << 4 );
+		uint8_t ln = decode_hex_char( hex_string[i * 2 + 1], success );
 		p[i] = uint8_t( hn | ln );
 	}
 }
 
-template <> inline uint8_t hex_string_to_value<uint8_t>( const char *hex_string )
+inline void hex_string_to_bytes( void *bytes, const char *hex_string, size_t count )
+{
+	bool success = true;
+	hex_string_to_bytes( bytes, hex_string, count, success );
+	if( !success )
+		throw std::runtime_error("Could not convert hex string to bytes, the string contains invalid characters.");
+}
+
+template <> inline uint8_t hex_string_to_value<uint8_t>( const char *hex_string, bool &success ) noexcept
 {
 	uint8_t ret;
-	hex_string_to_bytes( &ret, hex_string, sizeof( uint8_t ) );
+	hex_string_to_bytes( &ret, hex_string, sizeof( uint8_t ), success );
 	return ret;
 }
 
-template <> inline uint16_t hex_string_to_value<uint16_t>( const char *hex_string )
+template <> inline uint16_t hex_string_to_value<uint16_t>( const char *hex_string, bool &success ) noexcept
 {
 	uint8_t bytes[sizeof( uint16_t )];
-	hex_string_to_bytes( bytes, hex_string, sizeof( uint16_t ) );
+	hex_string_to_bytes( bytes, hex_string, sizeof( uint16_t ), success );
 	return value_from_bigendian<uint16_t>( bytes );
 }
 
-template <> inline uint32_t hex_string_to_value<uint32_t>( const char *hex_string )
+template <> inline uint32_t hex_string_to_value<uint32_t>( const char *hex_string, bool &success ) noexcept
 {
 	uint8_t bytes[sizeof( uint32_t )];
-	hex_string_to_bytes( bytes, hex_string, sizeof( uint32_t ) );
+	hex_string_to_bytes( bytes, hex_string, sizeof( uint32_t ), success );
 	return value_from_bigendian<uint32_t>( bytes );
 }
 
-template <> inline uint64_t hex_string_to_value<uint64_t>( const char *hex_string )
+template <> inline uint64_t hex_string_to_value<uint64_t>( const char *hex_string, bool &success ) noexcept
 {
 	uint8_t bytes[sizeof( uint64_t )];
-	hex_string_to_bytes( bytes, hex_string, sizeof( uint64_t ) );
+	hex_string_to_bytes( bytes, hex_string, sizeof( uint64_t ), success );
 	return value_from_bigendian<uint64_t>( bytes );
 }
 

@@ -70,6 +70,9 @@ inline bool uuid::operator!=( const ctle::uuid &right ) const noexcept
 }
 //namespace ctle
 
+namespace std
+{
+
 template <>
 struct std::hash<ctle::uuid>
 {
@@ -83,6 +86,7 @@ struct std::hash<ctle::uuid>
 
 std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
 
+}
 //namespace std
 
 #ifdef CTLE_IMPLEMENTATION
@@ -117,25 +121,41 @@ template <> std::string value_to_hex_string( const uuid &value )
 	return ret;
 }
 
-template <> uuid hex_string_to_value<uuid>( const char *hex_string )
+template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &success ) noexcept
 {
-	if( hex_string[8] != '-'
-		|| hex_string[13] != '-'
-		|| hex_string[18] != '-'
-		|| hex_string[23] != '-' )
+	if( (str.end - str.start) != 36
+		|| str.start[8] != '-'
+		|| str.start[13] != '-'
+		|| str.start[18] != '-'
+		|| str.start[23] != '-' )
 	{
-		throw std::runtime_error( "hex_string_to_value: ill-formated hex_string" );
+		success = false; // ill-formatted
+		return {};
 	}
 
 	uuid value;
 
-	hex_string_to_bytes( &value.data[0], &hex_string[0], 4 );
-	hex_string_to_bytes( &value.data[4], &hex_string[9], 2 );
-	hex_string_to_bytes( &value.data[6], &hex_string[14], 2 );
-	hex_string_to_bytes( &value.data[8], &hex_string[19], 2 );
-	hex_string_to_bytes( &value.data[10], &hex_string[24], 6 );
+	hex_string_to_bytes( &value.data[0], &str.start[0], 4, success );
+	hex_string_to_bytes( &value.data[4], &str.start[9], 2, success );
+	hex_string_to_bytes( &value.data[6], &str.start[14], 2, success );
+	hex_string_to_bytes( &value.data[8], &str.start[19], 2, success );
+	hex_string_to_bytes( &value.data[10], &str.start[24], 6, success );
 
 	return value;
+}
+
+template <> uuid ctle::from_string<uuid>( const string_span<char> &str )
+{
+	bool success = true;
+	auto value = ctle::from_string<uuid>( str, success );
+	if( !success )
+		throw std::runtime_error("Could not convert the string into a uuid, it is ill-formatted.");
+	return value;
+}
+
+template <> uuid hex_string_to_value<uuid>( const char *hex_string, bool &success ) noexcept
+{
+	return ctle::from_string<uuid>( string_span<char>( hex_string, hex_string+36 ), success );
 }
 
 uuid uuid::generate()
@@ -181,10 +201,15 @@ uuid uuid::generate()
 }
 //namespace ctle
 
+namespace std
+{
+
 std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid )
 {
 	os << ctle::value_to_hex_string( _uuid );
 	return os;
+}
+
 }
 
 #endif

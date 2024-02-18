@@ -160,5 +160,11 @@ TEST( hash, sha256_hashing )
 		};
 
 		EXPECT_EQ( memcmp( sha.data, expected_hash, 32 ), 0 );
+
+		std::stringstream sts;
+		sts << sha;
+		hash shafromstring = from_string<hash>(sts.str());
+		EXPECT_TRUE( sha == shafromstring );
+
 	}
 }

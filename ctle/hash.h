@@ -101,19 +101,22 @@ status calculate_sha256_hash( hash<256> &destHash, const uint8_t *srcData, size_
 }
 //namespace ctle
 
-template <>
-struct std::hash<ctle::hash<256>>
+namespace std
 {
-	std::size_t operator()( const ctle::hash<256> &val ) const noexcept
+
+template <>
+struct hash<ctle::hash<256>>
+{
+	size_t operator()( const ctle::hash<256> &val ) const noexcept
 	{
 		return ctle::calculate_size_hash<256>( val );
 	}
 };
 
 template <>
-struct std::hash<ctle::hash<512>>
+struct hash<ctle::hash<512>>
 {
-	std::size_t operator()( const ctle::hash<512> &val ) const noexcept
+	size_t operator()( const ctle::hash<512> &val ) const noexcept
 	{
 		return ctle::calculate_size_hash<512>( val );
 	}
@@ -121,6 +124,8 @@ struct std::hash<ctle::hash<512>>
 
 std::ostream &operator<<( std::ostream &os, const ctle::hash<256> &_hash );
 std::ostream &operator<<( std::ostream &os, const ctle::hash<512> &_hash );
+
+}
 
 #ifdef CTLE_IMPLEMENTATION
 
@@ -146,19 +151,59 @@ template <> std::string value_to_hex_string<hash<512>>( const hash<512> &value )
 	return bytes_to_hex_string( &value, 64 );
 }
 
-template <> hash<256> hex_string_to_value<hash<256>>( const char *hex_string )
+template <> hash<256> ctle::from_string<hash<256>>( const string_span<char> &str, bool &success ) noexcept
 {
+	if( (str.end - str.start) != 64 )
+	{
+		success = false;
+		return {};
+	}
+
 	hash<256> value;
 	static_assert( sizeof( value ) == 32, "Error: hash<256> is assumed to be of size 32." );
-	hex_string_to_bytes( &value, hex_string, 32 );
+	hex_string_to_bytes( &value, str.start, 32, success );
 	return value;
 }
 
-template <> hash<512> hex_string_to_value<hash<512>>( const char *hex_string )
+template <> hash<256> ctle::from_string<hash<256>>( const string_span<char> &str )
 {
+	bool success = true;
+	auto value = ctle::from_string<hash<256>>( str, success );
+	if( !success )
+		throw std::runtime_error("Could not convert the string into a hash<256> value, it is ill-formatted.");
+	return value;
+}
+
+template <> hash<256> hex_string_to_value<hash<256>>( const char *hex_string, bool &success ) noexcept
+{
+	return ctle::from_string<hash<256>>( string_span<char>(hex_string,hex_string+64), success );
+}
+
+template <> hash<512> ctle::from_string<hash<512>>( const string_span<char> &str, bool &success ) noexcept
+{
+	if( (str.end - str.start) != 128 )
+	{
+		success = false;
+		return {};
+	}
+
 	hash<512> value;
 	static_assert( sizeof( value ) == 64, "Error: hash<512> is assumed to be of size 64." );
-	hex_string_to_bytes( &value, hex_string, 64 );
+	hex_string_to_bytes( &value, str.start, 64, success );
+	return value;
+}
+
+template <> hash<512> hex_string_to_value<hash<512>>( const char *hex_string, bool &success ) noexcept
+{
+	return ctle::from_string<hash<512>>( string_span<char>(hex_string,hex_string+128), success );
+}
+
+template <> hash<512> ctle::from_string<hash<512>>( const string_span<char> &str )
+{
+	bool success = true;
+	auto value = ctle::from_string<hash<512>>( str, success );
+	if( !success )
+		throw std::runtime_error("Could not convert the string into a hash<512> value, it is ill-formatted.");
 	return value;
 }
 
@@ -185,6 +230,9 @@ status calculate_sha256_hash( hash<256> &destHash, const uint8_t *srcData, size_
 }
 //namespace ctle
 
+namespace std
+{
+
 std::ostream &operator<<( std::ostream &os, const ctle::hash<256> &_hash )
 {
 	os << ctle::value_to_hex_string( _hash );
@@ -195,6 +243,8 @@ std::ostream &operator<<( std::ostream &os, const ctle::hash<512> &_hash )
 {
 	os << ctle::value_to_hex_string( _hash );
 	return os;
+}
+
 }
 
 #endif
