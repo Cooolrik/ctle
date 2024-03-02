@@ -32,6 +32,6 @@ TEST( status, basic_test )
 	EXPECT_TRUE( !( res ) );
 
 	EXPECT_EQ( (int)res.value(), -109 );
-	EXPECT_TRUE( res.name() == "cant_write" );
-	EXPECT_TRUE( res.description() == "cant write to file or handle" );
+	EXPECT_TRUE( std::string(res.name()) == "cant_write" );
+	EXPECT_TRUE( std::string(res.description()) == "cant write to file or handle" );
 }

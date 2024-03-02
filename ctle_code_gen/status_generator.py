@@ -168,9 +168,7 @@ def generate_status( path:str ):
 
 	out.lines.append( '''#pragma once
 
-#include <string>
 #include <iostream>
-#include <unordered_map>
 
 namespace ctle
 {
@@ -238,13 +236,17 @@ namespace ctle
 		status_code value() const { return svalue; }
 
 		// get the name of the status code as a string 
-		std::string name() const;
+		const char* name() const;
 
 		// get a description of the status code value
-		std::string description() const;
+		const char* description() const;
 	};
 
 #ifdef CTLE_IMPLEMENTATION
+
+#include <string>
+#include <unordered_map>
+
 ''')
 
 	out.indentation = 1		
@@ -275,7 +277,7 @@ namespace ctle
 	out.lines.append( '''	};
 
 	// get the name of the status code as a string 
-	std::string status::name() const
+	const char* status::name() const
 	{
 		auto it = status_code_string_descriptions.find( this->svalue );
 		if( it == status_code_string_descriptions.end() )
@@ -286,7 +288,7 @@ namespace ctle
 	}
 	
 	// get a description of the status code value
-	std::string status::description() const
+	const char* status::description() const
 	{
 		auto it = status_code_string_descriptions.find( this->svalue );
 		if( it == status_code_string_descriptions.end() )
