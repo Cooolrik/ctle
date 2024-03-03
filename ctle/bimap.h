@@ -101,7 +101,7 @@ public:
 		{
 			return std::make_pair( it->second, true );
 		}
-		return std::make_pair( _Vty(), false );
+		return std::make_pair( _Kty(), false );
 	}
 
 	// clear the map

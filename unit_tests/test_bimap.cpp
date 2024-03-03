@@ -20,6 +20,8 @@ TEST( bimap, basic_test )
 	EXPECT_TRUE( uint_string_bimap.contains_key( 1 ) );
 	EXPECT_TRUE( uint_string_bimap.contains_value( "A" ) );
 	EXPECT_TRUE( uint_string_bimap.contains_value( "B" ) );
+	EXPECT_TRUE( uint_string_bimap.get_key( "A" ).second );
+	EXPECT_TRUE( uint_string_bimap.get_value( 1 ).second );
 	// now, insert 1<->A instead, this should remove the previous two mappings, and replace with one mapping
 	uint_string_bimap.insert( 1, "A" );
 	EXPECT_TRUE( uint_string_bimap.size() == 1 );
