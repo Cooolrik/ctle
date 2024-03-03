@@ -139,13 +139,13 @@ std::ostream &operator<<( std::ostream &os, const ctle::hash<512> &_hash );
 namespace ctle
 {
 
-template <> std::string value_to_hex_string<hash<256>>( const hash<256> &value )
+template <> std::string to_string<hash<256>>( const hash<256> &value )
 {
 	static_assert( sizeof( value ) == 32, "Error: hash<256> is assumed to be of size 32." );
 	return bytes_to_hex_string( &value, 32 );
 }
 
-template <> std::string value_to_hex_string<hash<512>>( const hash<512> &value )
+template <> std::string to_string<hash<512>>( const hash<512> &value )
 {
 	static_assert( sizeof( value ) == 64, "Error: hash<512> is assumed to be of size 64." );
 	return bytes_to_hex_string( &value, 64 );
@@ -235,13 +235,13 @@ namespace std
 
 std::ostream &operator<<( std::ostream &os, const ctle::hash<256> &_hash )
 {
-	os << ctle::value_to_hex_string( _hash );
+	os << ctle::to_string( _hash );
 	return os;
 }
 
 std::ostream &operator<<( std::ostream &os, const ctle::hash<512> &_hash )
 {
-	os << ctle::value_to_hex_string( _hash );
+	os << ctle::to_string( _hash );
 	return os;
 }
 

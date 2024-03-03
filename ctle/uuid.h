@@ -103,7 +103,7 @@ namespace ctle
 {
 const uuid uuid::nil;
 
-template <> std::string value_to_hex_string( const uuid &value )
+template <> std::string to_string( const uuid &value )
 {
 	std::string ret;
 
@@ -119,6 +119,11 @@ template <> std::string value_to_hex_string( const uuid &value )
 	ret += bytes_to_hex_string( &value.data[10], 6 );
 
 	return ret;
+}
+
+template <> std::string value_to_hex_string( const uuid &value )
+{
+	return to_string( value );
 }
 
 template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &success ) noexcept

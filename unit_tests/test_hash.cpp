@@ -23,18 +23,18 @@ TEST( hash, basic_test )
 {
 	using hash = ctle::hash<256>;
 
-	const hash hsh0 = hex_string_to_value<hash>( "0000000000000000000000000000000000000000000000000000000000000000" ); // lowest
-	const hash hsh1 = hex_string_to_value<hash>( "0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff" );
-	const hash hsh2 = hex_string_to_value<hash>( "00000200ffffffffffffffffffffffffffffffffffffffffffffffffffffffff" );
-	const hash hsh3 = hex_string_to_value<hash>( "ffffffffffffffffffffffffffffffffffff0000000000000000000000000000" ); // highest
+	const hash hsh0 = from_string<hash>( "0000000000000000000000000000000000000000000000000000000000000000" ); // lowest
+	const hash hsh1 = from_string<hash>( "0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff" );
+	const hash hsh2 = from_string<hash>( "00000200ffffffffffffffffffffffffffffffffffffffffffffffffffffffff" );
+	const hash hsh3 = from_string<hash>( "ffffffffffffffffffffffffffffffffffff0000000000000000000000000000" ); // highest
 
-	std::string hshstr = value_to_hex_string( hsh1 );
-	auto hshval2 = hex_string_to_value<hash>( hshstr.c_str() );
+	std::string hshstr = to_string( hsh1 );
+	auto hshval2 = from_string<hash>( hshstr.c_str() );
 	EXPECT_TRUE( hsh1 == hshval2 );
 
 	std::stringstream str;
 	str << hsh2;
-	auto hshval3 = hex_string_to_value<hash>( str.str().c_str() );
+	auto hshval3 = from_string<hash>( str.str().c_str() );
 	EXPECT_TRUE( hsh2 == hshval3 );
 
 	auto h2 = hsh3;
