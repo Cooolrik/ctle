@@ -2,6 +2,7 @@
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 #include "../ctle/bimap.h"
+#include "../ctle/uuid.h"
 
 #include "unit_tests.h"
 
@@ -46,4 +47,36 @@ TEST( bimap, basic_test )
 		EXPECT_TRUE( uint_string_bimap.at_key( val.first ) == val.second );
 		EXPECT_TRUE( uint_string_bimap.at_value( val.second ) == val.first );
 	}
+}
+
+TEST( bimap, uuid_test )
+{
+	bimap<uuid, uuid> uuid_uuid_bimap;
+
+	// build std map and bimap
+	std::map<uuid,uuid> kvmap;
+	for( size_t inx=0; inx<100; ++inx )
+	{
+		auto k = uuid::generate();
+		auto v = uuid::generate();
+
+		kvmap.emplace(k,v);	
+		uuid_uuid_bimap.insert(k,v);
+	}
+
+	// make sure that the values are correctly mapped backwards
+	for( const auto &kvpair: kvmap )
+	{
+		auto k = kvpair.first;
+		auto v = kvpair.second;
+
+		auto kres = uuid_uuid_bimap.get_key( v );
+		EXPECT_TRUE( kres.second );
+		EXPECT_EQ( kres.first, k );
+		auto vres = uuid_uuid_bimap.get_value( kvpair.first );
+		EXPECT_TRUE( vres.second );
+		EXPECT_EQ( vres.first, v );
+	}
+
+
 }

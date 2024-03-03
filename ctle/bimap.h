@@ -85,7 +85,7 @@ public:
 	// gets the value at key, IF the key exists (the returned bool is false otherwise)
 	std::pair<_Vty, bool> get_value( const _Kty &key ) const noexcept
 	{
-		const iterator it = this->Fwd.find( key );
+		auto it = this->Fwd.find( key );
 		if( it != this->Fwd.end() )
 		{
 			return std::make_pair( it->second, true );
@@ -96,7 +96,7 @@ public:
 	// gets the key that maps to value, IF the value exists (the returned bool is false otherwise)
 	std::pair<_Kty, bool> get_key( const _Vty &value ) const noexcept
 	{
-		const riterator it = this->Rev.find( value );
+		auto it = this->Rev.find( value );
 		if( it != this->Rev.end() )
 		{
 			return std::make_pair( it->second, true );
