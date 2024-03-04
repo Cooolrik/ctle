@@ -242,11 +242,22 @@ namespace ctle
 		const char* description() const;
 	};
 
+	class status_error : public std::runtime_error
+	{
+		public:
+			status value;
+			explicit status_error( status _value, char const* const _Message = "" ) noexcept : std::runtime_error(_Message), value(_value) {}
+	};				  
+}
+// namespace ctle
+
 #ifdef CTLE_IMPLEMENTATION
 
 #include <string>
 #include <unordered_map>
 
+namespace ctle				  
+{
 ''')
 
 	out.indentation = 1		
@@ -340,17 +351,10 @@ namespace ctle
 
 #endif//VULKAN_CORE_H_
 
-#endif//CTLE_IMPLEMENTATION
-  
-	class status_error : public std::runtime_error
-	{
-		public:
-			status value;
-			explicit status_error( status _value, char const* const _Message = "" ) noexcept : std::runtime_error(_Message), value(_value) {}
-	};
-
 }
 // namespace ctle
+
+#endif//CTLE_IMPLEMENTATION  
 
 // stream operator for writing a status to a stream
 inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
