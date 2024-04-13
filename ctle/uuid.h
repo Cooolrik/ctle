@@ -74,7 +74,7 @@ namespace std
 {
 
 template <>
-struct std::hash<ctle::uuid>
+struct hash<ctle::uuid>
 {
 	std::size_t operator()( ctle::uuid const &val ) const noexcept
 	{
