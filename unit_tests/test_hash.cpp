@@ -6,6 +6,9 @@
 
 #include "unit_tests.h"
 
+#include <map>
+#include <unordered_map>
+
 using namespace ctle;
 
 template<size_t _Size>
@@ -105,7 +108,7 @@ TEST( hash, basic_test )
 		EXPECT_EQ( idstrmap.find( hsh2 )->second, "hsh2" );
 		EXPECT_EQ( idstrmap.find( hsh3 )->second, "hsh3" );
 	}
-
+	
 	// insert a number of generated values.
 	if( true )
 	{

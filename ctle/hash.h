@@ -156,7 +156,7 @@ template <> hash<256> ctle::from_string<hash<256>>( const string_span<char> &str
 	if( (str.end - str.start) != 64 )
 	{
 		success = false;
-		return {};
+		return hash<256>();
 	}
 
 	hash<256> value;
@@ -184,7 +184,7 @@ template <> hash<512> ctle::from_string<hash<512>>( const string_span<char> &str
 	if( (str.end - str.start) != 128 )
 	{
 		success = false;
-		return {};
+		return hash<512>();
 	}
 
 	hash<512> value;

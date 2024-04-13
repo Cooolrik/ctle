@@ -135,7 +135,7 @@ template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &su
 		|| str.start[23] != '-' )
 	{
 		success = false; // ill-formatted
-		return {};
+		return uuid::nil;
 	}
 
 	uuid value;
