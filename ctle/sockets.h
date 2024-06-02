@@ -3,11 +3,16 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 #include "status.h"
+#include "status_return.h"
 
 namespace ctle
 {
+class socket;
+class stream_socket;
+class server_socket;
 
 enum class socket_protocol_family
 {
@@ -16,6 +21,16 @@ enum class socket_protocol_family
 	ipv6,
 };
 
+// initialize sockets code. not required to be called, but recommended for 
+// defensive reasons, if the sockets cannot be initialized, and for performance, 
+// since the sockets library keep an internal tally of how many sockets
+// are allocated, and deinitializes if the tally falls to 0, if the user
+// has not explicitly called initialize_sockets.
+status initialize_sockets();
+
+// deinitialize sockets code. deinitializes for real when the allocated sockets are 0
+status deinitialize_sockets();
+
 // base class for sockets. not used directly, implements generic functionality shared by derived classes
 class socket
 {
@@ -23,21 +38,28 @@ public:
 	~socket();
 
 protected:
+	class file;
+
 	socket();
-	socket(int&&);
+	socket(std::unique_ptr<file>);
 	
-	int socket_file_desc = -1;
-	void close_socket();
-	void move_socket_from(socket&&);	
+	static void transfer_socket_file(socket &dest, socket &src);
+
+	std::unique_ptr<file> socket_file;
 };
 
 class stream_socket : public socket
 {
 public:
-	stream_socket(int&&);
+	// sockets can only be owned by one object at a time, but can be handed over
+	stream_socket(std::unique_ptr<file>);
 	stream_socket(stream_socket&&);
 	stream_socket& operator=(stream_socket&&);
 	~stream_socket();
+
+	// create and connect a stream socket to a specified address and port
+	static status_return<status,std::unique_ptr<stream_socket>> connect(const std::string &address, uint16_t port, socket_protocol_family protocol_family = socket_protocol_family::ipv4);
+	static status_return<status,std::unique_ptr<stream_socket>> connect(const std::string &address, const std::string &port, socket_protocol_family protocol_family = socket_protocol_family::ipv4);
 
 	// send a message on a socket
 	// buf - data buffer to copy from
@@ -50,15 +72,12 @@ public:
 	// buflen - number of bytes to receive 
 	// received - actual number of bytes received
 	status recv(void* buf, size_t buflen, size_t& received);
-	
-protected:
-	stream_socket();
 };
 
 class server_socket : public socket
 {
 public:
-	using serve_func = const std::function<status(stream_socket&)>;
+	using serve_func = const std::function<status(stream_socket)>;
 	
 	server_socket();
 	~server_socket();
@@ -78,7 +97,7 @@ public:
 
 private:
 	struct internal_data;
-	internal_data* data = nullptr;
+	std::unique_ptr<internal_data> data;
 
 	status run_internal(const std::string &port, const serve_func& serve_function, socket_protocol_family protocol_family, size_t backlog_size);
 };
@@ -91,25 +110,106 @@ private:
 #include <string>
 #include <atomic>
 #include <utility>
+#include <mutex>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <signal.h>
+
+#if defined(_WIN32)
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#elif defined(linux)
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-#include <signal.h>
+#endif
 
 #include "log.h"
 #include "_macros.inl"
 
 namespace ctle
 {
+static std::mutex sockets_init_mutex;
+static size_t sockets_reference_count = 0;
+
+status initialize_sockets()
+{
+	const std::lock_guard<std::mutex> lock(sockets_init_mutex);
+
+	// only init when passing from 0->1
+	++sockets_reference_count;
+	if( sockets_reference_count > 1 )
+		return status::ok;
+
+#if defined(_WIN32)
+	ctLogDebug << "Initializing Windows Sockets 2" << ctLogEnd;
+
+	WORD wsa_version = MAKEWORD(2, 2);
+	WSADATA wsa_data = {};
+    auto result = WSAStartup(wsa_version, &wsa_data);
+	if( result != 0 )
+	{
+		sockets_reference_count = 0;
+		auto socket_error = WSAGetLastError();
+		ctLogError << "WSAStartup() call failed. WSAGetLastError() returned error code:" << socket_error << "." << ctLogEnd;
+		return status::cant_allocate;
+	}
+	else
+	{
+		ctLogDebug << "WSAStartup() call succeeded." << ctLogEnd;
+	}
+#endif
+
+	return status::ok;
+}
+
+status deinitialize_sockets()
+{
+	const std::lock_guard<std::mutex> lock(sockets_init_mutex);
+
+	ctValidate( sockets_reference_count != 0, status::invalid ) << "deinitialize_sockets() called, when the number of references are already 0" << ctValidateEnd;
+
+	// decrease reference count, but only deinit when passing from 1->0
+	--sockets_reference_count;
+	if( sockets_reference_count != 0 )
+		return status::ok;
+
+#if defined(_WIN32)
+	ctLogDebug << "Shutting down Windows Sockets 2" << ctLogEnd;
+
+	auto result = WSACleanup();
+	if( result != 0 )
+	{
+		sockets_reference_count = 0;
+		auto socket_error = WSAGetLastError();
+		ctLogError << "WSACleanup() call failed. WSAGetLastError() returned error code:" << socket_error << "." << ctLogEnd;
+		return status::not_initialized;
+	}
+	else
+	{
+		ctLogDebug << "WSACleanup() call succeeded." << ctLogEnd;
+	}
+#endif
+
+	return status::ok;
+}
+
+/////////////////////////////////////////
+
+#if defined(_WIN32)
+using socket_type = SOCKET;
+constexpr const socket_type invalid_socket = socket_type(SOCKET_ERROR);
+#elif defined(linux)
+using socket_type = int;
+constexpr const socket_type invalid_socket = -1;
+#endif
 
 inline int protocol_family_to_AF(socket_protocol_family protocol_family)
 {
@@ -129,77 +229,207 @@ inline void *get_inet_addr_pointer(sockaddr *sa)
 		return &(((sockaddr_in6*)sa)->sin6_addr);
 }
 
-inline void safe_close_socket( int &socket_fd )
+inline int get_last_socket_error()
 {
-	if (socket_fd != -1)
+#if defined(_WIN32)
+	return WSAGetLastError();
+#elif defined(linux)
+	return errno;
+#endif
+}
+
+class socket::file
+{
+public:
+	file();
+	~file();
+
+	// create a socket descriptor. if an existing socket is owned by the file object, it is automatically closed
+	// ai_family, ai_socktype and ai_protocol fields of the addrinfo &addr object is used to create the socket file descriptor
+	status create( const addrinfo &addr );
+
+	// connect the socket to another socket
+	status connect( const addrinfo &addr ) const;
+
+	// bind a socket descriptor to the specified address & port, to prepare for listening. optionally mark the address & port for reuse (default set), if it was recently closed (often the case when debugging)
+	status bind( const addrinfo &addr, bool reuse_address = true ) const;
+
+	// start listening on bound socket
+	status listen( size_t backlog_size ) const;
+
+	// accept a connection on listening port
+	status_return<status,std::unique_ptr<socket::file>> accept( sockaddr *remote_addr, socklen_t &remote_addr_size ) const;
+
+	// send data on a stream socket
+	status send(const void* buf, size_t buflen, size_t& sent) const;
+
+	// receive data on a stream socket
+	status recv(void* buf, size_t buflen, size_t& received) const;
+
+	// close the socket 
+	status close();
+
+	// returns if the socket is valid or invalid
+	bool is_valid() const;
+
+private:
+	socket_type fd = invalid_socket;
+};
+
+inline status socket::file::close()
+{
+	if( this->fd != invalid_socket )
 	{
-		::close(socket_fd);
-		socket_fd = -1;
+#if defined(_WIN32)
+		int result = ::closesocket(this->fd);
+#elif defined(linux)
+		int result = ::close(this->fd);
+#endif
+		this->fd = invalid_socket;
+		ctValidate( result != invalid_socket, status::invalid) << "Got an error code: " << get_last_socket_error() << " when closing the socket. " << ctValidateEnd;
+	}
+	return status::ok;
+}
+
+inline socket::file::file()
+{
+	// add a reference to the sockets library, to make sure that it is initialized. 
+	auto result = initialize_sockets();
+	if( !result )
+	{
+		ctLogError 
+			<< "initialize_sockets() failed, and returned the error: " << result 
+			<< ", which is unexpected. The socket library may not be available. " 
+			<< "Add an explict call to initialize_sockets() before allocating sockets to make sure the socket library exists." 
+			<< ctLogEnd;
 	}
 }
 
-socket::socket()
+inline socket::file::~file()
 {
+	auto result = this->close();
+	if( !result )
+	{
+		ctLogError 
+			<< "close() failed, and returned the error: " << result 
+			<< ctLogEnd;
+	}
+
+	result = deinitialize_sockets();
+	if( !result )
+	{
+		ctLogError 
+			<< "deinitialize_sockets() failed, and returned the error: " 
+			<< result << ", which is unexpected. It seems the number of allocated " 
+			<< "sockets are out of sync, or deinitialize_sockets() has been called too many times." << ctLogEnd;
+	}
 }
 
-socket::socket(int &&socket_fd)
-	: socket_file_desc(std::move(socket_fd))
+inline status socket::file::create( const addrinfo &addr )
 {
+	ctStatusCall( this->close() );
+
+	this->fd = ::socket(addr.ai_family, addr.ai_socktype, addr.ai_protocol);
+	ctValidate( this->fd != invalid_socket , status::cant_open ) 
+		<< "Could not create socket for family: " << addr.ai_family 
+		<< ", protocol: " << addr.ai_protocol 
+		<< ". System error code: " << get_last_socket_error() 
+		<< ctValidateEnd;
+
+	return status::ok;
 }
 
-socket::~socket()
+inline status socket::file::connect( const addrinfo &addr ) const
 {
-	this->close_socket();
+	int result = {};
+	ctValidate( this->fd != invalid_socket , status::invalid ) << "Invalid call when no socket is created." << ctValidateEnd;
+
+#if defined(_WIN32)
+	result = ::connect(this->fd, addr.ai_addr, (int)addr.ai_addrlen);
+#elif defined(linux)
+	result = ::connect(this->fd, addr.ai_addr, addr.ai_addrlen);
+#endif
+	ctValidate( result == 0 , status::cant_allocate ) 
+		<< "Could not connect socket to remote address. Family: " << addr.ai_family 
+		<< ", protocol: " << addr.ai_protocol 
+		<< ". System error code: " << get_last_socket_error() 
+		<< ctValidateEnd;
+
+	return status::ok;
 }
 
-inline void socket::close_socket()
+inline status socket::file::bind( const addrinfo &addr, bool reuse_address ) const
 {
-	safe_close_socket(this->socket_file_desc);
+	int result = {};
+	ctValidate( this->fd != invalid_socket , status::invalid ) << "Invalid call when no socket is created." << ctValidateEnd;
+
+	// tell sockets api to reuse the address
+	if( reuse_address )
+	{
+		const int option_value = 1;
+#if defined(_WIN32)
+		result = setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&option_value, sizeof(option_value));
+#elif defined(linux)
+		result = setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value));
+#endif
+		ctValidate( result == 0 , status::cant_allocate ) 
+			<< "Could not set the socket option on the socket file descriptor. System error code: " << get_last_socket_error() 
+			<< ctValidateEnd;
+	}
+
+	// bind the socket
+#if defined(_WIN32)
+	result = ::bind(this->fd, addr.ai_addr, (int)addr.ai_addrlen);
+#elif defined(linux)
+	result = ::bind(this->fd, addr.ai_addr, addr.ai_addrlen);
+#endif
+	ctValidate( result == 0 , status::cant_allocate ) 
+		<< "Could not bind socket for for family: " << addr.ai_family 
+		<< ", protocol: " << addr.ai_protocol 
+		<< ". System error code: " << get_last_socket_error() 
+		<< ctValidateEnd;
+
+	return status::ok;
 }
 
-inline void socket::move_socket_from(socket&& other)
+inline status socket::file::listen( size_t backlog_size ) const
 {
-	// if we have a socket open, close it
-	this->close_socket();
+	ctValidate( this->fd != invalid_socket , status::invalid ) << "Invalid call when no socket is created." << ctValidateEnd;
 
-	// move the socket descriptor
-	this->socket_file_desc = other.socket_file_desc;
-	other.socket_file_desc = -1;
+	auto result = ::listen(this->fd, (int)backlog_size);
+	ctValidate( result == 0 , status::not_ready ) 
+		<< "Could place socket in listen mode. System error code: " << get_last_socket_error() 
+		<< ctValidateEnd;
+
+	return status::ok;
 }
 
-stream_socket::stream_socket()
-	: socket()
+inline status_return<status,std::unique_ptr<socket::file>> socket::file::accept( sockaddr *remote_addr, socklen_t &remote_addr_size ) const
 {
+	ctValidate( this->fd != invalid_socket , status::invalid ) << "Invalid call when no socket is created." << ctValidateEnd;
+
+	std::unique_ptr<socket::file> incoming_file( new socket::file() );
+
+	incoming_file->fd = ::accept(this->fd, remote_addr, &remote_addr_size);
+	ctValidate(incoming_file->fd != invalid_socket, status::invalid) 
+		<< "Call to socket accept() failed. System error code: " << get_last_socket_error() 
+		<< ctValidateEnd;
+
+	return incoming_file;
 }
 
-stream_socket::stream_socket(int &&socket_fd)
-	: socket(std::move(socket_fd))
+inline status stream_socket::file::send(const void* buf, size_t buflen, size_t& sent) const
 {
-}
+	ctValidate(this->fd != -1, status::not_initialized) << "The socked has not been initialized, or has been closed after being initialized." << ctValidateEnd;
 
-stream_socket::stream_socket(stream_socket &&other)
-	: socket()
-{
-	this->move_socket_from(std::move(other));
-}
-
-stream_socket& stream_socket::operator=(stream_socket &&other)
-{
-	this->move_socket_from(std::move(other));
-	return *this;
-}
-
-stream_socket::~stream_socket()
-{
-}
-
-status stream_socket::send(const void* buf, size_t buflen, size_t& sent)
-{
-	ctValidate(this->socket_file_desc != -1, status::not_initialized) << "The socked has not been initialized, or has been closed after being initialized." << ctValidateEnd;
-
-	ssize_t result = ::send(this->socket_file_desc, buf, buflen, 0);
+#if defined(_WIN32)
+	int result = ::send(this->fd, (const char*)buf, (int)buflen, 0);
+#elif defined(linux)
+	ssize_t result = ::send(this->fd, buf, buflen, 0);
+#endif
 	if( result < 0 )
 	{
+		sent = 0;
 		return status::cant_write;
 	}
 	sent = result;
@@ -207,19 +437,129 @@ status stream_socket::send(const void* buf, size_t buflen, size_t& sent)
 	return status::ok;
 }
 
-status stream_socket::recv(void* buf, size_t buflen, size_t& received)
+inline status stream_socket::file::recv(void* buf, size_t buflen, size_t& received) const
 {
-	ctValidate(this->socket_file_desc != -1, status::not_initialized) << "The socked has not been initialized, or has been closed after being initialized." << ctValidateEnd;
+	ctValidate(this->fd != -1, status::not_initialized) << "The socked has not been initialized, or has been closed after being initialized." << ctValidateEnd;
 
-	ssize_t result = ::recv(this->socket_file_desc, buf, buflen, 0);
+#if defined(_WIN32)
+	int result = ::recv(this->fd, (char*)buf, (int)buflen, 0);
+#elif defined(linux)
+	ssize_t result = ::recv(this->fd, buf, buflen, 0);
+#endif
 	if( result < 0 )
 	{
+		received = 0;
 		return status::cant_write;
 	}
 	received = result;
 	
 	return status::ok;
 }
+
+inline bool stream_socket::file::is_valid() const
+{
+	return this->fd != invalid_socket;
+}
+
+/////////////////////////////////////////
+
+socket::socket()
+	: socket_file( new socket::file() )
+{}
+
+socket::socket(std::unique_ptr<file> other_file)
+	: socket_file( std::move(other_file) )
+{
+}
+
+socket::~socket()
+{
+}
+
+void socket::transfer_socket_file(socket &dest, socket &src)
+{
+	// transfer over the pointer from the src to the dest, but also allocate a new empty file in src, so that it still has an allocated object
+	dest.socket_file = std::move(src.socket_file);
+	src.socket_file = std::unique_ptr<socket::file>(new socket::file());
+}
+
+/////////////////////////////////////////
+
+stream_socket::stream_socket(std::unique_ptr<file> other_file)
+	: socket( std::move(other_file))
+{
+}
+
+stream_socket::stream_socket(stream_socket &&other)
+{
+	socket::transfer_socket_file(*this, other);
+}
+
+stream_socket& stream_socket::operator=(stream_socket &&other)
+{
+	socket::transfer_socket_file(*this, other);
+	return *this;
+}
+
+stream_socket::~stream_socket()
+{
+}
+
+status_return<status,std::unique_ptr<stream_socket>> stream_socket::connect(const std::string &address, const std::string &port, socket_protocol_family protocol_family)
+{
+	// we need to make sure the socket library is set up, so allocate the stream_socket object with an empty file
+	auto connect_socket = std::unique_ptr<stream_socket>( new stream_socket(std::unique_ptr<file>(new file())) );
+
+	int result = {};
+	addrinfo hints = {};
+	addrinfo* address_info = {};
+	const char *node_name = address.empty() ? nullptr : address.c_str();
+
+	// set up the servinfo structure, use getaddrinfo. it will possibly return multiple matches
+	hints.ai_family = protocol_family_to_AF(protocol_family);
+	hints.ai_socktype = SOCK_STREAM;
+	result = getaddrinfo(node_name, port.c_str(), &hints, &address_info);
+	ctValidate(result == 0, status::not_found ) << "Could not find the address using the specified protocol family or families." << ctValidateEnd;
+
+	// to to connect using possible protocols
+	for(addrinfo* p = address_info; p != nullptr; p = p->ai_next)
+	{
+		if( connect_socket->socket_file->create(*p) )
+		{
+			if( connect_socket->socket_file->connect(*p) )
+			{
+				// found, created and connected
+				break;
+			}
+		}
+
+		// not possible to connect, make sure the file is closed
+		connect_socket->socket_file->close();
+	}
+
+	// dont need the address info anymore
+	freeaddrinfo(address_info);
+
+	ctValidate( connect_socket->socket_file->is_valid(), status::cant_open ) << "Could not connect to the remote address." << ctValidateEnd;
+	return connect_socket;
+}
+
+status_return<status,std::unique_ptr<stream_socket>> stream_socket::connect(const std::string &address, uint16_t port, socket_protocol_family protocol_family )
+{
+	return std::move( stream_socket::connect( address, std::to_string(port), protocol_family) );
+}
+
+status stream_socket::send(const void* buf, size_t buflen, size_t& sent)
+{
+	return this->socket_file->send(buf,buflen,sent);
+}
+
+status stream_socket::recv(void* buf, size_t buflen, size_t& received)
+{
+	return this->socket_file->recv(buf,buflen,received);
+}
+
+/////////////////////////////////////////
 
 struct server_socket::internal_data
 {
@@ -231,19 +571,20 @@ struct server_socket::internal_data
 		stopping
 	};
 	std::atomic<state> server_state = state::stopped;
+
+	std::string server_port;
+	socket_protocol_family server_protocol_family = {};
 };
 
 server_socket::server_socket()
 	: socket()
+	, data(new server_socket::internal_data())
 {
-	this->data = new internal_data();
 }
 
 server_socket::~server_socket()
 {
-	delete this->data;
 }
-
 
 status server_socket::run_internal(const std::string& port, const serve_func& serve_function, socket_protocol_family protocol_family, size_t backlog_size)
 {
@@ -261,61 +602,50 @@ status server_socket::run_internal(const std::string& port, const serve_func& se
 	ctValidate(result == 0, status::not_found) << "Could not find the specified protocol and set up a local address on port " << port << ctValidateEnd;
 
 	// find a socket type to bind to, use first successful
-	bool found_and_bound_socket = false;
-	for (addrinfo* p = servinfo; p != nullptr; p = p->ai_next)
+	for(addrinfo* p = servinfo; p != nullptr; p = p->ai_next)
 	{
-		// create a socket file description
-		if ((this->socket_file_desc = ::socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+		if( this->socket_file->create( *p ) )
 		{
-			ctLogInfo << "Could not create socket for family: " << p->ai_family << ", protocol: " << p->ai_protocol << ctLogEnd;
-			continue;
+			if( this->socket_file->bind( *p ) )
+			{
+				// successfully bound
+				ctLogInfo << "Socket successfully bound for family: " << p->ai_family << ", protocol: " << p->ai_protocol << ctLogEnd;
+				this->data->server_port = port;
+				this->data->server_protocol_family = protocol_family;
+				break;
+			}
 		}
 
-		// tell sockets api to reuse the address
-		const int option_value = 1;
-		if (setsockopt(this->socket_file_desc, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value)) == -1)
-		{
-			ctLogError << "Could not set the socket option on the socket file descriptor" << ctLogEnd;
-			return status::cant_allocate;
-		}
-
-		// bind to the socket
-		if (bind(this->socket_file_desc, p->ai_addr, p->ai_addrlen) == -1)
-		{
-			ctLogInfo << "Could not bind socket for for family: " << p->ai_family << ", protocol: " << p->ai_protocol << ctLogEnd;
-			close_socket();
-			continue;
-		}
-
-		// report success, and break out of loop
-		ctLogInfo << "Socket successfully bound for family: " << p->ai_family << ", protocol: " << p->ai_protocol << ctLogEnd;
-		found_and_bound_socket = true;
-		break;
+		// make sure the socket is closed
+		ctStatusCall( this->socket_file->close() );
 	}
 
 	// dont need the address info anymore
 	freeaddrinfo(servinfo);
 
-	// make sure all is set up before continuing
-	ctValidate(found_and_bound_socket, status::not_found) << "Could not match the selected protocol and bind successfully to a socket." << ctValidateEnd;
+	ctValidate(this->socket_file->is_valid(), status::not_found) << "Could not match the selected protocol and bind successfully to a socket." << ctValidateEnd;
 
-	// start listening to the socket
-	if (listen(this->socket_file_desc, (int)backlog_size) == -1)
-	{
-		ctLogError << "Could not set the socket to listen to port" << port << ctLogEnd;
-		return status::cant_allocate;
-	}
+	// start listening to the bound socket
+	ctStatusCall( this->socket_file->listen(backlog_size) );
+
 	ctLogInfo << "Waiting for connections, listening on port: " << port << ctLogEnd;
 	this->data->server_state = internal_data::state::running;
 	
 	// blocking accept loop
-	while (this->data->server_state == internal_data::state::running)
+	while( this->data->server_state == internal_data::state::running )
 	{
 		// accept a connection to the listening socket
 		sockaddr_storage remote_addr = {};
 		socklen_t remote_addr_size = sizeof( remote_addr );
-		int incoming_file_desc = accept(this->socket_file_desc, (struct sockaddr*)&remote_addr, &remote_addr_size);
-		ctValidate(incoming_file_desc != -1, status::invalid) << "Call to socket accept() failed. errno=" << errno << ctValidateEnd;
+
+		// accept an incoming connection. this call is blocking, and the incoming call may be the stop() method just waking us up to shut down.
+		std::unique_ptr<socket::file> remote_file;
+		ctStatusReturnCall( remote_file, this->socket_file->accept((sockaddr*)&remote_addr, remote_addr_size) );
+		if( this->data->server_state != internal_data::state::running )
+		{
+			ctLogInfo << "Server signaled to stop" << ctLogEnd;
+			break;
+		}
 
 		// get the address of the remote process, log it
 		char remote_address[INET6_ADDRSTRLEN];
@@ -328,12 +658,12 @@ status server_socket::run_internal(const std::string& port, const serve_func& se
 		ctLogInfo << "Accepted incoming connection from: " << remote_address << ctLogEnd;
 
 		// call the provided function, to handle the incoming socket
-		stream_socket incoming_socket(std::move(incoming_file_desc));
-		ctStatusCall(serve_function(incoming_socket));
+		ctStatusCall(serve_function(stream_socket(std::move(remote_file))));
 	}
 
 	// we are done, close the socket and return
-	close_socket();
+	ctLogInfo << "Closing down server listen socket" << ctLogEnd;
+	this->socket_file->close();
 
 	return status::ok;
 }
@@ -348,7 +678,7 @@ status server_socket::start(const std::string& port, const serve_func& serve_fun
 	auto result = this->run_internal(port, serve_function, protocol_family, backlog_size);
 
 	// clean up, change state to stopped, and make sure the socket is closed
-	this->close_socket();
+	ctStatusCall(this->socket_file->close());
 	this->data->server_state = internal_data::state::stopped;
 
 	return result;
@@ -357,6 +687,21 @@ status server_socket::start(const std::string& port, const serve_func& serve_fun
 status server_socket::start(uint16_t port, const serve_func & serve_function, socket_protocol_family protocol_family, size_t backlog_size)
 {
 	return this->start(std::to_string(port), serve_function, protocol_family, backlog_size);
+}
+
+status server_socket::stop()
+{
+	if (this->data->server_state != internal_data::state::running)
+		return status::not_initialized;
+
+	ctLogInfo << "Signaling server to shut down" << ctLogEnd;
+
+	// signal server, and do a local connect to the listen socket, so the server wakes up from a blocking accept() call
+	this->data->server_state = internal_data::state::stopping;
+	std::unique_ptr<stream_socket> wake_connect;
+	ctStatusReturnCall( wake_connect, stream_socket::connect("",this->data->server_port,this->data->server_protocol_family) );
+
+	return status::ok;
 }
 
 }
