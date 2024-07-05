@@ -575,7 +575,7 @@ status stream_socket::recv(void* buf, size_t buflen, size_t& received)
 
 struct server_socket::internal_data
 {
-	std::atomic<server_state> _server_state = server_state::stopped;
+	std::atomic<ctle::server_socket::server_state> _server_state = { server_state::stopped };
 
 	std::string server_port;
 	socket_protocol_family server_protocol_family = {};
