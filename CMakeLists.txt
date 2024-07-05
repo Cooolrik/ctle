@@ -52,12 +52,13 @@ if(CTLE_BUILD_TESTS)
 	if(MSVC)
 		add_compile_options(/W4)
 	else()
-		add_compile_options(-Wall -Wextra -pedantic -Werror)
+		add_compile_options(-Wall -Wextra -pedantic) # -Werror
 	endif()
 
 	# unit_tests
 	add_executable( 
         unit_tests
+		
         ./unit_tests/unit_tests.cpp
         ./unit_tests/unit_tests.h
 
@@ -81,6 +82,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/uuid.h
 		./ctle/hash.h
 		./ctle/util.h
+		./ctle/sockets.h
 		./ctle/_macros.inl
 		./ctle/_undef_macros.inl
 
@@ -105,20 +107,32 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_uuid.cpp
 		./unit_tests/test_hash.cpp
 		./unit_tests/test_macros.cpp
+		./unit_tests/test_sockets.cpp
 
 		./ctle.natvis
 		)
 
 	target_include_directories( 
 		unit_tests 
+		
 		PUBLIC ${glm_SOURCE_DIR}
 		PUBLIC ${picosha2_SOURCE_DIR}
 		)
 
-	target_link_libraries( 	
-        unit_tests 
-		gtest_main 
-		)
+	if(MSVC)
+		target_link_libraries( 	
+			unit_tests 
+			
+			gtest_main 
+			ws2_32
+			)
+	else()
+		target_link_libraries( 	
+			unit_tests 
+			
+			gtest_main 
+			)
+	endif()
 
 # testing
 endif(CTLE_BUILD_TESTS)

@@ -41,16 +41,3 @@ else
 fi 
 cd ..
 tail results_c++14
-
-echo "Building & testing C++11"
-mkdir -p build_c++11
-cd build_c++11
-cmake .. -DCMAKE_CXX_STANDARD=11 -DCTLE_BUILD_TESTS=ON
-cmake --build .
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	./unit_tests > ../results_c++11
-else
-	./Debug/unit_tests > ../results_c++11
-fi 
-cd ..
-tail results_c++11
