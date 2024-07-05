@@ -79,6 +79,15 @@ class server_socket : public socket
 public:
 	using serve_func = const std::function<status(stream_socket)>;
 	
+	// the state of the server
+	enum class server_state
+	{
+		stopped,
+		started,
+		running,
+		stopping
+	};
+
 	server_socket();
 	~server_socket();
 
@@ -92,8 +101,11 @@ public:
 	status start(uint16_t port, const serve_func& serve_function, socket_protocol_family protocol_family = socket_protocol_family::ipv4, size_t backlog_size = 10);
 	status start(const std::string &port, const serve_func& serve_function, socket_protocol_family protocol_family = socket_protocol_family::ipv4, size_t backlog_size = 10);
 
-	// stops the server. this needs to be called from another thread than run(), which will block until the server is signaled to stop
+	// stops the server. this needs to be called from another thread than start(), which will block until the server is signaled to stop
 	status stop();
+
+	// get the state of the server
+	server_state get_server_state() const;
 
 private:
 	struct internal_data;
@@ -563,14 +575,7 @@ status stream_socket::recv(void* buf, size_t buflen, size_t& received)
 
 struct server_socket::internal_data
 {
-	enum class state
-	{
-		stopped,
-		started,
-		running,
-		stopping
-	};
-	std::atomic<state> server_state = state::stopped;
+	std::atomic<server_state> server_state = server_state::stopped;
 
 	std::string server_port;
 	socket_protocol_family server_protocol_family = {};
@@ -629,10 +634,10 @@ status server_socket::run_internal(const std::string& port, const serve_func& se
 	ctStatusCall( this->socket_file->listen(backlog_size) );
 
 	ctLogInfo << "Waiting for connections, listening on port: " << port << ctLogEnd;
-	this->data->server_state = internal_data::state::running;
+	this->data->server_state = server_state::running;
 	
 	// blocking accept loop
-	while( this->data->server_state == internal_data::state::running )
+	while( this->data->server_state == server_state::running )
 	{
 		// accept a connection to the listening socket
 		sockaddr_storage remote_addr = {};
@@ -641,7 +646,7 @@ status server_socket::run_internal(const std::string& port, const serve_func& se
 		// accept an incoming connection. this call is blocking, and the incoming call may be the stop() method just waking us up to shut down.
 		std::unique_ptr<socket::file> remote_file;
 		ctStatusReturnCall( remote_file, this->socket_file->accept((sockaddr*)&remote_addr, remote_addr_size) );
-		if( this->data->server_state != internal_data::state::running )
+		if( this->data->server_state != server_state::running )
 		{
 			ctLogInfo << "Server signaled to stop" << ctLogEnd;
 			break;
@@ -671,15 +676,15 @@ status server_socket::run_internal(const std::string& port, const serve_func& se
 status server_socket::start(const std::string& port, const serve_func& serve_function, socket_protocol_family protocol_family, size_t backlog_size)
 {
 	// make sure the server is not already running, and change state to running
-	if (this->data->server_state != internal_data::state::stopped)
+	if (this->data->server_state != server_state::stopped)
 		return status::already_initialized;
-	this->data->server_state = internal_data::state::started;
+	this->data->server_state = server_state::started;
 
 	auto result = this->run_internal(port, serve_function, protocol_family, backlog_size);
 
 	// clean up, change state to stopped, and make sure the socket is closed
 	ctStatusCall(this->socket_file->close());
-	this->data->server_state = internal_data::state::stopped;
+	this->data->server_state = server_state::stopped;
 
 	return result;
 }
@@ -691,17 +696,22 @@ status server_socket::start(uint16_t port, const serve_func & serve_function, so
 
 status server_socket::stop()
 {
-	if (this->data->server_state != internal_data::state::running)
+	if (this->data->server_state != server_state::running)
 		return status::not_initialized;
 
 	ctLogInfo << "Signaling server to shut down" << ctLogEnd;
 
 	// signal server, and do a local connect to the listen socket, so the server wakes up from a blocking accept() call
-	this->data->server_state = internal_data::state::stopping;
+	this->data->server_state = server_state::stopping;
 	std::unique_ptr<stream_socket> wake_connect;
 	ctStatusReturnCall( wake_connect, stream_socket::connect("",this->data->server_port,this->data->server_protocol_family) );
 
 	return status::ok;
+}
+
+server_socket::server_state server_socket::get_server_state() const
+{
+	return this->data->server_state;
 }
 
 }
