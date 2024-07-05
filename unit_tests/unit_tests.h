@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <chrono>
+#include <thread>
 
 // include external headers
 // silence warning we can't control
