@@ -23,6 +23,7 @@
 
 #include <gtest/gtest.h>
 #include <picosha2.h>
+#include <xxhash.h>
 #include <functional>
 
 // re-enable warnings again

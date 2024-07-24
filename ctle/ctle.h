@@ -3,6 +3,29 @@
 
 #pragma once
 
+// file which includes all of ctle, and can be used in a source file which defines CTLE_IMPLEMENTATION
+// example usage:
+
+/*
+
+//
+// example_implement.cpp - example implementation of ctle
+//
+
+// define CTLE_IMPLEMENTATION in this file only, this will include all the source code
+#define CTLE_IMPLEMENTATION
+
+// optionally, include headers of other libraries which may be used by ctle.
+// including these will add more functionality to ctle
+#include <vulkan/vulkan.h>	// convert vulkan errors to status errors
+#include <system_error>		// convert system errors to status errors
+#include <picosha2.h>		// hash calculation functions
+
+// now, include ctle, which will implement the source code
+#include <ctle/ctle.h>
+
+*/
+
 #include "bimap.h"
 #include "bitmap_font.h"
 #include "endianness.h"
@@ -24,3 +47,5 @@
 #include "uuid.h"
 #include "hash.h"
 #include "sockets.h"
+#include "data_stream.h"
+#include "hasher.h"

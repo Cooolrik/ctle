@@ -35,17 +35,26 @@ if(CTLE_BUILD_TESTS)
 		GIT_TAG        6fdeff4d67f3db493d47c44da20aa1efaa6574ef # (2020 Aug 06)
 	)
 	
-	# picosha2 - used by hash.h to calculate sha256 hashes
+	# picosha2 - used by hasher.h to calculate sha256 hashes
 	FetchContent_Declare( 
 		picosha2
 		GIT_REPOSITORY https://github.com/okdshin/PicoSHA2.git
 		GIT_TAG		   27fcf6979298949e8a462e16d09a0351c18fcaf2 # (2022 Aug 08)
 	)
 
+	# xxHash - used by hasher.h to calculate xxHash hashes XXH64 and XXH128
+	FetchContent_Declare( 
+		xxhash
+		GIT_REPOSITORY https://github.com/Cyan4973/xxHash.git
+		GIT_TAG		   bbb27a5efb85b92a0486cf361a8635715a53f6ba # (2023 Jul 21)
+	)
+
+
 	FetchContent_MakeAvailable( 
 		googletest 
 		glm
 		picosha2
+		xxhash
 		)
 		
 	# lots of warnings and all warnings as errors
@@ -62,9 +71,12 @@ if(CTLE_BUILD_TESTS)
         ./unit_tests/unit_tests.cpp
         ./unit_tests/unit_tests.h
 
+		./ctle/ctle.h
+
 		./ctle/bimap.h
 		./ctle/bitmap_font.h
 		./ctle/endianness.h
+		./ctle/data_stream.h
 		./ctle/file_funcs.h
 		./ctle/idx_vector.h
 		./ctle/log.h
@@ -81,6 +93,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/types.h
 		./ctle/uuid.h
 		./ctle/hash.h
+		./ctle/hasher.h
 		./ctle/util.h
 		./ctle/sockets.h
 		./ctle/_macros.inl
@@ -106,8 +119,12 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_util.cpp
 		./unit_tests/test_uuid.cpp
 		./unit_tests/test_hash.cpp
+		./unit_tests/test_hasher.cpp
 		./unit_tests/test_macros.cpp
 		./unit_tests/test_sockets.cpp
+		./unit_tests/test_data_stream.cpp		
+
+		${xxhash_SOURCE_DIR}/xxhash.c
 
 		./ctle.natvis
 		)
@@ -117,6 +134,7 @@ if(CTLE_BUILD_TESTS)
 		
 		PUBLIC ${glm_SOURCE_DIR}
 		PUBLIC ${picosha2_SOURCE_DIR}
+		PUBLIC ${xxhash_SOURCE_DIR}
 		)
 
 	if(MSVC)
