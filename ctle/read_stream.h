@@ -14,6 +14,8 @@ namespace ctle
 {
 constexpr const size_t data_stream_default_buffer_size = 2 * 1024 * 1024;
 
+class _data_stream_hasher;
+
 // base class for a read_stream, a read-only input stream which is designed for streaming data sequentially, using a memory buffer. 
 // the read stream can optionally calculate an SHA256 hash on the read data, if picosha2 is included in the build. 
 // NOTE to implement hash calculation, make sure to include picosha2 before including ctle in the file which implements ctle
@@ -60,19 +62,6 @@ private:
 
 	// fills the read buffer, and updates the hash
 	status fill_buffer();
-};
-
-class read_file_stream : public read_stream
-{
-public:
-	read_file_stream( const std::string &filepath, bool calculate_hash = false, size_t buffer_size = data_stream_default_buffer_size);
-	virtual ~read_file_stream();
-
-protected:
-	virtual status_return<status, u64> read_data(u8* dest, u64 size);
-
-	_file_object file;
-	u64 file_position = 0;
 };
 
 }
@@ -194,33 +183,6 @@ status read_stream::fill_buffer()
 	}
 	
 	return status::ok;
-}
-
-/////////////////////////////////////////
-
-read_file_stream::read_file_stream( const std::string &filepath, bool calculate_hash, size_t buffer_size)
-	: read_stream()
-{
-	ctStatusCallThrow(this->file.open_read(filepath));
-	ctStatusCallThrow(this->initialize(calculate_hash, buffer_size));
-}
-
-read_file_stream::~read_file_stream()
-{
-	this->file.close();
-}
-
-status_return<status, u64> read_file_stream::read_data(u8* dest, u64 size)
-{
-	// cap the read size to the size of the file
-	const u64 data_left = this->file.size() - this->file_position;
-	u64 read_size = (size < data_left) ? size : data_left;
-
-	if( read_size > 0 )
-		ctStatusCall(this->file.read(dest, read_size));
-	this->file_position += read_size;
-
-	return read_size;
 }
 
 }

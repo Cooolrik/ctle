@@ -11,6 +11,7 @@
 #include <time.h>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 // include external headers
 // silence warning we can't control
@@ -44,6 +45,14 @@ typedef int32_t i32;
 typedef int64_t i64;
 
 template<class T> T random_value();
+
+template<class T> inline std::vector<T> random_vector( size_t size )
+{
+	std::vector<u8> data(size);
+	for( size_t inx=0; inx<size; ++inx )
+		data[inx] = random_value<T>();
+    return data;
+}
 
 #define STANDARD_TEST_INIT() \
 	TEST_METHOD_INITIALIZE( InitMethod )\

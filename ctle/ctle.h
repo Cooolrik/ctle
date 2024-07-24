@@ -47,5 +47,7 @@
 #include "uuid.h"
 #include "hash.h"
 #include "sockets.h"
-#include "data_stream.h"
+#include "read_stream.h"
+#include "data_source.h"
+#include "data_destination.h"
 #include "hasher.h"

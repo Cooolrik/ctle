@@ -8,7 +8,7 @@
 #include <future>
 #include <thread>
 
-#include "../ctle/data_stream.h"
+#include "../ctle/read_stream.h"
 
 using namespace ctle;
 

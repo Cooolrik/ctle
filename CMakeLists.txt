@@ -76,7 +76,9 @@ if(CTLE_BUILD_TESTS)
 		./ctle/bimap.h
 		./ctle/bitmap_font.h
 		./ctle/endianness.h
-		./ctle/data_stream.h
+		./ctle/read_stream.h
+		./ctle/data_source.h
+		./ctle/data_destination.h
 		./ctle/file_funcs.h
 		./ctle/idx_vector.h
 		./ctle/log.h
@@ -122,7 +124,9 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_hasher.cpp
 		./unit_tests/test_macros.cpp
 		./unit_tests/test_sockets.cpp
-		./unit_tests/test_data_stream.cpp		
+		./unit_tests/test_read_stream.cpp
+		./unit_tests/test_data_source.cpp		
+		./unit_tests/test_data_destination.cpp		
 
 		${xxhash_SOURCE_DIR}/xxhash.c
 
