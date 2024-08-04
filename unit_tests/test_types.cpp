@@ -13,9 +13,33 @@
 
 using namespace ctle;
 
-template<class _Ty, size_t _Size> void TestTuple()
+template<class _Ty, size_t _Size> void CompareExact( const n_tup<_Ty, _Size> &tuple, const n_tup<_Ty, _Size> &tuple2 )
+{
+	// make sure they match exactly
+	for( size_t i = 0; i < _Size; ++i )
+	{
+		EXPECT_EQ( tuple[i], tuple2[i] );
+	}
+
+	EXPECT_EQ( tuple, tuple2 );
+	EXPECT_FALSE( tuple < tuple2 );
+	EXPECT_FALSE( tuple > tuple2 );
+}
+
+template<class _Ty, size_t _Size> void CompareNear( const n_tup<_Ty, _Size> &tuple, const n_tup<_Ty, _Size> &tuple2 )
+{
+	// make sure they are near
+	for( size_t i = 0; i < _Size; ++i )
+	{
+		EXPECT_NEAR( (double)tuple[i], (double)tuple2[i], 0.00001 );
+	}
+}
+
+template<class _Ty, size_t _Size, bool _Exact> void TestTuple()
 {
 	n_tup<_Ty, _Size> tuple = {};
+
+	static_assert( sizeof(tuple) == sizeof(_Ty)*_Size );
 
 	// init with random values
 	for( size_t i = 0; i < _Size; ++i )
@@ -29,81 +53,70 @@ template<class _Ty, size_t _Size> void TestTuple()
 	// read back from string
 	auto tuple2 = from_string<n_tup<_Ty, _Size>>( str );
 
-	// make sure they match
-	for( size_t i = 0; i < _Size; ++i )
+	if( _Exact )
 	{
-		EXPECT_EQ( tuple[i], tuple2[i] );
+		CompareExact<_Ty,_Size>( tuple, tuple2 );
 	}
-
-	EXPECT_EQ( tuple, tuple2 );
-	EXPECT_FALSE( tuple < tuple2 );
-	EXPECT_FALSE( tuple > tuple2 );
+	else
+	{
+		CompareNear<_Ty,_Size>( tuple, tuple2 );
+	}
 }
 
 TEST( types, basic_test )
 {
-	TestTuple<i8, 1>();
-	TestTuple<i8, 2>();
-	TestTuple<i8, 3>();
-	TestTuple<i8, 4>();
-	TestTuple<u8, 1>();
-	TestTuple<u8, 2>();
-	TestTuple<u8, 3>();
-	TestTuple<u8, 4>();
-	TestTuple<i16, 1>();
-	TestTuple<i16, 2>();
-	TestTuple<i16, 3>();
-	TestTuple<i16, 4>();
-	TestTuple<u16, 1>();
-	TestTuple<u16, 2>();
-	TestTuple<u16, 3>();
-	TestTuple<u16, 4>();
-	TestTuple<i32, 1>();
-	TestTuple<i32, 2>();
-	TestTuple<i32, 3>();
-	TestTuple<i32, 4>();
-	TestTuple<u32, 1>();
-	TestTuple<u32, 2>();
-	TestTuple<u32, 3>();
-	TestTuple<u32, 4>();
-	TestTuple<i64, 1>();
-	TestTuple<i64, 2>();
-	TestTuple<i64, 3>();
-	TestTuple<i64, 4>();
-	TestTuple<u64, 1>();
-	TestTuple<u64, 2>();
-	TestTuple<u64, 3>();
-	TestTuple<u64, 4>();
-	TestTuple<float, 1>();
-	TestTuple<float, 2>();
-	TestTuple<float, 3>();
-	TestTuple<float, 4>();
-	TestTuple<double, 1>();
-	TestTuple<double, 2>();
-	TestTuple<double, 3>();
-	TestTuple<double, 4>();
+	TestTuple<i8, 1, true>();
+	TestTuple<i8, 2, true>();
+	TestTuple<i8, 3, true>();
+	TestTuple<i8, 4, true>();
+	TestTuple<u8, 1, true>();
+	TestTuple<u8, 2, true>();
+	TestTuple<u8, 3, true>();
+	TestTuple<u8, 4, true>();
+	TestTuple<i16, 1, true>();
+	TestTuple<i16, 2, true>();
+	TestTuple<i16, 3, true>();
+	TestTuple<i16, 4, true>();
+	TestTuple<u16, 1, true>();
+	TestTuple<u16, 2, true>();
+	TestTuple<u16, 3, true>();
+	TestTuple<u16, 4, true>();
+	TestTuple<i32, 1, true>();
+	TestTuple<i32, 2, true>();
+	TestTuple<i32, 3, true>();
+	TestTuple<i32, 4, true>();
+	TestTuple<u32, 1, true>();
+	TestTuple<u32, 2, true>();
+	TestTuple<u32, 3, true>();
+	TestTuple<u32, 4, true>();
+	TestTuple<i64, 1, true>();
+	TestTuple<i64, 2, true>();
+	TestTuple<i64, 3, true>();
+	TestTuple<i64, 4, true>();
+	TestTuple<u64, 1, true>();
+	TestTuple<u64, 2, true>();
+	TestTuple<u64, 3, true>();
+	TestTuple<u64, 4, true>();
+	TestTuple<float, 1, false>();
+	TestTuple<float, 2, false>();
+	TestTuple<float, 3, false>();
+	TestTuple<float, 4, false>();
+	TestTuple<double, 1, false>();
+	TestTuple<double, 2, false>();
+	TestTuple<double, 3, false>();
+	TestTuple<double, 4, false>();
 }
 
-template<class _Ty> _Ty random_tuple()
-{
-	_Ty tup = {};
-
-	for( size_t i = 0; i < _Ty::dimensions; ++i )
-	{
-		tup[i] = random_value<typename _Ty::value_type>();
-	}
-
-	return tup;
-}
-
-template<class _Ty, size_t _Size> void TestTupleOfTuple()
+template<class _Ty, size_t _Size, bool _Exact> void TestTupleOfTuple()
 {
 	nm_tup<_Ty, _Size> tupletuple = {};
+
+	static_assert( sizeof(tupletuple) == sizeof(_Ty) * _Size );
 
 	// init with random values
 	for( size_t i = 0; i < _Size; ++i )
 	{
-		tupletuple[i] = random_tuple<_Ty>();
+		tupletuple[i] = random_value<_Ty>();
 	}
 
 	// convert to string
@@ -115,62 +128,66 @@ template<class _Ty, size_t _Size> void TestTupleOfTuple()
 	// make sure they match
 	for( size_t i = 0; i < _Size; ++i )
 	{
-		EXPECT_EQ( tupletuple[i], tupletuple2[i] );
+		if( _Exact )
+		{
+			CompareExact<_Ty::value_type,_Ty::dimensions>( tupletuple[i], tupletuple2[i] );
+		}
+		else
+		{
+			CompareNear<_Ty::value_type,_Ty::dimensions>( tupletuple[i], tupletuple2[i] );
+		}
 	}
 
-	EXPECT_EQ( tupletuple, tupletuple2 );
-	EXPECT_FALSE( tupletuple < tupletuple2 );
-	EXPECT_FALSE( tupletuple > tupletuple2 );
 }
 
-template<class _Ty, size_t _Size> void TestNMTuple()
+template<class _Ty, size_t _Size, bool _Exact> void TestNMTuple()
 {
-	TestTupleOfTuple<n_tup<_Ty,_Size>,1>();
-	TestTupleOfTuple<n_tup<_Ty,_Size>,2>();
-	TestTupleOfTuple<n_tup<_Ty,_Size>,3>();
-	TestTupleOfTuple<n_tup<_Ty,_Size>,4>();
+	TestTupleOfTuple<n_tup<_Ty,_Size>,1,_Exact>();
+	TestTupleOfTuple<n_tup<_Ty,_Size>,2,_Exact>();
+	TestTupleOfTuple<n_tup<_Ty,_Size>,3,_Exact>();
+	TestTupleOfTuple<n_tup<_Ty,_Size>,4,_Exact>();
 }
 
 TEST( types, tuple_of_tuple_test )
 {
-	TestNMTuple<i8, 1>();
-	TestNMTuple<i8, 2>();
-	TestNMTuple<i8, 3>();
-	TestNMTuple<i8, 4>();
-	TestNMTuple<u8, 1>();
-	TestNMTuple<u8, 2>();
-	TestNMTuple<u8, 3>();
-	TestNMTuple<u8, 4>();
-	TestNMTuple<i16, 1>();
-	TestNMTuple<i16, 2>();
-	TestNMTuple<i16, 3>();
-	TestNMTuple<i16, 4>();
-	TestNMTuple<u16, 1>();
-	TestNMTuple<u16, 2>();
-	TestNMTuple<u16, 3>();
-	TestNMTuple<u16, 4>();
-	TestNMTuple<i32, 1>();
-	TestNMTuple<i32, 2>();
-	TestNMTuple<i32, 3>();
-	TestNMTuple<i32, 4>();
-	TestNMTuple<u32, 1>();
-	TestNMTuple<u32, 2>();
-	TestNMTuple<u32, 3>();
-	TestNMTuple<u32, 4>();
-	TestNMTuple<i64, 1>();
-	TestNMTuple<i64, 2>();
-	TestNMTuple<i64, 3>();
-	TestNMTuple<i64, 4>();
-	TestNMTuple<u64, 1>();
-	TestNMTuple<u64, 2>();
-	TestNMTuple<u64, 3>();
-	TestNMTuple<u64, 4>();
-	TestNMTuple<float, 1>();
-	TestNMTuple<float, 2>();
-	TestNMTuple<float, 3>();
-	TestNMTuple<float, 4>();
-	TestNMTuple<double, 1>();
-	TestNMTuple<double, 2>();
-	TestNMTuple<double, 3>();
-	TestNMTuple<double, 4>();
+	TestNMTuple<i8, 1, true>();
+	TestNMTuple<i8, 2, true>();
+	TestNMTuple<i8, 3, true>();
+	TestNMTuple<i8, 4, true>();
+	TestNMTuple<u8, 1, true>();
+	TestNMTuple<u8, 2, true>();
+	TestNMTuple<u8, 3, true>();
+	TestNMTuple<u8, 4, true>();
+	TestNMTuple<i16, 1, true>();
+	TestNMTuple<i16, 2, true>();
+	TestNMTuple<i16, 3, true>();
+	TestNMTuple<i16, 4, true>();
+	TestNMTuple<u16, 1, true>();
+	TestNMTuple<u16, 2, true>();
+	TestNMTuple<u16, 3, true>();
+	TestNMTuple<u16, 4, true>();
+	TestNMTuple<i32, 1, true>();
+	TestNMTuple<i32, 2, true>();
+	TestNMTuple<i32, 3, true>();
+	TestNMTuple<i32, 4, true>();
+	TestNMTuple<u32, 1, true>();
+	TestNMTuple<u32, 2, true>();
+	TestNMTuple<u32, 3, true>();
+	TestNMTuple<u32, 4, true>();
+	TestNMTuple<i64, 1, true>();
+	TestNMTuple<i64, 2, true>();
+	TestNMTuple<i64, 3, true>();
+	TestNMTuple<i64, 4, true>();
+	TestNMTuple<u64, 1, true>();
+	TestNMTuple<u64, 2, true>();
+	TestNMTuple<u64, 3, true>();
+	TestNMTuple<u64, 4, true>();
+	TestNMTuple<float, 1, false>();
+	TestNMTuple<float, 2, false>();
+	TestNMTuple<float, 3, false>();
+	TestNMTuple<float, 4, false>();
+	TestNMTuple<double, 1, false>();
+	TestNMTuple<double, 2, false>();
+	TestNMTuple<double, 3, false>();
+	TestNMTuple<double, 4, false>();
 }

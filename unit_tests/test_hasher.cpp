@@ -41,9 +41,9 @@ void test_expected_hash( const u8 *srcdata, size_t size, const char *expected_ha
 
 TEST( hasher, test_expected_hash_values )
 {
-	test_expected_hash<hasher_SHA256>(hashing_testdata,sizeof(hashing_testdata),"0A2591AAF3340AD92FAECBC5908E74D04B51EE5D2DEEE78F089F1607570E2E91");
-	test_expected_hash<hasher_XXH64>(hashing_testdata,sizeof(hashing_testdata),"625A8B25C833FD36");
-	test_expected_hash<hasher_XXH128>(hashing_testdata,sizeof(hashing_testdata),"828D13C68D1BAC3AA5AA63C0925F9C1E");
+	test_expected_hash<hasher_sha256>(hashing_testdata,sizeof(hashing_testdata),"0A2591AAF3340AD92FAECBC5908E74D04B51EE5D2DEEE78F089F1607570E2E91");
+	test_expected_hash<hasher_xxh64>(hashing_testdata,sizeof(hashing_testdata),"625A8B25C833FD36");
+	test_expected_hash<hasher_xxh128>(hashing_testdata,sizeof(hashing_testdata),"828D13C68D1BAC3AA5AA63C0925F9C1E");
 
 	// test no-op hashers as well, expect zero strings
 	test_expected_hash<hasher_noop<64>>(hashing_testdata,sizeof(hashing_testdata) ,"0000000000000000");
@@ -86,7 +86,7 @@ TEST( hasher, test_determenism )
 	const size_t block_size1 = (size_t)random_value<u16>() + 100;
 	const size_t block_size2 = (size_t)random_value<u16>() + 100;
 
-	test_hash_determenism<hasher_SHA256>( random_data.data(), random_data.size(), block_size1, block_size2 );
-	test_hash_determenism<hasher_XXH64>( random_data.data(), random_data.size(), block_size1, block_size2 );
-	test_hash_determenism<hasher_XXH128>( random_data.data(), random_data.size(), block_size1, block_size2 );
+	test_hash_determenism<hasher_sha256>( random_data.data(), random_data.size(), block_size1, block_size2 );
+	test_hash_determenism<hasher_xxh64>( random_data.data(), random_data.size(), block_size1, block_size2 );
+	test_hash_determenism<hasher_xxh128>( random_data.data(), random_data.size(), block_size1, block_size2 );
 }

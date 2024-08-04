@@ -59,7 +59,7 @@ if(CTLE_BUILD_TESTS)
 		
 	# lots of warnings and all warnings as errors
 	if(MSVC)
-		add_compile_options(/W4)
+		add_compile_options(/W4 /bigobj)
 	else()
 		add_compile_options(-Wall -Wextra -pedantic) # -Werror
 	endif()
@@ -77,6 +77,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/bitmap_font.h
 		./ctle/endianness.h
 		./ctle/read_stream.h
+		./ctle/write_stream.h
 		./ctle/data_source.h
 		./ctle/data_destination.h
 		./ctle/file_funcs.h
@@ -93,6 +94,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/string_funcs.h
 		./ctle/thread_safe_map.h
 		./ctle/types.h
+		./ctle/ntup.h
 		./ctle/uuid.h
 		./ctle/hash.h
 		./ctle/hasher.h
@@ -124,9 +126,11 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_hasher.cpp
 		./unit_tests/test_macros.cpp
 		./unit_tests/test_sockets.cpp
-		./unit_tests/test_read_stream.cpp
+		./unit_tests/test_data_stream.cpp
 		./unit_tests/test_data_source.cpp		
 		./unit_tests/test_data_destination.cpp		
+
+		./unit_tests/unit_tests_variants.cpp
 
 		${xxhash_SOURCE_DIR}/xxhash.c
 

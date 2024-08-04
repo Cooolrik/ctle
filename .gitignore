@@ -20,3 +20,4 @@
 /ctle/_undef_macros.inl
 /ctle/prop.h
 /ctle/ntup.h
+/unit_tests/unit_tests_variants.cpp

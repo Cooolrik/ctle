@@ -23,7 +23,7 @@ public:
 	file_data_destination( const std::string &filepath, bool overwrite_existing = true );
 	~file_data_destination();
 
-	// read from source into dest_buffer, return number of bytes actually read
+	// write from source buffer into destination, return number of bytes actually written
 	status_return<status, u64> write(const u8* src_buffer, u64 write_count);
 
 private:

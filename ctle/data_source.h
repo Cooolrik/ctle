@@ -17,7 +17,6 @@ namespace ctle
 //	- Blocking call which reads from the source to dest_buffer, until the read_count bytes have been read, the source 
 //	  is at an end, or an error occurs. On succes, the method must return status::ok, and the actual number of bytes read from the 
 //	  source. The method should continue to return status::ok and 0 if called after reaching the end of the data source (eos/eof).
-
 class file_data_source
 {
 public:

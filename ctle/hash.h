@@ -12,7 +12,7 @@ namespace ctle
 {
 	
 // a hash digest structure, defined for 64, 128, 256 and 512 bits
-template<size_t _Size>
+template<size_t _Size> 
 struct hash
 {
 	static_assert( _Size == 64 || _Size == 128 || _Size == 256 || _Size == 512 , "Hash size must be one of 64, 128, 256 or 512");

@@ -5,9 +5,24 @@ from .formatted_output import formatted_output
 
 int_bit_sizes = [8,16,32,64]
 real_bit_sizes = [32,64]
-real_names = ['float','double']
 vector_names = ['x','y','z','w']
 color_names = ['r','g','b','a']
+
+# forward definition of all ctle classes
+fwd_classes = [
+    ['status.h', ['enum class status_code : int','status']],
+	['data_source.h', ['file_data_source']],
+	['data_destination.h', ['file_data_destination']],
+	['hasher.h', ['hasher_sha256', 'hasher_xxh64', 'hasher_xxh128', 'template <size_t _Size> class hasher_noop']],
+	['read_stream.h', ['template<class _DataSourceTy, class _HashTy = hasher_noop<64>> class read_stream']],
+	['write_stream.h', ['template<class _DataDestTy, class _HashTy = hasher_noop<64>> class write_stream']],
+	['ntup.h', ['template<class _Ty, size_t _Size> class n_tup','template<class _Ty, size_t _Size> class nm_tup']],
+	['bimap.h', ['template<class _Kty, class _Vty> class bimap']],
+	['bitmap_font.h', ['enum class bitmap_font_flags : int']],
+	['file_funcs.h', ['enum class access_mode : unsigned int','_file_object']],
+	['hash.h', ['template<size_t _Size> struct hash']],
+	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']]
+]
 
 def generate_types_dict():
 	global types
@@ -16,12 +31,14 @@ def generate_types_dict():
 	types = []
 	for bs in int_bit_sizes:
 		for sign in ['i','u']:
+      
 			# add the basic type
 			btype = f'{sign}{bs}'
 			types.append({ 
 				'otype': btype,
 				'tuple_cnt': 0
 				})
+   
 			# add the tuple variants
 			for d in range(1,5):
 				otype = f'{btype}tup{d}'
@@ -31,41 +48,50 @@ def generate_types_dict():
 					'subtype_cnt': 0,
 					'btype': btype,
 					})
+    
 			# add the tuple-of-tuple variants
 			for d in range(1,5):
 				for m in range(1,5):
 					otype = f'{btype}tup{d}x{m}'
+					subtype = f'{btype}tup{d}'
 					types.append({ 
 						'otype': otype,
 						'tuple_cnt': m,
 						'subtype_cnt': d,
+						'subtype' : subtype,
 						'btype': btype,
 						})
     
-	for rtype in ['float','double']:
+	for bs in real_bit_sizes:
+		btype = f'f{bs}'
+
 		# add the basic type
 		types.append({ 
-			'otype': rtype,
+			'otype': btype,
 			'tuple_cnt': 0
 			})
+
 		# add the tuple variants
 		for d in range(1,5):
-			otype = f'{rtype[0]}tup{d}'
+			otype = f'{btype}tup{d}'
 			types.append({ 
 				'otype': otype,
 				'tuple_cnt': d,
 				'subtype_cnt': 0,
-				'btype': rtype,
+				'btype': btype,
 				})
+
 		# add the tuple-of-tuple variants
 		for d in range(1,5):
 			for m in range(1,5):
-				otype = f'{rtype[0]}tup{d}x{m}'
+				otype = f'{btype}tup{d}x{m}'
+				subtype = f'{btype}tup{d}'
 				types.append({ 
 					'otype': otype,
 					'tuple_cnt': m,
 					'subtype_cnt': d,
-					'btype': rtype,
+					'subtype' : subtype,
+					'btype': btype,
 					})   
 
 def list_types( out:formatted_output ):
@@ -87,14 +113,15 @@ def list_types( out:formatted_output ):
 		out.ln('using f32 = float;')
 		out.ln('using f64 = double;')
 		out.ln()
-	
-		out.comment_ln(f'n-tuple template, for 1-4 dimensions')
-		out.ln('template<class _Ty, size_t _Size> class n_tup;')
-		out.ln()
-	
-		out.comment_ln(f'tuple-of-tuples template, nxm, for 1-4 dimensions')
-		out.ln('template<class _Ty, size_t _Size> class nm_tup;')
-		out.ln()
+
+		for fl in fwd_classes:
+			out.comment_ln(f'from {fl[0]}')
+			for cl in fl[1]:
+				if cl.startswith('template') or cl.startswith('enum'):
+					out.ln(f'{cl};')
+				else:
+					out.ln(f'class {cl};')
+			out.ln()
 
 		out.comment_ln(f'short-hand defines of common n-tuples')
 		for otype in types:
@@ -103,6 +130,15 @@ def list_types( out:formatted_output ):
 					out.ln(f'using {otype["otype"]} = nm_tup<n_tup<{otype["btype"]},{otype["subtype_cnt"]}>,{otype["tuple_cnt"]}>; ')
 				else:
 					out.ln(f'using {otype["otype"]} = n_tup<{otype["btype"]},{otype["tuple_cnt"]}>; ')
+		out.ln()
+  
+		out.comment_ln(f'short-hand aliases for float and double tuples')
+		for otype in types:
+			if otype['tuple_cnt'] > 0:
+				if otype['btype'] == 'f32' or otype['btype'] == 'f64':
+					alias = 'd' if otype['btype'] == 'f64' else 'f'
+					alias += otype['otype'][3:]
+					out.ln(f'using {alias} = {otype["otype"]}; ')
 		out.ln()
 
 		out.comment_ln(f'// a span of characters, with start and end pointers')
@@ -155,13 +191,15 @@ def list_types( out:formatted_output ):
 					out.ln('return val;')
 				out.ln()
 
-		for otype in ['float','double']:
+		for bs in real_bit_sizes:
+			alias = 'd' if bs == 64 else 'f'
+			otype = f'f{bs}'
 			out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool & ) noexcept')
 			with out.blk():
-				out.ln(f'return std::sto{otype[0]}( std::string( str.start, str.end ) );')
+				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
 			out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 			with out.blk():
-				out.ln(f'return std::sto{otype[0]}( std::string( str.start, str.end ) );')
+				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
 			out.ln()
  
   
@@ -217,22 +255,11 @@ def define_n_tuples( out:formatted_output ):
 			s += '}'
 			out.ln(s)   
 
-			# copy ctor
-			s = 'n_tup( const n_tup &other ) noexcept { '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += '}'
-			out.ln(s)
-
-			# copy operator
-			s = 'n_tup &operator=( const n_tup &other ) noexcept { '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# dtor
-			out.ln('~n_tup() noexcept {}')
+			# default copy ctor, copy operator & dtor
+			out.ln('n_tup( const n_tup &other ) noexcept = default;')
+			out.ln('n_tup &operator=( const n_tup &other ) noexcept = default;')
+			out.ln('~n_tup() noexcept = default;')
+			
 			out.ln()
 
 			# cmp operators
@@ -343,22 +370,11 @@ def define_n_tuples( out:formatted_output ):
 			s += '}'
 			out.ln(s)
 
-			# copy ctor
-			s = 'nm_tup( const nm_tup &other ) noexcept { '
-			for td in range(d):
-				s += f'values[{td}] = other.values[{td}]; '
-			s += '}'
-			out.ln(s)
+			# default copy ctor, copy operator & dtor
+			out.ln('nm_tup( const nm_tup &other ) noexcept = default;')
+			out.ln('nm_tup &operator=( const nm_tup &other ) noexcept = default;')
+			out.ln('~nm_tup() noexcept = default;')
 
-			# copy operator
-			s = 'nm_tup &operator=( const nm_tup &other ) noexcept { '
-			for td in range(d):
-				s += f'values[{td}] = other.values[{td}]; '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# dtor
-			out.ln('~nm_tup() noexcept {}')
 			out.ln()
 
 			# cmp operators
@@ -545,33 +561,129 @@ template<class _Ty> inline _Ty _nm_tup_from_string( const string_span<char> &str
 			out.ln(f'template<> {otype["otype"]} from_string( const string_span<char> &str, bool &result ) noexcept {{ return {func}<{otype["otype"]}>(str, result); }}')
 			out.ln(f'template<> {otype["otype"]} from_string( const string_span<char> &str ) {{ return {func}<{otype["otype"]}>(str); }}')
 
-	#for bs in int_bit_sizes:
-	#	for sign in ['i','u']:
-	#		for d in range(1,5):
-	#			otype = f'{sign}{bs}tup{d}'
-	#			print_from_string_for_tuple( out, otype, d, f'{sign}{bs}' )
-	#for bs in ['float','double']:
-	#	for d in range(1,5):
-	#		otype = f'{bs[0]}tup{d}'
-	#		print_from_string_for_tuple( out, otype, d, bs )
-
 	out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)		
 
 	out.ln()
 
-def generate_types( types_path:str, ntup_path:str ):
+def generate_random_value_functions( out:formatted_output ):
+	out.ln()
+ 
+	for otype in types:
+		d = otype['tuple_cnt']
+		if d > 0:
+			str = f'using ctle::{otype["otype"]};'
+			out.ln(str)
+ 
+	for otype in types:
+		d = otype['tuple_cnt']
+		if d > 0:
+			str = f'template<> {otype["otype"]} random_value<{otype["otype"]}>() {{ return {otype["otype"]}('
+			subtype = otype["btype"] if otype['subtype_cnt'] == 0 else otype["subtype"]
+			for v in range(d):
+				str += f'random_value<{subtype}>()'
+				if v < d-1:
+					str += ', '
+			str += '); }'
+			out.ln(str)
+	out.ln()
+
+def generate_variant_tuple_implementation( out:formatted_output, otype, variant_index ) -> str:
+	obj_type = otype['otype']
+	variant_type = 'variant_' + obj_type
+	out.ln( f'class {variant_type} : public variant')
+	with out.blk(add_semicolon=True,no_indent=True):
+		out.ln('public:')
+		with out.tab():
+			out.ln(f'std::vector<ctle::{obj_type}> data;')
+			out.ln()
+			out.ln(f'virtual ~{variant_type}() override {{}}')
+			out.ln(f'virtual size_t type() const override {{ return {variant_index}; }}')
+			out.ln(f'virtual const char *type_name() const override {{ return "{obj_type}"; }}')
+			out.ln(f'virtual size_t type_size() const override {{ return sizeof(ctle::{obj_type}); }}')
+			out.ln('virtual size_t type_count() const override { return this->data.size(); }')
+			out.ln(f'virtual bool is_equal( const variant &other ) const override {{ return _are_equal( *this, other ); }}');
+			out.ln('virtual void clear() override { this->data.clear(); }')
+			out.ln('virtual const void *cdata() const override { return this->data.data(); }')
+			out.ln(f'virtual void random() {{ this->data = random_vector<ctle::{obj_type}>(); }}')
+			out.ln(f'virtual ctle::status read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm ) override {{ return _read_from_stream<ctle::{obj_type}>( strm, this->data ); }}')
+			out.ln(f'virtual ctle::status write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm ) const override {{ return _write_to_stream<ctle::{obj_type}>( strm, this->data ); }}')
+	out.ln()
+	return variant_type
+  
+def generate_variant_implementations( out:formatted_output ):
+	variant_list = []
+	for otype in types:
+		variant_list.append( generate_variant_tuple_implementation( out, otype, len(variant_list) ) )
+	out.ln()
+
+	out.ln('std::unique_ptr<variant> random_variant()')
+	with out.blk():
+		out.ln(f'return new_variant( rand() % {len(variant_list)} );')
+		
+	out.ln('std::unique_ptr<variant> new_variant( size_t inx )')
+	with out.blk():
+		out.ln('switch( inx )')
+		with out.blk():
+			for inx,varnt in enumerate(variant_list):
+				out.ln(f'case {inx}: return std::make_unique<{varnt}>();')
+			out.ln('default: return std::unique_ptr<variant>(); // invalid')
+
+def generate_unit_tests_variants( test_path:str ):
+	out = formatted_output()
+	out.generate_license_header()
+	out.ln('''
+#include "unit_tests.h"
+#include "../ctle/status.h"
+#include "../ctle/ntup.h"    
+#include "../ctle/hasher.h"   
+#include "../ctle/read_stream.h"
+#include "../ctle/data_source.h"
+#include "../ctle/write_stream.h"
+#include "../ctle/data_destination.h"
+		
+template<class _Ty> ctle::status _read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm, std::vector<_Ty> &data )
+{
+	u32 cnt = 0;
+	ctle::status res = strm.read<u32>( &cnt, 1 );
+	if( !res ) 
+  		return res; 
+	data.resize(cnt);
+	return strm.read<_Ty>( data.data(), data.size() );
+}
+		
+template<class _Ty> ctle::status _write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm, const std::vector<_Ty> &data )
+{
+	ctle::status res = strm.write<u32>( (u32)data.size() );
+	if( !res ) 
+  		return res; 
+	return strm.write<_Ty>( data.data(), data.size() );
+}
+		
+bool _are_equal( const variant &a , const variant &b )
+{
+	if( a.type() != b.type() )
+		return false;
+	if( a.type_count() != b.type_count() )
+		return false;
+	return memcmp( a.cdata(), b.cdata(), a.type_size() * a.type_count() ) == 0;
+}
+
+''')
+  
+	generate_variant_implementations( out )
+	out.write_lines_to_file( test_path + '/unit_tests_variants.cpp' )    
+
+def generate_types( src_path:str, test_path:str ):
 
 	generate_types_dict()
 
 	## generate types.h 
 	out = formatted_output()
 	list_types( out )
-	out.write_lines_to_file( types_path )
+	out.write_lines_to_file( src_path + '/types.h' )
 
 	## generate ntuple.h 
-
 	out = formatted_output()
-
 	out.generate_license_header()
 	out.ln()
 	out.ln('#pragma once')
@@ -584,10 +696,15 @@ def generate_types( types_path:str, ntup_path:str ):
 	out.ln('#include "status.h"')	
 	out.ln('#include "status_return.h"')	
 	out.ln()
-
 	out.ln('namespace ctle')
 	with out.blk( no_indent = True ):
 		define_n_tuples(out)
 	out.ln('//namespace ctle')
-			
-	out.write_lines_to_file( ntup_path )
+	out.write_lines_to_file( src_path + '/ntup.h' )
+ 
+ 	# generate random values
+	#out = formatted_output()
+	#generate_random_value_functions(out)
+	#out.write_lines_to_file( 'random_value_output' )
+
+	generate_unit_tests_variants( test_path )

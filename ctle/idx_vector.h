@@ -6,11 +6,13 @@
 #include <vector>
 #include <cstdint>
 
+#include "types.h"
+
 namespace ctle
 {
 
 // idx_vector: std::vector of values, with an std::vector of int as index into the values
-template <class _Ty, class _IdxTy = std::vector<std::int32_t>, class _VecTy = std::vector<_Ty>>
+template <class _Ty, class _IdxTy /* = std::vector<i32>*/, class _VecTy /* = std::vector<_Ty>*/>
 class idx_vector
 {
 public:
