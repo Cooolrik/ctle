@@ -1,16 +1,19 @@
 # This file generates needed ctle code using the code generator module
-import ctle_code_gen
+import property_generator
+import status_generator
+import types_generator
+import macros_generator
 
 print('ctle code generation running...')
 
 # generate property.h 
-ctle_code_gen.property_generator.generate_property('./ctle/prop.h')
+property_generator.generate_property('../ctle/prop.h')
 
 # generate status.h 
-ctle_code_gen.status_generator.generate_status('./ctle/status.h')
+status_generator.generate_status('../ctle/status.h')
 
 # generate types
-ctle_code_gen.types_generator.generate_types('./ctle', './unit_tests')
+types_generator.generate_types('../ctle', '../unit_tests')
 
 # generate _macros.inl and _undef_macros.inl
-ctle_code_gen.macros_generator.generate_macros('./ctle/_macros.inl', './ctle/_undef_macros.inl')
+macros_generator.generate_macros('../ctle/_macros.inl', '../ctle/_undef_macros.inl')

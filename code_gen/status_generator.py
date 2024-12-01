@@ -1,7 +1,7 @@
 # ctle Copyright (c) 2022 Ulrik Lindahl
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-from .formatted_output import formatted_output
+from ctlepy import formatted_output
 
 class error_value:
 	def __init__(self,name,value,mapped_value,description):

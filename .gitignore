@@ -21,3 +21,4 @@
 /ctle/prop.h
 /ctle/ntup.h
 /unit_tests/unit_tests_variants.cpp
+/code_gen/ctlepy/__pycache__/*.pyc

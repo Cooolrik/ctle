@@ -9,7 +9,7 @@ find_package(Python 3.10 REQUIRED)
 # generate needed code
 execute_process( 
 	COMMAND 			${PYTHON_EXECUTABLE} generate.py
-	WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}
+	WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}/code_gen
 	RESULT_VARIABLE 	py_result
 )
 message(STATUS "Result of generate.py: ${py_result}")

@@ -1,10 +1,7 @@
 # ctle Copyright (c) 2022 Ulrik Lindahl
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-if __name__ == "__main__":
-	from formatted_output import formatted_output
-else:
-	from .formatted_output import formatted_output
+from ctlepy import formatted_output
 from enum import Enum
 
 class pass_type(Enum):
