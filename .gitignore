@@ -22,3 +22,10 @@
 /ctle/ntup.h
 /unit_tests/unit_tests_variants.cpp
 /code_gen/ctlepy/__pycache__/*.pyc
+/unit_tests/ctlepy_tests/outputs
+/pypi_dist/LICENSE
+/pypi_dist/README.md
+/pypi_dist/dist
+/pypi_dist/pyproject.toml
+/pypi_dist/setup.cfg
+/pypi_dist/src
