@@ -4,7 +4,7 @@
 #pragma once
 
 #include <cstdint>
-#include <string.h>
+#include <cstring>
 
 namespace ctle
 {

@@ -168,7 +168,7 @@ def generate_status( path:str ):
 
 	out.lines.append( '''#pragma once
 
-#include <iostream>
+#include <iosfwd>
 
 namespace ctle
 {
