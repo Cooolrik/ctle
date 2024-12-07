@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
 project( ctle )
 
+# if this is the main project, create test project as default
+if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
+option( CTLE_BUILD_TESTS "Build the ctle tests" ON )
+else()
 option( CTLE_BUILD_TESTS "Build the ctle tests" OFF )
+endif()
 
 find_package(PythonInterp 3.10 REQUIRED)
 find_package(Python 3.10 REQUIRED)
@@ -17,6 +22,7 @@ message(STATUS "Result of generate.py: ${py_result}")
 # if selected, build the testing code
 # (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
+	message(STATUS "Building ctle test project")
 	
 	include(FetchContent)
 				
