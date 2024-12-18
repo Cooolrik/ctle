@@ -4,6 +4,7 @@
 
 #include "status.h"
 #include "status_return.h"
+#include "status_error.h"
 #include "file_funcs.h"
 
 namespace ctle

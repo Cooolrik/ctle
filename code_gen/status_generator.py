@@ -240,16 +240,11 @@ namespace ctle
 
 		// get a description of the status code value
 		const char* description() const;
-	};
-
-	class status_error : public std::runtime_error
-	{
-		public:
-			status value;
-			explicit status_error( status _value, char const* const _Message = "" ) noexcept : std::runtime_error(_Message), value(_value) {}
-	};				  
+	};		  
 }
 // namespace ctle
+
+std::ostream &operator<<( std::ostream &os, const ctle::status &_status );
 
 #ifdef CTLE_IMPLEMENTATION
 
@@ -354,14 +349,15 @@ namespace ctle
 }
 // namespace ctle
 
-#endif//CTLE_IMPLEMENTATION  
-
 // stream operator for writing a status to a stream
-inline std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
+std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 {
 	os << _status.name() << std::string(" (\\"") << _status.description() << std::string("\\")");
 	return os;
 }
+				  
+#endif//CTLE_IMPLEMENTATION  
+
 ''')	
 			
 	out.write_lines_to_file( path )
