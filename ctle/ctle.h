@@ -1,6 +1,5 @@
 // ctle Copyright (c) 2022 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
 
 // file which includes all of ctle, and can be used in a source file which defines CTLE_IMPLEMENTATION

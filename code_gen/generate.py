@@ -1,3 +1,6 @@
+# ctle Copyright (c) 2022 Ulrik Lindahl
+# Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
+
 # This file generates needed ctle code using the code generator module
 import property_generator
 import status_generator

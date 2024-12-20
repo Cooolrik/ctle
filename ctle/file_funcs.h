@@ -25,7 +25,7 @@ enum class access_mode : unsigned int
 bool file_exists( const char *path );
 bool file_exists( const std::string &path );
 
-// check if a file exists, and can be accessed with a specified access mode
+// check if a file can be accessed with a specified access mode
 status file_access( const char *path, access_mode amode );
 status file_access( const std::string &path, access_mode amode );
 

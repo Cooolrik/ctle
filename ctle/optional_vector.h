@@ -1,6 +1,5 @@
 // ctle Copyright (c) 2021 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
 
 #include <vector>
