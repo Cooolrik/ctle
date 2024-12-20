@@ -1,6 +1,8 @@
 // ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_READ_STREAM_H_
+#define _CTLE_READ_STREAM_H_
 
 #include <vector>
 
@@ -190,3 +192,4 @@ inline status read_stream<_DataSourceTy,_HashTy>::fill_buffer()
 // namespace ctle
 
 #include "_undef_macros.inl"
+#endif//_CTLE_READ_STREAM_H_

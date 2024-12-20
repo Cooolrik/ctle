@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2022 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_ENDIANNESS_H_
+#define _CTLE_ENDIANNESS_H_
 
 #include <stdint.h>
 #include <stddef.h>
@@ -215,3 +217,5 @@ template<> inline void swap_byte_order<uint64_t>( uint64_t *dest, size_t count )
 
 }
 //namespace ctle
+
+#endif//_CTLE_ENDIANNESS_H_

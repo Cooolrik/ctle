@@ -1,6 +1,8 @@
 // ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_DATA_DESTINATION_H_
+#define _CTLE_DATA_DESTINATION_H_
 
 #include "status.h"
 #include "status_return.h"
@@ -70,3 +72,5 @@ status_return<status, u64> file_data_destination::write(const u8* src_buffer, u6
 #include "_undef_macros.inl"
 
 #endif//CTLE_IMPLEMENTATION
+
+#endif//_CTLE_DATA_DESTINATION_H_

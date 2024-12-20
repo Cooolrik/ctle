@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_LOG_H_
+#define _CTLE_LOG_H_
 
 #include <sstream>
 
@@ -191,3 +192,5 @@ void log_msg::enter_msg()
 #define ctle_log_end ""; }
 
 #endif//CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
+
+#endif//_CTLE_LOG_H_

@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_HASHER_H_
+#define _CTLE_HASHER_H_
 
 #include "hash.h"
 #include "status.h"
@@ -180,4 +182,6 @@ status_return<status,hash<128>> hasher_xxh128::finish()
 
 }
 
-#endif
+#endif//CTLE_IMPLEMENTATION
+
+#endif//_CTLE_HASHER_H_

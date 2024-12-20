@@ -429,8 +429,7 @@ def generate_property( path:str ):
 	out = formatted_output()
 
 	out.generate_license_header()
-	out.ln()
-	out.ln('#pragma once')
+	guard_def = out.begin_header_guard( 'prop.h', 'ctle' )
 	out.ln()
 	out.ln('#include <memory>')
 	out.ln('#include <atomic>')
@@ -500,4 +499,6 @@ def generate_property( path:str ):
 			v.generate_class( out )
 			out.ln()
 			
+	out.ln()
+	out.end_header_guard( guard_def )
 	out.write_lines_to_file( path )

@@ -45,3 +45,45 @@ def check_file_lines( file_path:str, line_defines:list[line_define] ) -> list[in
 	# return list of mismatches. if it is empty, everything matches
 	return mismatch_list
 	
+def fix_file( file_path:str, line_defines:list[line_define] ) -> bool:
+	'''Fixes a file which fails the checks, by inserting the correct lines. Returns False if the line_defines are not correct, or if the file could not be fixed.'''
+	
+	# read in the file verbatim, but make sure there is a newline at the end of the last line
+	with open(file_path, 'r') as file:
+		lines = file.readlines()
+		file.close()
+	lines[-1] = lines[-1].rstrip() + '\n'
+
+	# calculate how many lines to insert at the beginning and end of the file
+	insert_lines_begin = 0
+	insert_lines_end = 0
+	for line_def in line_defines:
+		insert_lines_begin = max( line_def.row, insert_lines_begin )
+		insert_lines_end = max( -line_def.row, insert_lines_end )
+
+	# allocated the empty lines
+	lines = [''] * insert_lines_begin + lines + [''] * insert_lines_end
+
+	# replace the allocated lines with correct ones
+	for line_def in line_defines:
+		
+		# calculate the row to check
+		line_inx = line_def.row - 1
+		if line_def.row < 0:
+			line_inx = len(lines) + line_def.row
+		if line_inx < 0 or line_inx >= len(lines):
+			print(f"Error: Could not fix file, line index {line_inx} out of range")
+			return False
+
+		lines[line_inx] = line_def.line_example + '\n'
+
+	# write the fixed file
+	try:
+		with open(file_path, 'w') as file:
+			file.writelines(lines)
+			file.close()
+	except:
+		print(f"Error: Could not fix file, writing failed")
+		return False
+	
+	return True

@@ -98,8 +98,7 @@ def list_types( out:formatted_output ):
 	global types
 
 	out.generate_license_header()
-	out.ln()
-	out.ln('#pragma once')
+	guard_def = out.begin_header_guard('types.h','ctle')
 	out.ln()
 	out.ln('#include <cinttypes>')
 	out.ln()
@@ -205,7 +204,8 @@ def list_types( out:formatted_output ):
   
 	out.ln('//namespace ctle')
  
-	out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)		
+	out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)
+	out.end_header_guard(guard_def)
 
 
 def define_n_tuples( out:formatted_output ):
@@ -685,8 +685,7 @@ def generate_types( src_path:str, test_path:str ):
 	## generate ntuple.h 
 	out = formatted_output()
 	out.generate_license_header()
-	out.ln()
-	out.ln('#pragma once')
+	guard_def = out.begin_header_guard('ntup.h','ctle')
 	out.ln()
 	out.ln('#include <cinttypes>')
 	out.ln('#include <limits>')
@@ -700,6 +699,8 @@ def generate_types( src_path:str, test_path:str ):
 	with out.blk( no_indent = True ):
 		define_n_tuples(out)
 	out.ln('//namespace ctle')
+	out.ln()
+	out.end_header_guard(guard_def)
 	out.write_lines_to_file( src_path + '/ntup.h' )
  
  	# generate random values

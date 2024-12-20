@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_OPTIONAL_VECTOR_H_
+#define _CTLE_OPTIONAL_VECTOR_H_
 
 #include <vector>
 #include "optional_value.h"
@@ -86,3 +88,5 @@ bool optional_vector<_Ty, _Alloc>::operator!=( const optional_vector &_other ) c
 
 }
 //namespace ctle
+
+#endif//_CTLE_OPTIONAL_VECTOR_H_

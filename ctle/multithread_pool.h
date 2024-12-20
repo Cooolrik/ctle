@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2023 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_MULTITHREAD_POOL_H_
+#define _CTLE_MULTITHREAD_POOL_H_
 
 #include <vector>
 #include <unordered_set>
@@ -102,3 +103,5 @@ public:
 
 }
 //namespace ctle
+
+#endif//_CTLE_MULTITHREAD_POOL_H_

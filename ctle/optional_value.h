@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_OPTIONAL_VALUE_H_
+#define _CTLE_OPTIONAL_VALUE_H_
 
 #include <memory>
 #include <stdexcept>
@@ -128,3 +129,5 @@ bool optional_value<T>::operator!=( const optional_value &_other ) const
 
 }
 //namespace ctle
+
+#endif//_CTLE_OPTIONAL_VALUE_H_

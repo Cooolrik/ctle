@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_IDX_VECTOR_H_
+#define _CTLE_IDX_VECTOR_H_
 
 #include <vector>
 #include <cstdint>
@@ -89,3 +90,5 @@ bool idx_vector<_Ty, _IdxTy, _VecTy>::operator!=( const idx_vector &_other ) con
 
 }
 //namespace ctle
+
+#endif//_CTLE_IDX_VECTOR_H_

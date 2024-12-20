@@ -164,10 +164,9 @@ def generate_status( path:str ):
 	out = formatted_output()
 
 	out.generate_license_header()
-	out.ln()
+	guard_def = out.begin_header_guard( 'status.h', 'ctle' )
 
-	out.lines.append( '''#pragma once
-
+	out.lines.append( '''
 #include <iosfwd>
 
 namespace ctle
@@ -359,5 +358,8 @@ std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 #endif//CTLE_IMPLEMENTATION  
 
 ''')	
-			
+	out.indentation = 0
+	
+	out.end_header_guard( guard_def )
+
 	out.write_lines_to_file( path )

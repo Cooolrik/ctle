@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_HASH_H_
+#define _CTLE_HASH_H_
 
 #include <cstdint>
 #include <functional>
@@ -228,4 +230,6 @@ std::ostream &operator<<( std::ostream &os, const ctle::hash<512> &_hash ) { os 
 
 }
 
-#endif
+#endif//CTLE_IMPLEMENTATION
+
+#endif//_CTLE_HASH_H_

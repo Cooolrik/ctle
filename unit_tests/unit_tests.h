@@ -1,8 +1,8 @@
-// ctle Copyright (c) 2023 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
-#ifndef PCH_H
-#define PCH_H
+#ifndef _CTLE_UNIT_TESTS_H_
+#define _CTLE_UNIT_TESTS_H_
 
 #include <cstdint>
 
@@ -111,4 +111,4 @@ bool run_function_with_timeout(Func func, long long timeout_ms)
     }
 }
 
-#endif //PCH_H
+#endif//_CTLE_UNIT_TESTS_H_

@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2022 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_FILE_FUNCS_H_
+#define _CTLE_FILE_FUNCS_H_
 
 #include "types.h"
 #include "status.h"
@@ -413,3 +414,5 @@ status _file_object::write(const u8* src, const u64 size)
 #include "_undef_macros.inl"
 
 #endif//CTLE_IMPLEMENTATION
+
+#endif//_CTLE_FILE_FUNCS_H_

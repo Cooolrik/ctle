@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2022 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_CTLE_H_
+#define _CTLE_CTLE_H_
 
 // file which includes all of ctle, and can be used in a source file which defines CTLE_IMPLEMENTATION
 // example usage:
@@ -50,3 +52,5 @@
 #include "data_source.h"
 #include "data_destination.h"
 #include "hasher.h"
+
+#endif//_CTLE_CTLE_H_

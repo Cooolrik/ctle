@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_SOCKETS_H_
+#define _CTLE_SOCKETS_H_
 
 #include <functional>
 #include <memory>
@@ -721,3 +723,5 @@ server_socket::server_state server_socket::get_server_state() const
 #include "_undef_macros.inl"
 
 #endif//CTLE_IMPLEMENTATION
+
+#endif//_CTLE_SOCKETS_H_

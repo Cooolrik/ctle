@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2023 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_BITMAP_FONT_H_
+#define _CTLE_BITMAP_FONT_H_
 
 // a ultralight-weight font render. Codepage 437 (ascii+), fixed width font only
 // _Ty is the pixel type of the output image to render to
@@ -223,3 +225,5 @@ inline ctle::bitmap_font_flags operator| ( const ctle::bitmap_font_flags &a, con
 {
     return (ctle::bitmap_font_flags)( (int)a | (int)b );
 }
+
+#endif//_CTLE_BITMAP_FONT_H_

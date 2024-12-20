@@ -1,6 +1,8 @@
-// ctle Copyright (c) 2022 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 #pragma once
+#ifndef _CTLE_READERS_WRITER_LOCK_H_
+#define _CTLE_READERS_WRITER_LOCK_H_
 
 #include <mutex>
 #include <atomic>
@@ -132,3 +134,5 @@ public:
 
 }
 //namespace ctle
+
+#endif//_CTLE_READERS_WRITER_LOCK_H_
