@@ -1,3 +1,6 @@
+# ctle Copyright (c) 2024 Ulrik Lindahl
+# Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
+
 import unittest
 import sys
 import os
