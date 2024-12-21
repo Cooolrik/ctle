@@ -53,30 +53,45 @@ def check_file(file_path: str) -> bool:
 	return True
 
 # Function to traverse directories and check files
-def check_files_in_directory(directory):
+def check_files_in_directory(ctle_root:pathlib.Path, subdir:str) -> list:
+	directory = ctle_root / subdir
 	file_types = [".cpp", ".h", ".inl", ".py"]
+	invalid_headers = set()
 
-	invalid_headers = []
+	# check all files in directory
 	for root, _, files in os.walk(directory):
 		for file in files:
 			for ext in file_types:
 				if file.endswith(ext):
 					file_path = os.path.join(root, file)
 					if not check_file(file_path):
-						invalid_headers.append(file_path)
+						invalid_headers.add(f"File: {file_path} fails header check")
+
+	# if the subdir is ctle, also make sure there are .md files in docs
+	if subdir == "ctle":
+		docs_dir = ctle_root / "docs"
+		for root, _, files in os.walk(directory):
+			for file in files:
+				file = pathlib.Path(file)
+				if file.stem[0] == "_":
+					continue
+				md_path = pathlib.Path(ctle_root) / "docs" / (str(file.stem) + ".md")
+				if not md_path.exists():
+					invalid_headers.add(f"Missing file: {md_path}")
+
 	return invalid_headers
 
 if __name__ == "__main__":
 	ctle_root = pathlib.Path(__file__).parent.parent.resolve()
 
-	invalid_headers = []
+	errors = []
 	source_directories = ["ctle","unit_tests","code_gen"]
-	for dir in source_directories:
-		invalid_headers.extend(check_files_in_directory(ctle_root / dir))
+	for subdir in source_directories:
+		errors.extend(check_files_in_directory(ctle_root,subdir))
 
-	if len(invalid_headers) > 0:
-		print("\033[31mError: Invalid headers in files:")
-		for f in invalid_headers:
+	if len(errors) > 0:
+		print(f"\033[31mFound {len(errors)} Errors:")
+		for f in errors:
 			print(f)
 		print("\033[0m")
 		exit(-1)

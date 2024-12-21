@@ -4,6 +4,10 @@
 #ifndef _CTLE_DATA_SOURCE_H_
 #define _CTLE_DATA_SOURCE_H_
 
+/// @file data_source.h
+/// @brief Data source objects implement a read method, and can be used for streaming data classes, e.g. read_stream
+/// @attention Blocking call which reads from the source to dest_buffer, until the read_count bytes have been read, the source is at an end, or an error occurs. On succes, the method must return status::ok, and the actual number of bytes read from the source. The method should continue to return status::ok and 0 if called after reaching the end of the data source (eos/eof).
+
 #include "status.h"
 #include "status_return.h"
 #include "status_error.h"
@@ -12,21 +16,18 @@
 namespace ctle
 {
 
-// data source objects implement a read method, and can be used for streaming data classes, e.g. read_stream 
-//
-// the method which need to be implemented is:
-//
-// status_return<status, u64> read(u8* dest_buffer, u64 read_count)
-//	- Blocking call which reads from the source to dest_buffer, until the read_count bytes have been read, the source 
-//	  is at an end, or an error occurs. On succes, the method must return status::ok, and the actual number of bytes read from the 
-//	  source. The method should continue to return status::ok and 0 if called after reaching the end of the data source (eos/eof).
+/// @brief Data source objects for reading data from a file. Used as a source for streaming data classes, e.g., read_stream to read in data from a file.
 class file_data_source
 {
 public:
 	file_data_source( const std::string &filepath );
 	~file_data_source();
 
-	// read from source into dest_buffer, return number of bytes actually read
+	/// @brief read from source into dest_buffer, return number of bytes actually read
+	/// 
+	/// @param dest_buffer the buffer to read into
+	/// @param read_count the number of bytes to read
+	/// @return status::ok, along with the number of bytes read, or an error status if the read failed.
 	status_return<status, u64> read(u8* dest_buffer, u64 read_count);
 
 private:

@@ -4,6 +4,10 @@
 #ifndef _CTLE_DATA_DESTINATION_H_
 #define _CTLE_DATA_DESTINATION_H_
 
+/// @file data_destination.h
+/// @brief Data destination objects implement a write method and can be used for streaming data classes, e.g., write_stream.
+/// @attention Blocking call which writes to the destination from a src_buffer, until the write_count bytes have been written, or an error occurs. On success, the method must return status::ok, and the actual number of bytes written to the destination.
+
 #include "status.h"
 #include "status_return.h"
 #include "status_error.h"
@@ -12,25 +16,21 @@
 namespace ctle
 {
 
-// data destination objects implement a write method, and can be used for streaming data classes, e.g. write_stream 
-//
-// the method which needs to be implemented is:
-//
-// status_return<status, u64> write(const u8* src_buffer, u64 write_count)
-//	- Blocking call which writes to the destination from a src_buffer, until the write_count bytes have been written, or an error occurs. 
-//	  On succes, the method must return status::ok, and the actual number of bytes written to the destination.
-
+/// @brief Data destination objects for writing data to a file. Used as a destination for streaming data classes, e.g., write_stream to write out data to a file.
 class file_data_destination
 {
 public:
 	file_data_destination( const std::string &filepath, bool overwrite_existing = true );
 	~file_data_destination();
 
-	// write from source buffer into destination, return number of bytes actually written
+	/// @brief Write from source buffer into file.
+	/// 
+	/// @param src_buffer the buffer to write from
+	/// @param write_count the number of bytes to write
+	/// @return status::ok, along with the number of bytes written, or an error status if the write failed.
 	status_return<status, u64> write(const u8* src_buffer, u64 write_count);
 
 private:
-	u64 file_position = 0;
 	_file_object file;
 };
 
@@ -60,7 +60,6 @@ status_return<status, u64> file_data_destination::write(const u8* src_buffer, u6
 	if( write_count > 0 )
 	{
 		ctStatusCall(this->file.write(src_buffer, write_count));
-		this->file_position += write_count;
 	}
 
 	return write_count;
