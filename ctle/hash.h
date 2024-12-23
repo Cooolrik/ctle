@@ -13,17 +13,24 @@
 namespace ctle
 {
 	
-// a hash digest structure, defined for 64, 128, 256 and 512 bits
-template<size_t _Size> 
+/// @brief A hash digest structure.
+/// 
+/// The hash structure encapsulates a hash value, and adds comparison operators.
+/// Ctle also provides stream output of hash digests, as well as conversion to(ctle::to_string) and from(ctle::from_string) strings.
+/// @tparam _Size the size of the hash in bits, must be 64, 128, 256 or 512.
+/// @note The hash values are stored and compared big-endian, so most significant byte at index 0, least significant byte at the last index (7, 15, 31 or 63).
+template<size_t _Size>
 struct hash
 {
 	static_assert( _Size == 64 || _Size == 128 || _Size == 256 || _Size == 512 , "Hash size must be one of 64, 128, 256 or 512");
 	static constexpr const size_t hash_size = _Size;
 
+	/// @brief The data storage for the hash value. 
 	union
 	{
-		uint64_t _data_q[_Size/64] = {};
-		uint8_t data[_Size/8];
+		/// @brief The data as bytes, stored as most significant byte at index 0, least significant byte at the last index (7, 15, 31 or 63).
+		uint8_t data[_Size / 8];
+		uint64_t _data_q[_Size / 64] = {};
 	};
 
 	// compare operators
@@ -38,7 +45,7 @@ inline bool hash<_Size>::operator<( const hash &right ) const noexcept
 	const uint8_t *u1 = this->data;
 	const uint8_t *u2 = right.data;
 
-	// hash values are stored big-endian, so MSB is first byte (index 0), LSB is last byte (index 31 or 63)
+	// hash values are stored big-endian, so MSB is first byte (index 0), LSB is last byte (index 7, 15, 31 or 63)
 	size_t n = _Size/8;
 	do
 	{
@@ -63,7 +70,7 @@ inline bool hash<_Size>::operator==( const hash &right ) const noexcept
 	const uint64_t *u1 = this->_data_q;
 	const uint64_t *u2 = right._data_q;
 
-	// hash values are stored big-endian, so MSB is first byte (index 0), LSB is last byte (index 31 or 63)
+	// compare the 64bit values
 	size_t n = _Size/64;
 	do
 	{

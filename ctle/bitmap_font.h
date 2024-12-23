@@ -52,7 +52,7 @@ template<class _Ty> void render_bitmap_font( _Ty *output, uint32_t line_stride, 
 /// 
 /// @tparam _Ty The pixel type of the output image to render to.
 /// @param output The output pixel buffer.
-/// @param line_stride The number of pixels to the next row.
+/// @param _line_stride The number of pixels to the next row.
 /// @param txt The character string to render.
 /// @param txt_length The number of characters in txt to render.
 /// @param pixel_on The pixel value for 'on' pixels.

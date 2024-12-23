@@ -4,18 +4,52 @@
 #ifndef _CTLE_HASHER_H_
 #define _CTLE_HASHER_H_
 
+/// @file hasher.h
+/// @brief Hasher function wrappers for hashing data streams.
+/// 
+/// The hasher_[...] classes are wrappers around popular hash functions, and provide a simple interface for hashing data streams.
+/// 
+/// Each hasher class implements the following functions:
+/// - ctor() to initialize the hasher
+/// - update() to update the hash with a block of bytes
+/// - finish(), to end the hashed stream, and return the final hash
+/// @note The hashers are implemented using external libraries. All declarations exist, but to implement a specific library, include 
+/// the library header before including hasher.h in the implementation source file. (see the example implementation in the 
+/// documentation for ctle.h for more information).
+
 #include "hash.h"
 #include "status.h"
 #include "status_return.h"
 
 namespace ctle
 {
-	
-// hasher function wrappers. all hashers auto-initializes in the ctor, and implements:
-// - update() to update the hash with a block of bytes
-// - finish(), to end the hashed stream, and return the final hash
 
-// implementation of SHA-256 hasher, using picosha2 (include picosha2 in the build before ctle to implement)
+/// @brief Implementation of a no-operation hasher class template, for use when hashing is not needed. Always returns a zero hash on finish.
+/// @tparam _Size the size of the hash in bits, must be 64, 128, 256 or 512.
+/// @note This hasher is used when hashing is not needed, but the interface requires a hasher to be passed, and can be used as a template default parameter.
+template <size_t _Size>
+class hasher_noop
+{
+	status _update(const uint8_t* /*data*/, size_t /*size*/) { return status::ok; }
+
+public:
+	hasher_noop() {};
+	~hasher_noop() {};
+	using hash_type = hash<_Size>;
+
+	/// @brief Update the hash with a block of bytes.
+	/// @param data the data to add to the hash
+	/// @param size the size of the data in bytes
+	/// @return status::ok if the update was successful	
+	status update(const uint8_t* data, size_t size) { return _update(data,size); }
+
+	/// @brief Finish the hash generation and return the final hash value.
+	/// @return status::ok if the update was successful, and the final hash value	
+	status_return<status, hash<_Size>> finish() { return hash<_Size>(); }
+};
+
+/// @brief Implementation of a SHA-256 hasher, using picosha2.
+/// @note To use, include picosha2 in the build before hasher.h to implement (see the example implementation in the documentation for ctle.h).
 class hasher_sha256
 {
 public:
@@ -23,14 +57,18 @@ public:
 	~hasher_sha256();
 	using hash_type = hash<256>;
 
+	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
-	status_return<status,hash<256>> finish();
+
+	/// @copydoc hasher_noop::finish
+	status_return<status, hash<256>> finish();
 
 private:
 	void *context = nullptr;
 };
 
-// implementation of XXH3 XXH64 hasher, using xxHash (include xxHash in the build before ctle to implement)
+/// @brief Implementation of XXH3 XXH64 hasher, using xxHash.
+/// @note To use, include xxHash in the build before hasher.h to implement (see the example implementation in the documentation for ctle.h).
 class hasher_xxh64
 {
 public:
@@ -38,14 +76,18 @@ public:
 	~hasher_xxh64();
 	using hash_type = hash<64>;
 
+	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
-	status_return<status,hash<64>> finish();
+
+	/// @copydoc hasher_noop::finish
+	status_return<status, hash<64>> finish();
 
 private:
 	void *context = nullptr;
 };
 
-// implementation of XXH3 XXH128 hasher, using xxHash (include xxHash in the build before ctle to implement)
+/// @brief Implementation of XXH3 XXH128 hasher, using xxHash.
+/// @note To use, include xxHash in the build before hasher.h to implement (see the example implementation in the documentation for ctle.h).
 class hasher_xxh128
 {
 public:
@@ -53,24 +95,14 @@ public:
 	~hasher_xxh128();
 	using hash_type = hash<128>;
 
+	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
-	status_return<status,hash<128>> finish();
+
+	/// @copydoc hasher_noop::finish
+	status_return<status, hash<128>> finish();
 
 private:
 	void *context = nullptr;
-};
-
-// implementation of no-operation hasher class template, for use when hashing is not needed. always returns a zero hash 
-template <size_t _Size> 
-class hasher_noop
-{
-public:
-	hasher_noop() {};
-	~hasher_noop() {};
-	using hash_type = hash<_Size>;
-
-	status update(const uint8_t* /*data*/, size_t /*size*/) { return status::ok; }
-	status_return<status,hash<_Size>> finish() { return hash<_Size>(); }
 };
 
 }

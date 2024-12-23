@@ -4,16 +4,21 @@
 #ifndef _CTLE_FILE_FUNCS_H_
 #define _CTLE_FILE_FUNCS_H_
 
-#include "types.h"
-#include "status.h"
+/// @file file_funcs.h
+/// @brief Functions for file handling.
 
 #include <utility>
 #include <iostream>
 #include <fstream>
 #include <vector>
 
+#include "types.h"
+#include "status.h"
+
 namespace ctle
 {
+
+/// @brief Enum class for file access modes in file_access() function.
 enum class access_mode : unsigned int
 {
 	no_access = 0x0,	// only checks for existence of file
@@ -22,26 +27,59 @@ enum class access_mode : unsigned int
 	read_write = 0x6,	// read and write access
 };
 
-// check if file exists
-bool file_exists( const char *path );
-bool file_exists( const std::string &path );
+/// @brief Check if a file exists
+/// @param path the file path
+/// @return true if the file exists
+bool file_exists(const char* path);
+bool file_exists(const std::string& path); ///< @copydoc ctle::file_exists
 
-// check if a file can be accessed with a specified access mode
-status file_access( const char *path, access_mode amode );
-status file_access( const std::string &path, access_mode amode );
+/// @brief Check if a file can be accessed with a specified access mode
+/// @param path the file path
+/// @param amode the access mode
+/// @return 
+///	- status::ok if the file can be accessed using the specified access mode
+///	- status::cant_access if the file can't be accessed 
+///	- status::not_found if the file doesn't exist
+///	- status::invalid_param if the path is nullptr
+status file_access(const char* path, access_mode amode);
+status file_access(const std::string& path, access_mode amode); ///< @copydoc ctle::file_access
 
-// read a file in binary mode into a vector of bytes
-status read_file( const std::string &filepath, std::vector<uint8_t> &dest );
+/// @brief Read a file in binary mode into a vector of bytes
+/// @param filepath the source file path
+/// @param dest the destination vector
+/// @return 
+/// - status::ok if the file was read successfully
+/// - status::cant_allocate if the vector could not be allocated
+/// - status::cant_read if the file could not be read
+status read_file(const std::string & filepath, std::vector<uint8_t>&dest);
 
-// write a file in binary mode from a pointer to or a container.
-// If overwrite_existing is false, the return value will be status::already_exists if the file already exists.
-status write_file( const std::string &filepath, const void *src, size_t src_size, bool overwrite_existing = false );
-template<class _Ty> inline status write_file( const std::string &filepath, const _Ty &src, bool overwrite_existing = false )
+/// @brief Write a file in binary mode from a pointer to or a container.
+/// @param filepath the destination file path
+/// @param src the source data 
+/// @param src_size the source data size
+/// @param overwrite_existing if false, the file will not be overwritten if it already exists, and the function will return status::already_exists
+/// @return 
+/// - status::ok if the file was written successfully
+/// - status::cant_write if the file could not be written
+/// - status::already_exists if the file already exists and overwrite_existing is false
+status write_file(const std::string& filepath, const void* src, size_t src_size, bool overwrite_existing = false);
+
+/// @brief Write a file in binary mode from a pointer to or a container.
+/// @tparam _Ty the type of the source data(container)
+/// @param filepath the destination file path
+/// @param src the source data 
+/// @param overwrite_existing if false, the file will not be overwritten if it already exists, and the function will return status::already_exists
+/// @return 
+/// - status::ok if the file was written successfully
+/// - status::cant_write if the file could not be written
+/// - status::already_exists if the file already exists and overwrite_existing is false
+template<class _Ty> inline status write_file(const std::string& filepath, const _Ty& src, bool overwrite_existing = false)
 {
 	return write_file( filepath, (const void *)src.data(), src.size() * sizeof( typename _Ty::value_type ), overwrite_existing );
 }
 
-// an object which encapsulates a file object, portable, but using native interfaces when possible
+/// @brief Class for file reading/writing, encapsulating a file object.
+/// @details This class is portable, but uses native interfaces when possible. Mainly for internal use, but can be used directly.
 class _file_object
 {
 private:
@@ -52,15 +90,47 @@ public:
 	_file_object();
 	~_file_object();
 
-	status open_read(const std::string& filepath);
-	status open_write(const std::string& filepath, bool overwrite_existing = false);
+	/// @brief Open a file for reading
+	/// @param filepath the file path
+	/// @return 
+	/// - status::ok if the file was opened successfully
+	/// - status::cant_open if the file could not be opened
+	/// - status::corrupted if the file size could not be determined
+	status open_read(const std::string & filepath);
+
+	/// @brief Open a file for writing
+	/// @param filepath the file path
+	/// @param overwrite_existing if false, the file will not be overwritten if it already exists, and the function will return status::already_exists
+	/// @return 
+	/// - status::ok if the file was opened successfully
+	/// - status::cant_write if the file could not be opened
+	/// - status::already_exists if the file already exists and overwrite_existing is false
+	status open_write(const std::string & filepath, bool overwrite_existing = false);
+
+	/// @brief Close the file
 	status close();
 
+	/// @brief Check if the file is open
 	bool is_open() const;
+
+	/// @brief Get the size of the file
 	u64 size() const { return this->file_size; };
-	
-	status read(u8* dest, const u64 size);
-	status write(const u8* src, const u64 size);
+
+	/// @brief Read data from the file
+	/// @param dest the destination buffer
+	/// @param size the number of bytes to read
+	/// @return 
+	/// - status::ok if the data was read successfully
+	/// - status::cant_read if the data could not be read
+	status read(u8 * dest, const u64 size);
+
+	/// @brief Write data to the file
+	/// @param src the source buffer
+	/// @param size the number of bytes to write
+	/// @return 
+	/// - status::ok if the data was written successfully
+	/// - status::cant_write if the data could not be written
+	status write(const u8 * src, const u64 size);
 };
 
 }
