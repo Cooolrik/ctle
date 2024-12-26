@@ -31,7 +31,7 @@ TEST( data_stream, basic_test )
 	}
 
 	// write the data to a file
-	hash<128> digest;
+	digest<128> digest1;
 	if( true )
 	{
 		file_data_destination dd("./data_stream_basic_test.dat");
@@ -43,11 +43,11 @@ TEST( data_stream, basic_test )
 			positions[inx] = ws.get_position();
 		}
 		ASSERT_EQ( ws.end(), status::ok );
-		digest = ws.get_digest().value();
+		digest1 = ws.get_digest().value();
 	}
 
 	// read the data back to a second list
-	hash<128> digest2;
+	digest<128> digest2;
 	std::vector<std::unique_ptr<variant>> value_list2(value_list_size);
 	std::vector<size_t> positions2(value_list_size);
 	if( true )

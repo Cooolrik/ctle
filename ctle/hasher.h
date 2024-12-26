@@ -17,7 +17,7 @@
 /// the library header before including hasher.h in the implementation source file. (see the example implementation in the 
 /// documentation for ctle.h for more information).
 
-#include "hash.h"
+#include "digest.h"
 #include "status.h"
 #include "status_return.h"
 
@@ -35,7 +35,7 @@ class hasher_noop
 public:
 	hasher_noop() {};
 	~hasher_noop() {};
-	using hash_type = hash<_Size>;
+	using hash_type = digest<_Size>;
 
 	/// @brief Update the hash with a block of bytes.
 	/// @param data the data to add to the hash
@@ -45,7 +45,7 @@ public:
 
 	/// @brief Finish the hash generation and return the final hash value.
 	/// @return status::ok if the update was successful, and the final hash value	
-	status_return<status, hash<_Size>> finish() { return hash<_Size>(); }
+	status_return<status, digest<_Size>> finish() { return digest<_Size>(); }
 };
 
 /// @brief Implementation of a SHA-256 hasher, using picosha2.
@@ -55,13 +55,13 @@ class hasher_sha256
 public:
 	hasher_sha256();
 	~hasher_sha256();
-	using hash_type = hash<256>;
+	using hash_type = digest<256>;
 
 	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
 
 	/// @copydoc hasher_noop::finish
-	status_return<status, hash<256>> finish();
+	status_return<status, digest<256>> finish();
 
 private:
 	void *context = nullptr;
@@ -74,13 +74,13 @@ class hasher_xxh64
 public:
 	hasher_xxh64();
 	~hasher_xxh64();
-	using hash_type = hash<64>;
+	using hash_type = digest<64>;
 
 	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
 
 	/// @copydoc hasher_noop::finish
-	status_return<status, hash<64>> finish();
+	status_return<status, digest<64>> finish();
 
 private:
 	void *context = nullptr;
@@ -93,13 +93,13 @@ class hasher_xxh128
 public:
 	hasher_xxh128();
 	~hasher_xxh128();
-	using hash_type = hash<128>;
+	using hash_type = digest<128>;
 
 	/// @copydoc hasher_noop::update
 	status update(const uint8_t* data, size_t size);
 
 	/// @copydoc hasher_noop::finish
-	status_return<status, hash<128>> finish();
+	status_return<status, digest<128>> finish();
 
 private:
 	void *context = nullptr;
@@ -134,9 +134,9 @@ status hasher_sha256::update(const uint8_t* data, size_t size)
 	return status::ok;
 }
 
-status_return<status,hash<256>> hasher_sha256::finish()
+status_return<status,digest<256>> hasher_sha256::finish()
 {
-	hash<256> ret;
+	digest<256> ret;
 	((picosha2::hash256_one_by_one*)this->context)->finish();
 	((picosha2::hash256_one_by_one*)this->context)->get_hash_bytes( ret.data, ret.data+32 );
 	return ret;
@@ -165,14 +165,14 @@ status hasher_xxh64::update(const uint8_t* data, size_t size)
 	return status::ok;
 }
 
-status_return<status,hash<64>> hasher_xxh64::finish()
+status_return<status,digest<64>> hasher_xxh64::finish()
 {
 	XXH64_hash_t result = XXH3_64bits_digest((XXH3_state_t*)this->context);
 
 	XXH64_canonical_t canonical;
 	XXH64_canonicalFromHash( &canonical, result );
 
-	hash<64> ret;
+	digest<64> ret;
 	memcpy( ret.data, canonical.digest, sizeof(ret.data) );
 	return ret;
 }
@@ -196,14 +196,14 @@ status hasher_xxh128::update(const uint8_t* data, size_t size)
 	return status::ok;
 }
 
-status_return<status,hash<128>> hasher_xxh128::finish()
+status_return<status,digest<128>> hasher_xxh128::finish()
 {
 	XXH128_hash_t result = XXH3_128bits_digest((XXH3_state_t*)this->context);
 
 	XXH128_canonical_t canonical;
 	XXH128_canonicalFromHash( &canonical, result );
 
-	hash<128> ret;
+	digest<128> ret;
 	memcpy( ret.data, canonical.digest, sizeof(ret.data) );
 	return ret;
 }

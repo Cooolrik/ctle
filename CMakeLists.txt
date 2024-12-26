@@ -102,7 +102,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/types.h
 		./ctle/ntup.h
 		./ctle/uuid.h
-		./ctle/hash.h
+		./ctle/digest.h
 		./ctle/hasher.h
 		./ctle/util.h
 		./ctle/sockets.h
@@ -128,7 +128,7 @@ if(CTLE_BUILD_TESTS)
 		./unit_tests/test_types.cpp
 		./unit_tests/test_util.cpp
 		./unit_tests/test_uuid.cpp
-		./unit_tests/test_hash.cpp
+		./unit_tests/test_digest.cpp
 		./unit_tests/test_hasher.cpp
 		./unit_tests/test_macros.cpp
 		./unit_tests/test_sockets.cpp

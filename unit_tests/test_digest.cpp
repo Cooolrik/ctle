@@ -1,7 +1,7 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "../ctle/hash.h"
+#include "../ctle/digest.h"
 #include "../ctle/string_funcs.h"
 
 #include "unit_tests.h"
@@ -12,9 +12,9 @@
 using namespace ctle;
 
 template<size_t _Size>
-static hash<_Size> random_hash()
+static digest<_Size> random_hash()
 {
-	hash<_Size> val;
+	digest<_Size> val;
 	for( size_t inx=0; inx<_Size/64; ++inx )
 	{
 		val._data_q[inx] = random_value<uint64_t>();
@@ -24,7 +24,7 @@ static hash<_Size> random_hash()
 
 TEST( hash, basic_test )
 {
-	using hash = ctle::hash<256>;
+	using hash = ctle::digest<256>;
 
 	const hash hsh0 = from_string<hash>( "0000000000000000000000000000000000000000000000000000000000000000" ); // lowest
 	const hash hsh1 = from_string<hash>( "0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff" );
@@ -43,7 +43,7 @@ TEST( hash, basic_test )
 	auto h2 = hsh3;
 	EXPECT_TRUE( h2 == hsh3 );
 
-	std::vector<hash> a = { random_hash<hash::hash_size>() , random_hash<hash::hash_size>() };
+	std::vector<hash> a = { random_hash<hash::digest_size>() , random_hash<hash::digest_size>() };
 	std::vector<hash> b;
 	EXPECT_FALSE( a == b );
 	EXPECT_TRUE( a != b );
@@ -115,7 +115,7 @@ TEST( hash, basic_test )
 		std::map<hash, hash> idmap;
 		for( size_t inx = 0; inx < 1000; ++inx )
 		{
-			hash myid = random_hash<hash::hash_size>();
+			hash myid = random_hash<hash::digest_size>();
 			idmap[myid] = myid;
 		}
 		EXPECT_EQ( idmap.size(), 1000 );
@@ -125,9 +125,9 @@ TEST( hash, basic_test )
 template<size_t _Size>
 static void test_hash_of_size()
 {
-	using hash = ctle::hash<_Size>;
+	using hash = ctle::digest<_Size>;
 
-	std::vector<hash> a = { random_hash<hash::hash_size>() , random_hash<hash::hash_size>() };
+	std::vector<hash> a = { random_hash<hash::digest_size>() , random_hash<hash::digest_size>() };
 	std::vector<hash> b;
 	EXPECT_FALSE( a == b );
 	EXPECT_TRUE( a != b );
@@ -142,7 +142,7 @@ static void test_hash_of_size()
 	EXPECT_TRUE( a == b );
 	EXPECT_FALSE( a != b );
 
-	hash q1 = random_hash<hash::hash_size>();
+	hash q1 = random_hash<hash::digest_size>();
 	auto q1string = ctle::to_string(q1);
 	hash q2 = ctle::from_string<hash>(q1string);
 
