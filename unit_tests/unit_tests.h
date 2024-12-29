@@ -37,16 +37,16 @@
 #include "../ctle/types.h"
 
 // import basic types and tuples
-using ctle::i8; using ctle::i8tup1; using ctle::i8tup2; using ctle::i8tup3; using ctle::i8tup4; using ctle::i8tup1x1; using ctle::i8tup1x2; using ctle::i8tup1x3; using ctle::i8tup1x4; using ctle::i8tup2x1; using ctle::i8tup2x2; using ctle::i8tup2x3; using ctle::i8tup2x4; using ctle::i8tup3x1; using ctle::i8tup3x2; using ctle::i8tup3x3; using ctle::i8tup3x4; using ctle::i8tup4x1; using ctle::i8tup4x2; using ctle::i8tup4x3; using ctle::i8tup4x4;
-using ctle::u8; using ctle::u8tup1;  using ctle::u8tup2;  using ctle::u8tup3;  using ctle::u8tup4;  using ctle::u8tup1x1;  using ctle::u8tup1x2;  using ctle::u8tup1x3;  using ctle::u8tup1x4;  using ctle::u8tup2x1;  using ctle::u8tup2x2;  using ctle::u8tup2x3;  using ctle::u8tup2x4;  using ctle::u8tup3x1;  using ctle::u8tup3x2;  using ctle::u8tup3x3;  using ctle::u8tup3x4;  using ctle::u8tup4x1;  using ctle::u8tup4x2;  using ctle::u8tup4x3;  using ctle::u8tup4x4;
-using ctle::i16; using ctle::i16tup1; using ctle::i16tup2; using ctle::i16tup3; using ctle::i16tup4; using ctle::i16tup1x1; using ctle::i16tup1x2; using ctle::i16tup1x3; using ctle::i16tup1x4; using ctle::i16tup2x1; using ctle::i16tup2x2; using ctle::i16tup2x3; using ctle::i16tup2x4; using ctle::i16tup3x1; using ctle::i16tup3x2; using ctle::i16tup3x3; using ctle::i16tup3x4; using ctle::i16tup4x1; using ctle::i16tup4x2; using ctle::i16tup4x3; using ctle::i16tup4x4;
-using ctle::u16; using ctle::u16tup1; using ctle::u16tup2; using ctle::u16tup3; using ctle::u16tup4; using ctle::u16tup1x1; using ctle::u16tup1x2; using ctle::u16tup1x3; using ctle::u16tup1x4; using ctle::u16tup2x1; using ctle::u16tup2x2; using ctle::u16tup2x3; using ctle::u16tup2x4; using ctle::u16tup3x1; using ctle::u16tup3x2; using ctle::u16tup3x3; using ctle::u16tup3x4; using ctle::u16tup4x1; using ctle::u16tup4x2; using ctle::u16tup4x3; using ctle::u16tup4x4;
-using ctle::i32; using ctle::i32tup1; using ctle::i32tup2; using ctle::i32tup3; using ctle::i32tup4; using ctle::i32tup1x1; using ctle::i32tup1x2; using ctle::i32tup1x3; using ctle::i32tup1x4; using ctle::i32tup2x1; using ctle::i32tup2x2; using ctle::i32tup2x3; using ctle::i32tup2x4; using ctle::i32tup3x1; using ctle::i32tup3x2; using ctle::i32tup3x3; using ctle::i32tup3x4; using ctle::i32tup4x1; using ctle::i32tup4x2; using ctle::i32tup4x3; using ctle::i32tup4x4;
-using ctle::u32; using ctle::u32tup1; using ctle::u32tup2; using ctle::u32tup3; using ctle::u32tup4; using ctle::u32tup1x1; using ctle::u32tup1x2; using ctle::u32tup1x3; using ctle::u32tup1x4; using ctle::u32tup2x1; using ctle::u32tup2x2; using ctle::u32tup2x3; using ctle::u32tup2x4; using ctle::u32tup3x1; using ctle::u32tup3x2; using ctle::u32tup3x3; using ctle::u32tup3x4; using ctle::u32tup4x1; using ctle::u32tup4x2; using ctle::u32tup4x3; using ctle::u32tup4x4;
-using ctle::i64; using ctle::i64tup1; using ctle::i64tup2; using ctle::i64tup3; using ctle::i64tup4; using ctle::i64tup1x1; using ctle::i64tup1x2; using ctle::i64tup1x3; using ctle::i64tup1x4; using ctle::i64tup2x1; using ctle::i64tup2x2; using ctle::i64tup2x3; using ctle::i64tup2x4; using ctle::i64tup3x1; using ctle::i64tup3x2; using ctle::i64tup3x3; using ctle::i64tup3x4; using ctle::i64tup4x1; using ctle::i64tup4x2; using ctle::i64tup4x3; using ctle::i64tup4x4;
-using ctle::u64; using ctle::u64tup1; using ctle::u64tup2; using ctle::u64tup3; using ctle::u64tup4; using ctle::u64tup1x1; using ctle::u64tup1x2; using ctle::u64tup1x3; using ctle::u64tup1x4; using ctle::u64tup2x1; using ctle::u64tup2x2; using ctle::u64tup2x3; using ctle::u64tup2x4; using ctle::u64tup3x1; using ctle::u64tup3x2; using ctle::u64tup3x3; using ctle::u64tup3x4; using ctle::u64tup4x1; using ctle::u64tup4x2; using ctle::u64tup4x3; using ctle::u64tup4x4;
-using ctle::ftup1; using ctle::ftup2; using ctle::ftup3; using ctle::ftup4; using ctle::ftup1x1; using ctle::ftup1x2; using ctle::ftup1x3; using ctle::ftup1x4; using ctle::ftup2x1; using ctle::ftup2x2; using ctle::ftup2x3; using ctle::ftup2x4; using ctle::ftup3x1; using ctle::ftup3x2; using ctle::ftup3x3; using ctle::ftup3x4; using ctle::ftup4x1; using ctle::ftup4x2; using ctle::ftup4x3; using ctle::ftup4x4;
-using ctle::dtup1; using ctle::dtup2; using ctle::dtup3; using ctle::dtup4; using ctle::dtup1x1; using ctle::dtup1x2; using ctle::dtup1x3; using ctle::dtup1x4; using ctle::dtup2x1; using ctle::dtup2x2; using ctle::dtup2x3; using ctle::dtup2x4; using ctle::dtup3x1; using ctle::dtup3x2; using ctle::dtup3x3; using ctle::dtup3x4; using ctle::dtup4x1; using ctle::dtup4x2; using ctle::dtup4x3; using ctle::dtup4x4;
+using ctle::i8; 
+using ctle::u8; 
+using ctle::i16;
+using ctle::u16;
+using ctle::i32;
+using ctle::u32;
+using ctle::i64;
+using ctle::u64;
+using ctle::f32;
+using ctle::f64;
 
 template<class T> T random_value();
 
