@@ -4,6 +4,9 @@
 #ifndef _CTLE_READERS_WRITER_LOCK_H_
 #define _CTLE_READERS_WRITER_LOCK_H_
 
+/// @file readers_writer_lock.h
+/// @brief Contains the readers_writer_lock class template, a lock for concurrent read and exclusive write operations.
+
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -12,10 +15,10 @@ namespace ctle
 {
 
 
-// readers_writer_lock.
-// allows concurrent access for read-only operations. write operations is given exclusive access.
-// use read_lock/read_unlock for read operations, and write_lock/write_unlock for write operations
-// (the write code uses a spin lock (but calls yield()) for efficiency, so assumes the read operations are fast)
+/// @brief a lock for concurrent read and exclusive write operations.
+/// @details Implements a lock class for allowing concurrent access for read - only operations, while write operations 
+/// are given exclusive access. use read_lock/read_unlock for read operations, and write_lock/write_unlock for write operations
+/// @note The write code uses a spin lock (but calls std::this_thread::yield()) for efficiency, so assumes the read operations are fast.
 class readers_writer_lock
 {
 private:
@@ -29,7 +32,7 @@ public:
 		, numWriters( 0 ) 	
 	{}
 
-	// lock before reading 
+	/// @brief lock before reading
 	inline void read_lock()
 	{
 		// increase number of readers
@@ -52,14 +55,14 @@ public:
 		}
 	}
 
-	// unlock after reading 
+	/// @brief unlock after reading 
 	inline void read_unlock()
 	{
 		// just remove from count
 		--this->numReaders;
 	}
 
-	// lock before writing 
+	/// @brief lock before writing 
 	inline void write_lock()
 	{
 		// lock the write mutex, so we have unique access to writing 
@@ -78,7 +81,7 @@ public:
 		// done, we now have a unique write lock
 	}
 
-	// unlock after writing 
+	/// @brief unlock after writing 
 	inline void write_unlock()
 	{
 		// we are done, so remove from number of writers again
@@ -86,12 +89,12 @@ public:
 
 		// unlock the write lock, so anyone waiting (reader or writer) gets access again
 #ifdef _MSC_VER
-		_Requires_lock_held_( this->writeMutex ) // markup for VS SCA
+		_Requires_lock_held_( this->writeMutex ) // markup for VS static code analysis to check that the mutex is locked
 #endif
 			this->writeMutex.unlock();
 	}
 
-	// read_lock class locks for read while in scope
+	/// @brief read_lock class locks for read while in scope
 	class read_guard
 	{
 	private:
@@ -110,7 +113,7 @@ public:
 		}
 	};
 
-	// read_lock class locks for write while in scope
+	/// @brief read_lock class locks for write while in scope
 	class write_guard
 	{
 	private:
