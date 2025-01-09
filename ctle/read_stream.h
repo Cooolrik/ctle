@@ -4,19 +4,22 @@
 #ifndef _CTLE_READ_STREAM_H_
 #define _CTLE_READ_STREAM_H_
 
+/// @file read_stream.h
+/// @brief A read-only input stream for streaming data sequentially, using a memory buffer, while also calculating a hash on the input stream.
+
 #include <vector>
 
-#include "types.h"
+#include "fwd.h"
 #include "status.h"
 #include "status_return.h"
-#include "types.h"
 #include "hasher.h"
 #include "file_funcs.h"
 
 namespace ctle
 {
-// base class for a read_stream, a read-only input stream which is designed for 
-// streaming data sequentially, using a memory buffer, while also calculating a hash on the input stream.
+/// @brief A read-only input stream with optional hashing
+/// @details A read-only input stream which is designed for streaming data sequentially, using a 
+/// memory buffer, while also calculating a hash on the input stream.
 template<class _DataSourceTy, class _HashTy /* = hasher_noop<64> */>
 class read_stream
 {
@@ -30,28 +33,33 @@ public:
 	using hasher_type = _HashTy;
 	using hash_type = typename _HashTy::hash_type;
 
-	// Get the current position/number of bytes read from the stream (not including any pre-read data in the read buffer)
+	/// @brief Get the current position/number of bytes read from the stream (not including any pre-read data in the read buffer)
 	u64 get_position() const { return this->current_position; };
 	
-	// Read a single value from the stream. if at end of the stream, an empty value is returned. (Note that for reading
-	// multiple values, the read method which takes a count is much more efficient.)
-	// Caveat! the type must be trivially copyable, and memcpy is used since the source values may not be correctly aligned
-	// Caveat! Make sure the type is correctly packed, since any alignment byte will also be read from the stream
+	/// @brief Read a single value from the stream. 
+	/// @details Read a single value from the stream. If at end of the stream, an empty value is returned. (Note that for reading
+	/// multiple values, the read method which takes a count is much more efficient.)
+	/// @note The type must be trivially copyable, and memcpy is used since the source values may not be correctly aligned
+	/// @note Make sure the type is correctly packed, since any alignment byte will also be read from the stream
 	template<class _DataTy> _DataTy read();
 	
-	// Read a number of values from the stream. if at end of the stream, method returns an error
-	// Caveat! the type must be trivially copyable, and memcpy is used since the source values may not be correctly aligned
-	// Caveat! Make sure the type is correctly packed, since any alignment byte will also be read from the stream
+	/// @brief Read a number of values from the stream. 
+	/// @details Read a number of values from the stream. If at the end of the stream, an error is returned.
+	/// @note The type must be trivially copyable, and memcpy is used since the source values may not be correctly aligned
+	/// @note Make sure the type is correctly packed, since any alignment byte will also be read from the stream
 	template<class _DataTy> status read(_DataTy* dest, size_t count = 1);
 
-	// Read a raw byte stream into a memory area
+	/// @brief Read a raw byte stream into a memory area
+	/// @param dest the destination memory area
+	/// @param count the number of bytes to read
+	/// @note dest must be a valid memory area of at least count bytes
 	status read_bytes(u8* dest, size_t count);
 
-	// Returns true if the stream has ended (eos/eof)
+	/// @brief Returns true if the stream has ended (eos/eof)
 	bool has_ended() const;
 
-	// Get the hash digest from the stream. Note that the hash value will be 
-	// calculated when the stream has ended. any call before then will return an empty hash digest
+	/// @brief Get the hash digest from the stream. 
+	/// @note The hash value will be calculated when the stream has ended, any call before then will return an empty hash digest
 	status_return<status,hash_type> get_digest() const { return hash_digest; };
 
 private:

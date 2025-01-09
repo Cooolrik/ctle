@@ -6,10 +6,9 @@
 
 #include <vector>
 
-#include "types.h"
+#include "fwd.h"
 #include "status.h"
 #include "status_return.h"
-#include "types.h"
 #include "hasher.h"
 #include "file_funcs.h"
 

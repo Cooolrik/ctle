@@ -4,12 +4,17 @@
 #ifndef _CTLE_STATUS_ERROR_H_
 #define _CTLE_STATUS_ERROR_H_
 
+/// @file status_error.h
+/// @brief Contains the status_error class, a runtime_error exception class for status values.
+
 #include "status.h"
 #include <stdexcept>
 
 namespace ctle
 {
-	class status_error : public std::runtime_error
+	/// @brief status_error exception class, derived from std::runtime_error.
+	/// @details This exception class implements a runtime_error exception, with a status value attached.
+	class status_error : public std::runtime_error	
 	{
 		public:
 			status value;

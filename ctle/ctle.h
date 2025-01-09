@@ -28,7 +28,10 @@
 /// @note It is recommended to include only the headers you need, to reduce compile time and dependencies, so only 
 /// include this file if you need all of ctle, which is mostly only when you are implementing ctle library in a source file.
 
+#include "fwd.h"
+
 #include "bimap.h"
+#include "base_types.h"
 #include "bitmap_font.h"
 #include "endianness.h"
 #include "file_funcs.h"
@@ -44,7 +47,6 @@
 #include "status_return.h"
 #include "string_funcs.h"
 #include "thread_safe_map.h"
-#include "types.h"
 #include "util.h"
 #include "uuid.h"
 #include "digest.h"

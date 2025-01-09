@@ -8,9 +8,8 @@
 /// @brief Contains the idx_vector class template, a vector of values with an index vector into the values.
 
 #include <vector>
-#include <cstdint>
 
-#include "types.h"
+#include "fwd.h"
 
 namespace ctle
 {
@@ -47,15 +46,9 @@ private:
 public:
 	idx_vector() = default;
 	idx_vector( const idx_vector &_other ) noexcept : values_m( _other.values_m ), index_m( _other.index_m ) {}
-	idx_vector &operator = ( const idx_vector &_other )
-	{
-		this->values_m = _other.values_m; this->index_m = _other.index_m; return *this;
-	}
+	idx_vector &operator = ( const idx_vector &_other )	{ this->values_m = _other.values_m; this->index_m = _other.index_m; return *this; }
 	idx_vector( idx_vector &&_other ) noexcept : values_m( std::move( _other.values_m ) ), index_m( std::move( _other.index_m ) ) {}
-	idx_vector &operator = ( idx_vector &&_other )
-	{
-		this->values_m = std::move( _other.values_m ); this->index_m = std::move( _other.index_m ); return *this;
-	}
+	idx_vector &operator = ( idx_vector &&_other ) { this->values_m = std::move( _other.values_m ); this->index_m = std::move( _other.index_m ); return *this; }
 
 	// comparison operators
 	bool operator==(const idx_vector& _other) const;

@@ -94,17 +94,21 @@ def generate_types_dict():
 					'btype': btype,
 					})   
 
-def list_types( out:formatted_output ):
+def list_fwd_classes( out:formatted_output ):
 	global types
 
 	out.generate_license_header()
-	guard_def = out.begin_header_guard('types.h','ctle')
+	guard_def = out.begin_header_guard('fwd.h','ctle')
+	out.ln()
+	out.ln('/// @file fwd.h')
+	out.ln('/// @brief Forward declarations of ctle classes')
 	out.ln()
 	out.ln('#include <cinttypes>')
 	out.ln()
 
 	out.ln('namespace ctle')
 	with out.blk( no_indent = True ):
+		out.ln()
 		out.comment_ln('Standard integer and real values short-hand')
 		for s in int_bit_sizes:
 			out.ln(f'using i{s} = std::int{s}_t;')
@@ -121,39 +125,28 @@ def list_types( out:formatted_output ):
 				else:
 					out.ln(f'class {cl};')
 			out.ln()
-
-		#out.comment_ln(f'short-hand defines of n-tuples.')
-		#for otype in types:
-		#	if otype['tuple_cnt'] > 0:
-		#		if otype['subtype_cnt'] > 0:
-		#			out.ln(f'using {otype["otype"]} = mn_tup<n_tup<{otype["btype"]},{otype["subtype_cnt"]}>,{otype["tuple_cnt"]}>; ')
-		#		else:
-		#			out.ln(f'using {otype["otype"]} = n_tup<{otype["btype"]},{otype["tuple_cnt"]}>; ')
-		#out.ln()
-  #
-		#out.comment_ln(f'short-hand aliases for float and double tuples')
-		#for otype in types:
-		#	if otype['tuple_cnt'] > 0:
-		#		if otype['btype'] == 'f32' or otype['btype'] == 'f64':
-		#			alias = 'd' if otype['btype'] == 'f64' else 'f'
-		#			alias += otype['otype'][3:]
-		#			out.ln(f'using {alias} = {otype["otype"]}; ')
-		#out.ln()
-
-		out.comment_ln(f'// a span of characters, with start and end pointers')
-		out.ln('template<class _Ty> struct string_span;')
+	
 		out.ln()
 	out.ln('//namespace ctle')
 	out.ln()
 
+	out.end_header_guard(guard_def)
+
+def list_base_types( out:formatted_output ):
+	global types
+
+	out.generate_license_header()
+	guard_def = out.begin_header_guard('base_types.h','ctle')
+	out.ln()
+
 	out.ln('#ifdef CTLE_IMPLEMENTATION', no_indent=True)		
 
+	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
 
 	out.ln('namespace ctle')
-	with out.blk():
-		out.ln()
-		out.comment_ln(f'Print types to strings.')
+	with out.blk(no_indent=True):
+		out.comment_ln(f'Print base types to strings.')
 		for otype in types:
 			if otype['tuple_cnt'] == 0:
 				str = f'template<> std::string to_string( const {otype["otype"]} &val ) {{ return '
@@ -162,6 +155,7 @@ def list_types( out:formatted_output ):
 				out.ln(str)
 		out.ln()
   	
+		out.comment_ln(f'Parse base types from strings.')
 		for bs in int_bit_sizes:
 			for sign in ['i','u']:
 				otype = f'{sign}{bs}'
@@ -188,7 +182,6 @@ def list_types( out:formatted_output ):
 					if bs != 64:
 						out.ln(f'if( !result ) {{ throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type ({otype})."); }}')
 					out.ln('return val;')
-				out.ln()
 
 		for bs in real_bit_sizes:
 			alias = 'd' if bs == 64 else 'f'
@@ -199,9 +192,8 @@ def list_types( out:formatted_output ):
 			out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 			with out.blk():
 				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
-			out.ln()
- 
-  
+
+		out.ln()
 	out.ln('//namespace ctle')
  
 	out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)
@@ -308,7 +300,7 @@ def define_n_tuples( out:formatted_output ):
 
 			# glm interops
 			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including types.h)')
+			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
 
 			# copy ctor
 			s = f'n_tup( const glm::vec<{d},_Ty> &other ) noexcept {{ '
@@ -433,7 +425,7 @@ def define_n_tuples( out:formatted_output ):
 
 			# glm interop
 			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including types.h)')
+			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
 
 			# copy ctor
 			s = f'mn_tup( const glm::mat<{d}, _InnerSize, typename _Ty> &other ) noexcept {{ '
@@ -687,10 +679,15 @@ def generate_types( src_path:str, test_path:str ):
 
 	generate_types_dict()
 
-	## generate types.h 
+	## generate fwd.h 
 	out = formatted_output()
-	list_types( out )
-	out.write_lines_to_file( src_path + '/types.h' )
+	list_fwd_classes( out )
+	out.write_lines_to_file( src_path + '/fwd.h' )
+
+	## generate base_types.h 
+	out = formatted_output()
+	list_base_types( out )
+	out.write_lines_to_file( src_path + '/base_types.h' )
 
 	## generate ntup.h 
 	out = formatted_output()
@@ -711,7 +708,7 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln('#include <cinttypes>')
 	out.ln('#include <limits>')
 	out.ln()
-	out.ln('#include "types.h"')
+	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
 	out.ln('#include "status.h"')	
 	out.ln('#include "status_return.h"')	

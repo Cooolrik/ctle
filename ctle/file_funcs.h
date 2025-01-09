@@ -12,7 +12,7 @@
 #include <fstream>
 #include <vector>
 
-#include "types.h"
+#include "fwd.h"
 #include "status.h"
 
 namespace ctle

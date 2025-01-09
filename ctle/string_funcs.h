@@ -511,4 +511,5 @@ template <> inline uint64_t hex_string_to_value<uint64_t>( const char *hex_strin
 
 }
 // namespace ctle
+
 #endif//_CTLE_STRING_FUNCS_H_

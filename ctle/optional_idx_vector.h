@@ -83,15 +83,19 @@ public:
 	}
 
 	/// @brief Get a reference to the values vector.
+	/// @throw ctle::bad_optional_value_access if the optional_idx_vector has no value.
 	values_vector_type& values() { return this->vector().values(); }
 
 	/// @brief Get a const reference to the values vector.
+	/// @throw ctle::bad_optional_value_access if the optional_idx_vector has no value.
 	const values_vector_type& values() const { return this->vector().values(); }
 
 	/// @brief Get a reference to the index vector.
+	/// @throw ctle::bad_optional_value_access if the optional_idx_vector has no value.
 	index_vector_type& index() { return this->vector().index(); }
 
 	/// @brief Get a const reference to the index vector.
+	/// @throw ctle::bad_optional_value_access if the optional_idx_vector has no value.
 	const index_vector_type& index() const { return this->vector().index(); }
 };
 

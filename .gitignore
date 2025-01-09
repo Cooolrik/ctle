@@ -15,7 +15,7 @@
 /code_gen/__pycache__/*.pyc
 /ctle_code_gen/__pycache__
 status.h
-types.h
+fwd.h
 prop.h
 ntup.h
 /ctle/_macros.inl
