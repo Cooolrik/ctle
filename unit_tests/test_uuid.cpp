@@ -10,10 +10,10 @@ using namespace ctle;
 
 TEST( uuid, basic_test )
 {
-	const uuid ido0 = hex_string_to_value<uuid>( "00000000-0000-0000-0000-000000000000" ); // lowest
-	const uuid ido1 = hex_string_to_value<uuid>( "00000000-0000-0001-0000-000000000000" );
-	const uuid ido2 = hex_string_to_value<uuid>( "00000200-0000-0000-0000-000000000000" );
-	const uuid ido3 = hex_string_to_value<uuid>( "ffffffff-ffff-ffff-0000-000000000000" ); // highest
+	const uuid ido0 = from_hex_string<uuid>( "00000000-0000-0000-0000-000000000000" ); // lowest
+	const uuid ido1 = from_hex_string<uuid>( "00000000-0000-0001-0000-000000000000" );
+	const uuid ido2 = from_hex_string<uuid>( "00000200-0000-0000-0000-000000000000" );
+	const uuid ido3 = from_hex_string<uuid>( "ffffffff-ffff-ffff-0000-000000000000" ); // highest
 
 	uuid id = uuid::generate();
 
@@ -22,19 +22,19 @@ TEST( uuid, basic_test )
 	uuid idfromstring = from_string<uuid>(sts.str());
 	EXPECT_TRUE( id == idfromstring );
 
-	std::string idstr = value_to_hex_string( id );
-	uuid id2 = hex_string_to_value<uuid>( idstr.c_str() );
+	std::string idstr = to_hex_string( id );
+	uuid id2 = from_hex_string<uuid>( idstr.c_str() );
 	EXPECT_TRUE( id == id2 );
 
 	EXPECT_TRUE( id != uuid::nil );
 	EXPECT_TRUE( id2 != uuid::nil );
 
-	uuid id_nil = hex_string_to_value<uuid>( "00000000-0000-0000-0000-000000000000" );
+	uuid id_nil = from_hex_string<uuid>( "00000000-0000-0000-0000-000000000000" );
 	EXPECT_TRUE( id_nil == uuid::nil );
 
 	std::stringstream str;
 	str << id;
-	uuid id3 = hex_string_to_value<uuid>( str.str().c_str() );
+	uuid id3 = from_hex_string<uuid>( str.str().c_str() );
 	EXPECT_TRUE( id == id3 );
 
 	id2 = id3;

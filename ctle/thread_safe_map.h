@@ -1,7 +1,8 @@
-// ctle Copyright (c) 2021 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_THREAD_SAFE_MAP_H_
+#define _CTLE_THREAD_SAFE_MAP_H_
 
 #include <unordered_map>
 #include <mutex>
@@ -9,8 +10,8 @@
 
 namespace ctle
 {
-// thread safe map, forces single access to map. performace as if single threaded access.
-// (this code should be upgraded to a lock free map for multi-core performance)
+/// @brief thread safe map, forces single access to map. 
+/// @details performace as if single threaded access.
 template<class _Kty, class _Ty> class thread_safe_map
 {
 private:
@@ -83,3 +84,4 @@ public:
 
 }
 //namespace ctle
+#endif//_CTLE_THREAD_SAFE_MAP_H_

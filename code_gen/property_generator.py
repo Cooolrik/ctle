@@ -1,10 +1,7 @@
 # ctle Copyright (c) 2022 Ulrik Lindahl
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-if __name__ == "__main__":
-	from formatted_output import formatted_output
-else:
-	from .formatted_output import formatted_output
+from ctlepy import formatted_output
 from enum import Enum
 
 class pass_type(Enum):
@@ -432,14 +429,13 @@ def generate_property( path:str ):
 	out = formatted_output()
 
 	out.generate_license_header()
-	out.ln()
-	out.ln('#pragma once')
+	guard_def = out.begin_header_guard( 'prop.h', 'ctle' )
 	out.ln()
 	out.ln('#include <memory>')
 	out.ln('#include <atomic>')
 	out.ln('#include <functional>')
 	out.ln()
-	out.ln('#include "status.h"')
+	out.ln('#include "status_error.h"')
 	out.ln('#include "util.h"')
 	out.ln()
 
@@ -503,4 +499,6 @@ def generate_property( path:str ):
 			v.generate_class( out )
 			out.ln()
 			
+	out.ln()
+	out.end_header_guard( guard_def )
 	out.write_lines_to_file( path )

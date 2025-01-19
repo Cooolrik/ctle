@@ -60,7 +60,10 @@ TEST( string_funcs, basic_test )
 	EXPECT_TRUE( strspn_t( get_span<char>( "qwerTY" ), "ytrewq" ) == 4 );
 	EXPECT_TRUE( strcspn_t( get_span<char>( "qwerrrrrrtyTY" ), "YTy" ) == 10 );
 	EXPECT_TRUE( strspn_t( get_span<wchar_t>( L"qwertyTY" ), L"ytrewq" ) == 6 );
-	EXPECT_TRUE( strcspn_t( get_span<wchar_t>( L"qwertyTY" ), L"YTy" ) == 5 );
+	EXPECT_TRUE(strcspn_t(get_span<wchar_t>(L"qwertyTY"), L"YTy") == 5);
+
+	EXPECT_TRUE(strspn_t(std::string("qwertyTY"), "qerw") == 4);
+
 	// get the tokens of the string
 	auto tok = strtok_t( testString2_start, testString2_end, " " );
 	EXPECT_TRUE( std::string( tok.start, tok.end ) == "A" );
@@ -166,4 +169,35 @@ TEST( string_funcs, basic_test )
 	EXPECT_TRUE( lex_t( &lexed_tokens, get_span<char>( lexTest6 ) ) );
 	EXPECT_TRUE( lexed_tokens.size() == 3 );
 	EXPECT_TRUE( std::string( lexed_tokens[2] ) == "this string does end well" );
+}
+
+template<class T> void test_to_from_string(T expected_value, const char *expected_str)
+{
+	std::string str = ctle::to_string(expected_value);
+	EXPECT_EQ(str, expected_str);
+	T value = ctle::from_string<T>(str);
+	EXPECT_EQ(value, expected_value);
+}
+
+template<class T> void test_to_from_hex_string(T expected_value, const char *expected_str)
+{
+	std::string str = ctle::to_hex_string(expected_value);
+	EXPECT_EQ(str, expected_str);
+	T value = ctle::from_hex_string<T>(str);
+	EXPECT_EQ(value, expected_value);
+}
+
+TEST(string_funcs, from_to_string_tests)
+{
+	test_to_from_string<uint8_t>(189, "189");
+	test_to_from_hex_string<uint8_t>(0x39, "39");
+
+	test_to_from_string<uint16_t>(2189, "2189");
+	test_to_from_hex_string<uint16_t>(0x243, "0243");
+
+	test_to_from_string<uint32_t>(218359, "218359");
+	test_to_from_hex_string<uint32_t>(0x18243, "00018243");
+
+	test_to_from_string<uint64_t>(23456545218359, "23456545218359");
+	test_to_from_hex_string<uint64_t>(0x83645918243, "0000083645918243");		
 }

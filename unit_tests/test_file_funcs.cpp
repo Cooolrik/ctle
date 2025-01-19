@@ -22,7 +22,7 @@ static void testReadWriteAccess()
 	}
 
 	// generate a unique local file name using a uuid
-	std::string filename = value_to_hex_string( uuid::generate() );
+	std::string filename = to_hex_string( uuid::generate() );
 
 	// make sure file does not exists 
 	EXPECT_FALSE( file_exists( filename.c_str() ) );

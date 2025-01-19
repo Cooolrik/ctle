@@ -1,7 +1,11 @@
-// ctle Copyright (c) 2022 Ulrik Lindahl
+// ctle Copyright (c) 2024 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
-
 #pragma once
+#ifndef _CTLE_STATUS_RETURN_H_
+#define _CTLE_STATUS_RETURN_H_
+
+/// @file status_return.h
+/// @brief status_return is a class template which represents a pair of result/status and return type for functions which return a type along with a status.
 
 #include <type_traits>
 #include <utility>
@@ -9,11 +13,11 @@
 namespace ctle
 {
 
-// represents a pair of result/status and return type for 
-// functions which return a type along with a status 
+/// @brief return type with a status value
+/// @details represents a pair of result / status and return type for functions which return a type along with a status 
 template<class _StatusType, class _ValueType> class status_return;
 
-// general implementation
+// general implementation, when we have both a _StatusType and a _ValueType
 template<class _StatusType, class _ValueType> class status_return
 {
 	static_assert( std::is_trivially_copyable<_StatusType>(), "_StatusType needs to be trivially copyable, like a plain old value, like bool, int or enum, or a class with a default copy ctor" );
@@ -100,3 +104,4 @@ public:
 
 }
 //namespace ctle
+#endif//_CTLE_STATUS_RETURN_H_
