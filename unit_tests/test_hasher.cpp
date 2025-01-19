@@ -19,7 +19,7 @@ static const u8 hashing_testdata[] = {  0x4E,0x6F,0x62,0x6F,0x64,0x79,0x20,0x65,
 template<class _Ty>
 void test_expected_hash( const u8 *srcdata, size_t size, const char *expected_hash_string )
 {
-	using hash = _Ty::hash_type;
+	using hash = typename _Ty::hash_type;
 
 	status result;
 	_Ty hasher;

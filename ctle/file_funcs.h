@@ -404,15 +404,15 @@ status _file_object::open_read(const std::string& filepath)
 
 	// open the file at the end, so we can tell() the size of the file
 	this->file_handle = new std::ifstream(filepath.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
-	if( !this->file_handle || !this->file_handle->is_open() )
+	if( !this->file_handle || !((std::ifstream*)this->file_handle)->is_open() )
 	{
 		this->close();
 		return status::cant_open;
 	}
 
 	// get the size of the file, and move back to the beginning
-	this->file_size = this->file_handle->tellg();
-	this->file_handle->seekg( 0, std::ios::beg );
+	this->file_size = ((std::ifstream*)this->file_handle)->tellg();
+	((std::ifstream*)this->file_handle)->seekg( 0, std::ios::beg );
 
 	return status::ok;
 }
@@ -428,7 +428,7 @@ status _file_object::open_write(const std::string& filepath, bool overwrite_exis
 
 	// create the file
 	this->file_handle = new std::ofstream( filepath.c_str(), std::ios::out | std::ios::binary );
-	if( !this->file_handle || !this->file_handle->is_open() )
+	if( !this->file_handle || !((std::ofstream*)this->file_handle)->is_open() )
 	{
 		this->close();
 		return status::cant_write;
@@ -441,7 +441,7 @@ status _file_object::close()
 {
 	if (this->file_handle)
 	{
-		delete this->file_handle;
+		delete ((std::ofstream*)this->file_handle);
 		this->file_handle = nullptr;
 	}
 	return status::ok;
@@ -449,7 +449,7 @@ status _file_object::close()
 
 bool _file_object::is_open() const
 {
-	return this->file_handle && this->file_handle->is_open();
+	return this->file_handle && ((std::ofstream*)this->file_handle)->is_open();
 }
 
 status _file_object::read(u8* dest, const u64 size)
@@ -458,7 +458,7 @@ status _file_object::read(u8* dest, const u64 size)
 
 	// read the data to the dest
 	((std::ifstream*)this->file_handle)->read((char*)dest, size);
-	if( this->file_handle->fail() )
+	if( ((std::ifstream*)this->file_handle)->fail() )
 		return status::cant_read;
 
 	return status::ok;
@@ -469,8 +469,8 @@ status _file_object::write(const u8* src, const u64 size)
 	ctValidate(this->file_handle, status::not_ready) << "The file stream is not open" << ctValidateEnd;
 
 	// read the data to the dest
-	((std::ifstream*)this->file_handle)->write((const char*)src, size);
-	if( this->file_handle->fail() )
+	((std::ofstream*)this->file_handle)->write((const char*)src, size);
+	if( ((std::ofstream*)this->file_handle)->fail() )
 		return status::cant_read;
 
 	return status::ok;

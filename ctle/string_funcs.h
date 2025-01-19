@@ -199,7 +199,7 @@ template<class _Ty> inline int64_t stoi64_t(const std::basic_string<_Ty>& str) n
 /// @returns True if the lexer succeeded, false if the lexer failed.
 template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* start, const _Ty* end, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept;
 template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const string_span<_Ty>& span, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, span.start, span.end, separators, quotes, whitespaces); }
-template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const std::basic_string<_Ty>& str, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, span.data(), span.data() + span.size(), separators, quotes, whitespaces); }
+template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const std::basic_string<_Ty>& str, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, str.data(), str.data() + str.size(), separators, quotes, whitespaces); }
 
 void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, bool& success) noexcept;
 std::string _bytes_to_hex_string(const void* bytes, size_t count);

@@ -4,46 +4,46 @@
 #ifndef _CTLE_LOG_H_
 #define _CTLE_LOG_H_
 
-/// @file log.h
-/// @brief A simple logging system for ctle, with log levels and a global log function.
-/// @details The log system is a simple logging system, which can be used to log messages with different log levels.
-/// To use the log system with a set of macros, see the example below.
-/// @code{.cpp}
-/// // Example macros for logging with the ctle log system
-/// 
-/// // General function signature macro usable in both MSVC and GCC/Clang
-/// #if defined(_MSC_VER)
-/// #define _EX_FUNCTION_SIGNATURE __FUNCSIG__
-/// #elif defined(__GNUC__)
-/// #define _EX_FUNCTION_SIGNATURE __PRETTY_FUNCTION__ 
-/// #endif		   
-/// 
-/// // _EX_STRINGIZE converts a number macro (like __LINE__) into a string.
-/// // The _EX_STRINGIZE_DETAIL is needed because of how macros work in the preprocessor
-/// // E.g. use _EX_STRINGIZE(__LINE__) to use __LINE__ as a string macro
-/// // (i.e. convert any number or value to a string: 1 -> "1" )
-/// #define _EX_STRINGIZE_DETAIL(x) #x
-/// #define _EX_STRINGIZE(x) _EX_STRINGIZE_DETAIL(x)
-/// 
-/// // Logging macros for the log.h ctle type
-/// #define EX_LOG_LEVEL( msg_level )\
-/// 	if( ctle::log_level::msg_level <= ctle::get_global_log_level() ) {\
-/// 		ctle::log_msg _EX_log_entry(ctle::log_level::msg_level,__FILE__,__LINE__,_EX_FUNCTION_SIGNATURE); _EX_log_entry.message()
-/// #define EX_LOG_ERROR EX_LOG_LEVEL( error )
-/// #define EX_LOG_WARNING EX_LOG_LEVEL( warning )
-/// #define EX_LOG_INFO EX_LOG_LEVEL( info )
-/// #define EX_LOG_DEBUG EX_LOG_LEVEL( debug )
-/// #define EX_LOG_VERBOSE EX_LOG_LEVEL( verbose )
-/// #define EX_LOG_END ""; }
-///
-/// @endcode
-/// 
-/// To use the macros, include the log.h file, and then use the macros in your code like this:
-/// @code{.cpp}
-/// EX_LOG_INFO << "This is an info message" << EX_LOG_END;
-/// EX_LOG_DEBUG << "This is a debug message" << EX_LOG_END;
-/// @endcode
-
+/**
+ * @file log.h
+ * @brief A simple logging system for ctle, with log levels and a global log function.
+ * @details The log system is a simple logging system, which can be used to log messages with different log levels.
+ * To use the log system with a set of macros, see the example below.
+ * @code{.cpp}
+ * // Example macros for logging with the ctle log system
+ * 
+ * // General function signature macro usable in both MSVC and GCC/Clang
+ * #if defined(_MSC_VER)
+ * #define _EX_FUNCTION_SIGNATURE __FUNCSIG__
+ * #elif defined(__GNUC__)
+ * #define _EX_FUNCTION_SIGNATURE __PRETTY_FUNCTION__ 
+ * #endif		   
+ * 
+ * // _EX_STRINGIZE converts a number macro (like __LINE__) into a string.
+ * // The _EX_STRINGIZE_DETAIL is needed because of how macros work in the preprocessor
+ * // E.g. use _EX_STRINGIZE(__LINE__) to use __LINE__ as a string macro
+ * // (i.e. convert any number or value to a string: 1 -> "1" )
+ * #define _EX_STRINGIZE_DETAIL(x) #x
+ * #define _EX_STRINGIZE(x) _EX_STRINGIZE_DETAIL(x)
+ * 
+ * // Logging macros for the log.h ctle type
+ * #define EX_LOG_LEVEL( msg_level )\
+ * 	if( ctle::log_level::msg_level <= ctle::get_global_log_level() ) {\
+ * 		ctle::log_msg _EX_log_entry(ctle::log_level::msg_level,__FILE__,__LINE__,_EX_FUNCTION_SIGNATURE); _EX_log_entry.message()
+ * #define EX_LOG_ERROR EX_LOG_LEVEL( error )
+ * #define EX_LOG_WARNING EX_LOG_LEVEL( warning )
+ * #define EX_LOG_INFO EX_LOG_LEVEL( info )
+ * #define EX_LOG_DEBUG EX_LOG_LEVEL( debug )
+ * #define EX_LOG_VERBOSE EX_LOG_LEVEL( verbose )
+ * #define EX_LOG_END ""; }
+ * @endcode
+ * 
+ * To use the macros, include the log.h file, and then use the macros in your code like this:
+ * @code{.cpp}
+ * EX_LOG_INFO << "This is an info message" << EX_LOG_END;
+ * EX_LOG_DEBUG << "This is a debug message" << EX_LOG_END;
+ * @endcode
+ */
 
 #include <sstream>
 

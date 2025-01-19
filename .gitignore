@@ -14,10 +14,13 @@
 /results_c++20
 /code_gen/__pycache__/*.pyc
 /ctle_code_gen/__pycache__
+
 status.h
 fwd.h
 prop.h
 ntup.h
+base_types.h
+
 /ctle/_macros.inl
 /ctle/_undef_macros.inl
 /unit_tests/unit_tests_variants.cpp
@@ -30,5 +33,4 @@ ntup.h
 /pypi_dist/setup.cfg
 /pypi_dist/src
 
-ntup.h
-/code_gen/random_value_output
+random_value_output

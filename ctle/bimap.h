@@ -7,6 +7,7 @@
 /// @file bimap.h
 /// @brief class bimap, a bi-directional unordered_map, providing O(1) average lookup for both key->value and value->key.
 
+#include <cstddef>
 #include <unordered_map>
 
 namespace ctle

@@ -221,11 +221,10 @@ template <> digest<128> ctle::from_hex_string<digest<128>>(const string_span<cha
 template <> digest<256> ctle::from_hex_string<digest<256>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<256>(str, success); }
 template <> digest<512> ctle::from_hex_string<digest<512>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<512>(str, success); }
 
-template <> digest<64> ctle::from_string<digest<64>>(const string_span<char>& str) noexcept { return digest_from_string<64>(str); }
-template <> digest<128> ctle::from_string<digest<128>>(const string_span<char>& str) noexcept { return digest_from_string<128>(str); }
-template <> digest<256> ctle::from_string<digest<256>>(const string_span<char>& str) noexcept { return digest_from_string<256>(str); }
-template <> digest<512> ctle::from_string<digest<512>>(const string_span<char>& str) noexcept { return digest_from_string<512>(str); }
-
+template <> digest<64> ctle::from_string<digest<64>>(const string_span<char>& str) { return digest_from_string<64>(str); }
+template <> digest<128> ctle::from_string<digest<128>>(const string_span<char>& str) { return digest_from_string<128>(str); }
+template <> digest<256> ctle::from_string<digest<256>>(const string_span<char>& str) { return digest_from_string<256>(str); }
+template <> digest<512> ctle::from_string<digest<512>>(const string_span<char>& str) { return digest_from_string<512>(str); }
 }
 //namespace ctle
 

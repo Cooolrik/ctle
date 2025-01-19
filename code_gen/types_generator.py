@@ -105,6 +105,8 @@ def list_fwd_classes( out:formatted_output ):
 	out.ln('/// @brief Forward declarations of ctle classes')
 	out.ln()
 	out.ln('#include <cinttypes>')
+	out.ln('#include <cstddef>')
+	out.ln('#include <vector>')
 	out.ln()
 
 	out.ln('namespace ctle')
@@ -429,21 +431,21 @@ def define_n_tuples( out:formatted_output ):
 			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
 
 			# copy ctor
-			s = f'mn_tup( const glm::mat<{d}, _InnerSize, typename _Ty> &other ) noexcept {{ '
+			s = f'mn_tup( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
 			for td in range(d):
 				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
 			s += '}'
 			out.ln(s)
 
 			# copy operator
-			s = f'mn_tup &operator=( const glm::mat<{d}, _InnerSize, typename _Ty> &other ) noexcept {{ '
+			s = f'mn_tup &operator=( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
 			for td in range(d):
 				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
 			s += 'return *this; }'
 			out.ln(s)
 
 			# convert to glm matrix
-			s = f'operator glm::mat<{d}, _InnerSize, typename _Ty>() const noexcept {{ return glm::mat<{d}, _InnerSize, typename _Ty>( '
+			s = f'operator glm::mat<{d}, _InnerSize, _Ty>() const noexcept {{ return glm::mat<{d},_InnerSize,_Ty>( '
 			for td in range(d):
 				s += f'values[{td}]'
 				if td < d-1:

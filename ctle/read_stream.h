@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "fwd.h"
-#include "status.h"
+#include "status_error.h"
 #include "status_return.h"
 #include "hasher.h"
 #include "file_funcs.h"
@@ -110,7 +110,7 @@ template<class _DataSourceTy, class _HashTy>
 template<class _DataTy>
 inline status read_stream<_DataSourceTy,_HashTy>::read(_DataTy* dest, size_t count)
 {
-	static_assert( std::is_trivially_copyable<_DataTy>() );
+	static_assert( std::is_trivially_copyable<_DataTy>(), "_DataTy data type must be trivially copyable" );
 
 	ctStatusCall( this->read_bytes( (u8*)dest, sizeof(_DataTy)*count) );
 	return status::ok;

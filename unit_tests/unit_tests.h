@@ -51,12 +51,11 @@ using ctle::f64;
 template<class T> T random_value();
 
 // if size == 0, returns a random lenght vector, up to 100 values in length
-template<class T> inline std::vector<T> random_vector( size_t size = 0 )
+template<class T> inline std::vector<T> random_vector( const size_t size = 0 )
 {
-    if( size == 0 )
-        size = (rand() % 100) + 1;
-	std::vector<T> data(size);
-	for( size_t inx=0; inx<size; ++inx )
+	const size_t vec_size = (size != 0) ? (size) : ((rand() % 100) + 1);
+	std::vector<T> data(vec_size);
+	for( size_t inx=0; inx<vec_size; ++inx )
 		data[inx] = random_value<T>();
     return data;
 }

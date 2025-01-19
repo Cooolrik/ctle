@@ -7,17 +7,12 @@
 #include <glm/glm.hpp>
 #include <type_traits>
 
-#include "../ctle/types.h"
+#include "../ctle/base_types.h"
 #include "../ctle/ntup.h"
 
 #include "unit_tests.h"
 
 using namespace ctle;
-
-//static_assert(i8tup2x4::dimensions == 2);
-//static_assert(i8tup2x4::value_type::dimensions == 4);
-//static_assert(i8tup2x4::num_rows == 2);
-//static_assert(i8tup2x4::num_columns == 4);
 
 template<class _Ty, size_t _Size> void CompareExact(const n_tup<_Ty, _Size>& tuple, const n_tup<_Ty, _Size>& tuple2)
 {
@@ -45,7 +40,7 @@ template<class _Ty, size_t _Size, bool _Exact> void TestTuple()
 {
 	n_tup<_Ty, _Size> tuple = {};
 
-	static_assert( sizeof(tuple) == sizeof(_Ty)*_Size );
+	static_assert( sizeof(tuple) == sizeof(_Ty)*_Size, "tuple does not match type size" );
 
 	// init with random values
 	for( size_t i = 0; i < _Size; ++i )
@@ -89,13 +84,19 @@ TEST( types, basic_test )
 	TestNTuple<u64, true>();	
 	TestNTuple<float, false>();
 	TestNTuple<double, false>();
+
+	// try common conversions to/from glm
+	glm::vec3 gvec(1, 2, 3);
+	ctle::n_tup<float, 3> cvec(gvec);
+	auto gvec2 = (glm::vec3)cvec;
+	EXPECT_EQ(gvec, gvec2);
 }
 
 template<class _Ty, size_t _InnerSize, size_t _OuterSize, bool _Exact> void TestTupleOfTuples()
 {
 	mn_tup<_Ty, _InnerSize, _OuterSize> tupletuple = {};
 
-	static_assert( sizeof(tupletuple) == sizeof(_Ty) * _InnerSize * _OuterSize );
+	static_assert( sizeof(tupletuple) == sizeof(_Ty) * _InnerSize * _OuterSize, "Packing is off, size of tuple type must equal sizeof one item times inner and outer size" );
 
 	// init with random values
 	for( size_t i = 0; i < _OuterSize; ++i )
@@ -163,17 +164,17 @@ TEST( types, tuple_of_tuple_test )
 template<class _Ty, size_t _M, size_t _N> void TestMNTupleConvert()
 {
 	using glm_mtx = typename glm::mat<_N, _M, _Ty>;
-	using ctle_tup = typename mn_tup<_Ty, _M, _N>;
+	using ctle_tup = typename ctle::mn_tup<_Ty, _M, _N>;
 
 	// make sure the glm matrix is the right size
 	// (note that the size of a column is the number of rows, and the size of a row is the number of columns)
-	static_assert( sizeof(glm_mtx::col_type) / sizeof(_Ty) == _M );
-	static_assert( sizeof(glm_mtx::row_type) / sizeof(_Ty) == _N );
+	static_assert( sizeof(typename glm_mtx::col_type) / sizeof(_Ty) == _M , "column tuple type size is off");
+	static_assert( sizeof(typename glm_mtx::row_type) / sizeof(_Ty) == _N , "row tuple type size is off");
 
 	ctle_tup tuptup = {};
-	static_assert( sizeof(tuptup) == sizeof(_Ty) * _M * _N );
-	static_assert( ctle_tup::num_rows == _M );
-	static_assert( ctle_tup::num_columns == _N );
+	static_assert( sizeof(tuptup) == sizeof(_Ty) * _M * _N, "packing size is off" );
+	static_assert( ctle_tup::num_rows == _M, "num_rows does not match expected number of rows in test template instance" );
+	static_assert( ctle_tup::num_columns == _N, "num_columns does not match expected number of columns in test template instance" );
 
 	// init with values 1->M*N, in data order
 	_Ty *dest = tuptup.data();

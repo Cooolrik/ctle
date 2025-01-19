@@ -435,7 +435,7 @@ def generate_property( path:str ):
 	out.ln('#include <atomic>')
 	out.ln('#include <functional>')
 	out.ln()
-	out.ln('#include "status.h"')
+	out.ln('#include "status_error.h"')
 	out.ln('#include "util.h"')
 	out.ln()
 

@@ -98,7 +98,7 @@ template<class _DataDestTy, class _HashTy>
 template<class _DataTy>
 inline status write_stream<_DataDestTy,_HashTy>::write( const _DataTy* src, size_t count)
 {
-	static_assert( std::is_trivially_copyable<_DataTy>() );
+	static_assert( std::is_trivially_copyable<_DataTy>(), "_DataTy data type must be trivially copyable" );
 
 	ctStatusCall( this->write_bytes( (const u8*)src, sizeof(_DataTy)*count) );
 	return status::ok;
