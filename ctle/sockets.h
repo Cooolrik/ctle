@@ -581,7 +581,7 @@ status_return<status,std::unique_ptr<stream_socket>> stream_socket::connect(cons
 
 status_return<status,std::unique_ptr<stream_socket>> stream_socket::connect(const std::string &address, uint16_t port, socket_protocol_family protocol_family )
 {
-	return std::move( stream_socket::connect( address, std::to_string(port), protocol_family) );
+	return stream_socket::connect( address, std::to_string(port), protocol_family);
 }
 
 status stream_socket::send(const void* buf, size_t buflen, size_t& sent)

@@ -7,6 +7,7 @@
 /// @file string_funcs.h
 /// @brief Functions for parsing and converting strings.
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <stdexcept>
