@@ -176,10 +176,10 @@ std::ostream& operator<<(std::ostream& os, const ctle::digest<512>& _digest);
 namespace ctle
 {
 
-template <> std::string to_string<digest<64>>(const digest<64>& value) { return bytes_to_hex_string(&value, 8); }
-template <> std::string to_string<digest<128>>(const digest<128>& value) { return bytes_to_hex_string(&value, 16); }
-template <> std::string to_string<digest<256>>(const digest<256>& value) { return bytes_to_hex_string(&value, 32); }
-template <> std::string to_string<digest<512>>(const digest<512>& value) { return bytes_to_hex_string(&value, 64); }
+template <> std::string to_string<digest<64>>(const digest<64>& value) { return _bytes_to_hex_string(&value, 8); }
+template <> std::string to_string<digest<128>>(const digest<128>& value) { return _bytes_to_hex_string(&value, 16); }
+template <> std::string to_string<digest<256>>(const digest<256>& value) { return _bytes_to_hex_string(&value, 32); }
+template <> std::string to_string<digest<512>>(const digest<512>& value) { return _bytes_to_hex_string(&value, 64); }
 
 // error return version
 template <size_t _Size>
@@ -196,7 +196,7 @@ inline digest<_Size> digest_from_string(const string_span<char>& str, bool& succ
 	}
 
 	digest<_Size> value;
-	hex_string_to_bytes(&value, str.start, byte_size, success);
+	_bytes_from_hex_string(&value, byte_size, str.start, success);
 	return value;
 }
 
@@ -211,15 +211,15 @@ inline digest<_Size> digest_from_string(const string_span<char>& str)
 	return value;
 }
 
-template <> digest<64> ctle::from_string<digest<64>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<64>(str, success); }
+template <> digest<64> ctle::from_string<digest<64>>  (const string_span<char>& str, bool& success) noexcept { return digest_from_string<64>(str, success); }
 template <> digest<128> ctle::from_string<digest<128>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<128>(str, success); }
 template <> digest<256> ctle::from_string<digest<256>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<256>(str, success); }
 template <> digest<512> ctle::from_string<digest<512>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<512>(str, success); }
 
-template <> digest<64> hex_string_to_value<digest<64>>(const char* hex_string, bool& success) noexcept { return ctle::from_string<digest<64>>(string_span<char>(hex_string, hex_string + 16), success); }
-template <> digest<128> hex_string_to_value<digest<128>>(const char* hex_string, bool& success) noexcept { return ctle::from_string<digest<128>>(string_span<char>(hex_string, hex_string + 32), success); }
-template <> digest<256> hex_string_to_value<digest<256>>(const char* hex_string, bool& success) noexcept { return ctle::from_string<digest<256>>(string_span<char>(hex_string, hex_string + 64), success); }
-template <> digest<512> hex_string_to_value<digest<512>>(const char* hex_string, bool& success) noexcept { return ctle::from_string<digest<512>>(string_span<char>(hex_string, hex_string + 128), success); }
+template <> digest<64>  ctle::from_hex_string<digest<64>>( const string_span<char>& str, bool& success) noexcept { return digest_from_string<64>(str, success); }
+template <> digest<128> ctle::from_hex_string<digest<128>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<128>(str, success); }
+template <> digest<256> ctle::from_hex_string<digest<256>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<256>(str, success); }
+template <> digest<512> ctle::from_hex_string<digest<512>>(const string_span<char>& str, bool& success) noexcept { return digest_from_string<512>(str, success); }
 
 template <> digest<64> ctle::from_string<digest<64>>(const string_span<char>& str) noexcept { return digest_from_string<64>(str); }
 template <> digest<128> ctle::from_string<digest<128>>(const string_span<char>& str) noexcept { return digest_from_string<128>(str); }

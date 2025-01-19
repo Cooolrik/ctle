@@ -99,7 +99,7 @@ if(CTLE_BUILD_TESTS)
 		./ctle/status_return.h
 		./ctle/string_funcs.h
 		./ctle/thread_safe_map.h
-		./ctle/types.h
+		./ctle/fwd.h
 		./ctle/ntup.h
 		./ctle/uuid.h
 		./ctle/digest.h

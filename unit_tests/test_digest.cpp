@@ -154,7 +154,7 @@ static void test_hash_of_size()
 	EXPECT_FALSE( success );
 
 	success = true;
-	hash q5 = ctle::hex_string_to_value<hash>(q1string.c_str(),success);
+	hash q5 = ctle::from_hex_string<hash>(q1string.c_str(),success);
 	EXPECT_TRUE( success );
 
 	hash qempty;

@@ -4,14 +4,17 @@
 #ifndef _CTLE_UUID_H_
 #define _CTLE_UUID_H_
 
+/// @file uuid.h
+/// @brief A portable, variant 1, version 4 (RNG generated) of uuid implementation.
+
 #include <cstdint>
 #include <functional>
 #include <iosfwd>
 
 namespace ctle
 {
-// uuid implements a portable, variant 1, version 4 (RNG generated) of uuid
-// stored big-endian on all platforms
+/// @brief uuid implements a portable, variant 1, version 4 (RNG generated) of uuid implementation.
+/// @details The uuid is stored as big-endian 16 bytes, and can be compared, hashed, and converted to and from strings.
 struct uuid
 {
 	union
@@ -28,8 +31,8 @@ struct uuid
 	bool operator!=( const ctle::uuid &other ) const noexcept;
 	bool operator<( const ctle::uuid &other ) const noexcept;
 
-	// generates an uuid using the mt19937 seeded from random_device
-	// the call is thread-safe and uses a mutex to avoid collisions
+	/// @brief Generates an uuid using the mt19937 seeded from random_device.
+	/// @details The generate call is thread-safe and uses a mutex to avoid collisions
 	static uuid generate();
 };
 
@@ -110,20 +113,20 @@ template <> std::string to_string( const uuid &value )
 	std::string ret;
 
 	// format: nnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn , 36 characters long (32 hex + 4 dash)
-	ret += bytes_to_hex_string( &value.data[0], 4 );
+	ret += _bytes_to_hex_string( &value.data[0], 4 );
 	ret += "-";
-	ret += bytes_to_hex_string( &value.data[4], 2 );
+	ret += _bytes_to_hex_string( &value.data[4], 2 );
 	ret += "-";
-	ret += bytes_to_hex_string( &value.data[6], 2 );
+	ret += _bytes_to_hex_string( &value.data[6], 2 );
 	ret += "-";
-	ret += bytes_to_hex_string( &value.data[8], 2 );
+	ret += _bytes_to_hex_string( &value.data[8], 2 );
 	ret += "-";
-	ret += bytes_to_hex_string( &value.data[10], 6 );
+	ret += _bytes_to_hex_string( &value.data[10], 6 );
 
 	return ret;
 }
 
-template <> std::string value_to_hex_string( const uuid &value )
+template <> std::string to_hex_string( const uuid &value )
 {
 	return to_string( value );
 }
@@ -142,11 +145,11 @@ template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &su
 
 	uuid value;
 
-	hex_string_to_bytes( &value.data[0], &str.start[0], 4, success );
-	hex_string_to_bytes( &value.data[4], &str.start[9], 2, success );
-	hex_string_to_bytes( &value.data[6], &str.start[14], 2, success );
-	hex_string_to_bytes( &value.data[8], &str.start[19], 2, success );
-	hex_string_to_bytes( &value.data[10], &str.start[24], 6, success );
+	_bytes_from_hex_string( &value.data[0], 4, &str.start[0], success );
+	_bytes_from_hex_string( &value.data[4], 2, &str.start[9], success );
+	_bytes_from_hex_string( &value.data[6], 2, &str.start[14], success );
+	_bytes_from_hex_string( &value.data[8], 2, &str.start[19], success );
+	_bytes_from_hex_string( &value.data[10], 6, &str.start[24], success );
 
 	return value;
 }
@@ -160,36 +163,44 @@ template <> uuid ctle::from_string<uuid>( const string_span<char> &str )
 	return value;
 }
 
-template <> uuid hex_string_to_value<uuid>( const char *hex_string, bool &success ) noexcept
+template <> uuid ctle::from_hex_string<uuid>( const string_span<char>& str, bool &success ) noexcept
 {
-	return ctle::from_string<uuid>( string_span<char>( hex_string, hex_string+36 ), success );
+	return ctle::from_string<uuid>(str, success);
+}
+
+template <> uuid ctle::from_hex_string<uuid>( const string_span<char> &str )
+{
+	return ctle::from_string<uuid>(str);
 }
 
 uuid uuid::generate()
 {
 	static std::mutex generate_mutex;
-	static std::unique_ptr<std::mt19937> generator;
+	static std::mt19937 generator;
+	static bool generator_initialized = false;
 
-	// make it thread safe
-	const std::lock_guard<std::mutex> lock( generate_mutex );
+	// lock access to the generator
+	const std::lock_guard<std::mutex> lock(generate_mutex);
 
-	// in first call, set up generator
-	if( !generator )
+	// If needed, set up the generator.
+	// we use a generator which is setup once, and shared between threads. 
+	// The assumption since the random_device setup might be costly and that thread collisions are not common.
+	if( !generator_initialized )
 	{
 		std::random_device rd;
 		auto seed_data = std::array<int, std::mt19937::state_size> {};
 		std::generate( std::begin( seed_data ), std::end( seed_data ), std::ref( rd ) );
 		std::seed_seq seq( std::begin( seed_data ), std::end( seed_data ) );
-		generator = std::unique_ptr<std::mt19937>( new std::mt19937( seq ) );
+		generator = std::mt19937(seq);
+		generator_initialized = true;
 	}
 
-	// generate random values
-	uint64_t v0 = ( *generator.get() )( );
-	uint64_t v1 = ( *generator.get() )( );
-	uint64_t v2 = ( *generator.get() )( );
-	uint64_t v3 = ( *generator.get() )( );
-
+	// pack four 32-bit random numbers into the uuid (generator() outputs 32-bit values)
 	uuid value;
+	uint64_t v0 = generator();
+	uint64_t v1 = generator();
+	uint64_t v2 = generator();
+	uint64_t v3 = generator();
 	value._data_q[0] = ( v0 << 32 | v1 );
 	value._data_q[1] = ( v2 << 32 | v3 );
 
@@ -213,7 +224,7 @@ namespace std
 
 std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid )
 {
-	os << ctle::value_to_hex_string( _uuid );
+	os << ctle::to_string( _uuid );
 	return os;
 }
 

@@ -10,8 +10,8 @@
 
 namespace ctle
 {
-// thread safe map, forces single access to map. performace as if single threaded access.
-// (this code should be upgraded to a lock free map for multi-core performance)
+/// @brief thread safe map, forces single access to map. 
+/// @details performace as if single threaded access.
 template<class _Kty, class _Ty> class thread_safe_map
 {
 private:

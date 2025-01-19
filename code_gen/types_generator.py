@@ -21,7 +21,8 @@ fwd_classes = [
 	['bitmap_font.h', ['enum class bitmap_font_flags : int']],
 	['file_funcs.h', ['enum class access_mode : unsigned int','_file_object']],
 	['hash.h', ['template<size_t _Size> struct hash']],
-	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']]
+	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']],
+	['string_funcs.h', ['template<class _Ty> struct string_span']],
 ]
 
 def generate_types_dict():
