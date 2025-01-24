@@ -1,9 +1,9 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "../ctle/optional_idx_vector.h"
-
 #include "unit_tests.h"
+
+#include <ctle/optional_idx_vector.h>
 
 using namespace ctle;
 

@@ -1,14 +1,14 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "../ctle/sockets.h"
+#include <ctle/sockets.h>
 
 #include "unit_tests.h"
 
 #include <future>
 #include <thread>
 
-#include "../ctle/data_destination.h"
+#include <ctle/data_destination.h>
 
 using namespace ctle;
 

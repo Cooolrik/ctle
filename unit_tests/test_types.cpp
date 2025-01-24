@@ -7,8 +7,8 @@
 #include <glm/glm.hpp>
 #include <type_traits>
 
-#include "../ctle/base_types.h"
-#include "../ctle/ntup.h"
+#include <ctle/base_types.h>
+#include <ctle/ntup.h>
 
 #include "unit_tests.h"
 

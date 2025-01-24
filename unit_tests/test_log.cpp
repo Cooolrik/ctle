@@ -3,7 +3,7 @@
 
 #define CTLE_IMPLEMENT_EXAMPLE_LOG_MACROS
 
-#include "../ctle/log.h"
+#include <ctle/log.h>
 
 #include "unit_tests.h"
 

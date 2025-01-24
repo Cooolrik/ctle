@@ -3,8 +3,8 @@
 
 #include "unit_tests.h"
 
-#include "../ctle/data_source.h"
-#include "../ctle/file_funcs.h"
+#include <ctle/data_source.h>
+#include <ctle/file_funcs.h>
 
 using namespace ctle;
 
