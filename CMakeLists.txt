@@ -4,7 +4,6 @@ project(
 	VERSION 		1.7.0
 	DESCRIPTION 	"A header-only library with template extensions to STL C++ for Linux and Windows"
 	HOMEPAGE_URL 	"https://github.com/Cooolrik/ctle"
-	LANGUAGES CXX
 	)
 include(GNUInstallDirs)
 
