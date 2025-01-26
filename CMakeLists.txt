@@ -1,28 +1,87 @@
 cmake_minimum_required(VERSION 3.21)
-project( ctle )
+project( 
+	"ctle" 
+	VERSION 		1.7.0
+	DESCRIPTION 	"A header-only library with template extensions to STL C++ for Linux and Windows"
+	HOMEPAGE_URL 	"https://github.com/Cooolrik/ctle"
+	)
+include(GNUInstallDirs)
 
-# if this is the main project, create test project as default
-if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
-option( CTLE_BUILD_TESTS "Build the ctle tests" ON )
-else()
-option( CTLE_BUILD_TESTS "Build the ctle tests" OFF )
-endif()
+# if this is the main project, create test project as default, and install it
+option(CTLE_INSTALL_LIBRARY "Install ctle as a library" OFF )
+option(CTLE_BUILD_TESTS "Build and run ctle tests" ${PROJECT_IS_TOP_LEVEL})
 
+# generate dynamic code 
 find_package(PythonInterp 3.10 REQUIRED)
 find_package(Python 3.10 REQUIRED)
-
-# generate needed code
 execute_process( 
 	COMMAND 			${PYTHON_EXECUTABLE} generate.py
 	WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}/code_gen
 	RESULT_VARIABLE 	py_result
 )
-message(STATUS "Result of generate.py: ${py_result}")
+message(STATUS "Result of running code gen - generate.py: ${py_result}")
+
+# list all header and inline files in 'include/ctle'. This is the library in full.
+file(GLOB CTLE_FILE_SET CONFIGURE_DEPENDS "include/ctle/*.h" "include/ctle/*.inl")
+
+# add our library, define the build and install interface variants
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(
+	${PROJECT_NAME} 
+	INTERFACE 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> 
+				$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+	)
+
+# if selected, set up the build for installing.
+if(CTLE_INSTALL_LIBRARY)
+	message(STATUS "Setting up ctle library for install")
+
+	# locations are provided by GNUInstallDirs
+	install(
+		TARGETS ${PROJECT_NAME} 
+		EXPORT 	${PROJECT_NAME}_targets
+		ARCHIVE	DESTINATION	${CMAKE_INSTALL_LIBDIR}
+		LIBRARY	DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		RUNTIME	DESTINATION	${CMAKE_INSTALL_BINDIR}
+		)
+
+	include(CMakePackageConfigHelpers)
+		write_basic_package_version_file(
+		"${PROJECT_NAME}ConfigVersion.cmake"
+		VERSION			${PROJECT_VERSION}
+		COMPATIBILITY 	SameMajorVersion
+		)
+
+	configure_package_config_file(
+		"${PROJECT_SOURCE_DIR}/cmake/CtleProjectConfig.cmake.in"
+		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+		INSTALL_DESTINATION 	${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		EXPORT 		${PROJECT_NAME}_targets
+		FILE 		${PROJECT_NAME}Targets.cmake
+		NAMESPACE 	${PROJECT_NAME}::
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		FILES 		${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+					${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		DIRECTORY 	${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
+		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+		)
+
+endif(CTLE_INSTALL_LIBRARY)
 
 # if selected, build the testing code
 # (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
-	message(STATUS "Building ctle test project")
+	message(STATUS "Creating ctle test project")
 	
 	include(FetchContent)
 				
@@ -63,81 +122,27 @@ if(CTLE_BUILD_TESTS)
 		xxhash
 		)
 		
-	# lots of warnings and all warnings as errors
+	# level 4 warnings
 	if(MSVC)
 		add_compile_options(/W4 /bigobj)
 	else()
-		add_compile_options(-Wall -Wextra -pedantic) # -Werror
+		add_compile_options(-Wall -Wextra -pedantic)
 	endif()
+
+	# list all header and inline files in 'include/ctle'. This is the library in full.
+	file(GLOB CTLE_TEST_FILE_SET CONFIGURE_DEPENDS "./unit_tests/*.h" "./unit_tests/*.cpp")
 
 	# unit_tests
 	add_executable( 
         unit_tests
 		
-        ./unit_tests/unit_tests.cpp
-        ./unit_tests/unit_tests.h
+		# the ctle library files
+		${CTLE_FILE_SET}
 
-		./ctle/ctle.h
+		# the test files
+		${CTLE_TEST_FILE_SET}
 
-		./ctle/bimap.h
-		./ctle/bitmap_font.h
-		./ctle/endianness.h
-		./ctle/read_stream.h
-		./ctle/write_stream.h
-		./ctle/data_source.h
-		./ctle/data_destination.h
-		./ctle/file_funcs.h
-		./ctle/idx_vector.h
-		./ctle/log.h
-		./ctle/multithread_pool.h
-		./ctle/optional_idx_vector.h
-		./ctle/optional_value.h
-		./ctle/optional_vector.h
-		./ctle/prop.h
-		./ctle/readers_writer_lock.h
-		./ctle/status.h
-		./ctle/status_return.h
-		./ctle/string_funcs.h
-		./ctle/thread_safe_map.h
-		./ctle/fwd.h
-		./ctle/ntup.h
-		./ctle/uuid.h
-		./ctle/digest.h
-		./ctle/hasher.h
-		./ctle/util.h
-		./ctle/sockets.h
-		./ctle/_macros.inl
-		./ctle/_undef_macros.inl
-
-		./unit_tests/test_bimap.cpp
-		./unit_tests/test_bitmap_font.cpp
-		./unit_tests/test_endianness.cpp
-		./unit_tests/test_file_funcs.cpp
-		./unit_tests/test_idx_vector.cpp
-		./unit_tests/test_log.cpp
-		./unit_tests/test_multithread_pool.cpp
-		./unit_tests/test_optional_idx_vector.cpp
-		./unit_tests/test_optional_value.cpp
-		./unit_tests/test_optional_vector.cpp
-		./unit_tests/test_prop.cpp
-		./unit_tests/test_readers_writer_lock.cpp
-		./unit_tests/test_status.cpp
-		./unit_tests/test_status_return.cpp
-		./unit_tests/test_string_funcs.cpp
-		./unit_tests/test_thread_safe_map.cpp
-		./unit_tests/test_types.cpp
-		./unit_tests/test_util.cpp
-		./unit_tests/test_uuid.cpp
-		./unit_tests/test_digest.cpp
-		./unit_tests/test_hasher.cpp
-		./unit_tests/test_macros.cpp
-		./unit_tests/test_sockets.cpp
-		./unit_tests/test_data_stream.cpp
-		./unit_tests/test_data_source.cpp		
-		./unit_tests/test_data_destination.cpp		
-
-		./unit_tests/unit_tests_variants.cpp
-
+		# dependencies
 		${xxhash_SOURCE_DIR}/xxhash.c
 
 		./ctle.natvis
@@ -146,6 +151,7 @@ if(CTLE_BUILD_TESTS)
 	target_include_directories( 
 		unit_tests 
 		
+		PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
 		PUBLIC ${glm_SOURCE_DIR}
 		PUBLIC ${picosha2_SOURCE_DIR}
 		PUBLIC ${xxhash_SOURCE_DIR}
@@ -168,3 +174,6 @@ if(CTLE_BUILD_TESTS)
 
 # testing
 endif(CTLE_BUILD_TESTS)
+
+
+

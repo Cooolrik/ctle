@@ -10,13 +10,13 @@ import macros_generator
 print('ctle code generation running...')
 
 # generate property.h 
-property_generator.generate_property('../ctle/prop.h')
+property_generator.generate_property('../include/ctle/prop.h')
 
 # generate status.h 
-status_generator.generate_status('../ctle/status.h')
+status_generator.generate_status('../include/ctle/status.h')
 
 # generate types
-types_generator.generate_types('../ctle', '../unit_tests')
+types_generator.generate_types('../include/ctle', '../unit_tests')
 
 # generate _macros.inl and _undef_macros.inl
-macros_generator.generate_macros('../ctle/_macros.inl', '../ctle/_undef_macros.inl')
+macros_generator.generate_macros('../include/ctle/_macros.inl', '../include/ctle/_undef_macros.inl')

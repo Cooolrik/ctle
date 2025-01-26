@@ -1,13 +1,12 @@
 // ctle Copyright (c) 2023 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
-#include "../ctle/status.h"
-#include "../ctle/status_return.h"
-#include "../ctle/log.h"
-
 #include "unit_tests.h"
 
-#include "../ctle/_macros.inl"
+#include <ctle/status.h>
+#include <ctle/status_return.h>
+#include <ctle/log.h>
+#include <ctle/_macros.inl>
 
 using namespace ctle;
 
@@ -137,14 +136,14 @@ TEST( macros, basic_test )
 #error The _macros.inl file failed to create the macros
 #endif
 
-#include "../ctle/_undef_macros.inl"
+#include <ctle/_undef_macros.inl>
 
 // make sure the macros were removed by _undef_macros.inl
 #if defined(_CTLE_MACROS_INCLUDED) || defined(_CTLE_STRINGIZE_DETAIL) || defined(_CTLE_STRINGIZE) || defined(ctLogLevel) || defined(ctStatusCall)
 #error The _undef_macros.inl file failed to remove the macros
 #endif
 
-#include "../ctle/_macros.inl"
+#include <ctle/_macros.inl>
 
 // make sure the macros were created by _macros.inl again
 #if !defined(_CTLE_MACROS_INCLUDED) || !defined(_CTLE_STRINGIZE_DETAIL) || !defined(_CTLE_STRINGIZE) || !defined(ctLogLevel) || !defined(ctStatusCall)

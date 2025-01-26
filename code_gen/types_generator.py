@@ -638,13 +638,13 @@ def generate_unit_tests_variants( test_path:str ):
 	out.generate_license_header()
 	out.ln('''
 #include "unit_tests.h"
-#include "../ctle/status.h"
-#include "../ctle/ntup.h"    
-#include "../ctle/hasher.h"   
-#include "../ctle/read_stream.h"
-#include "../ctle/data_source.h"
-#include "../ctle/write_stream.h"
-#include "../ctle/data_destination.h"
+#include <ctle/status.h>
+#include <ctle/ntup.h>  
+#include <ctle/hasher.h>   
+#include <ctle/read_stream.h>
+#include <ctle/data_source.h>
+#include <ctle/write_stream.h>
+#include <ctle/data_destination.h>
 		
 template<class _Ty> ctle::status _read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm, std::vector<_Ty> &data )
 {
@@ -725,8 +725,8 @@ def generate_types( src_path:str, test_path:str ):
 	out.write_lines_to_file( src_path + '/ntup.h' )
  
  	# generate random values
-	out = formatted_output()
-	generate_random_value_functions(out)
-	out.write_lines_to_file( 'random_value_output' )
+	# out = formatted_output()
+	# generate_random_value_functions(out)
+	# out.write_lines_to_file( 'random_value_output' )
 
 	generate_unit_tests_variants( test_path )

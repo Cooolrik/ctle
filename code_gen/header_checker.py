@@ -85,7 +85,7 @@ if __name__ == "__main__":
 	ctle_root = pathlib.Path(__file__).parent.parent.resolve()
 
 	errors = []
-	source_directories = ["ctle","unit_tests","code_gen"]
+	source_directories = ["include/ctle","unit_tests","code_gen"]
 	for subdir in source_directories:
 		errors.extend(check_files_in_directory(ctle_root,subdir))
 
