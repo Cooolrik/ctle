@@ -9,8 +9,8 @@ project(
 include(GNUInstallDirs)
 
 # if this is the main project, create test project as default, and install it
-option(CTLE_INSTALL_LIBRARY "Install ctle as a library" ${PROJECT_IS_TOP_LEVEL})
-option(CTLE_BUILD_TESTS "Build and run ctle tests " ${PROJECT_IS_TOP_LEVEL})
+option(CTLE_INSTALL_LIBRARY "Install ctle as a library" OFF )
+option(CTLE_BUILD_TESTS "Build and run ctle tests" ${PROJECT_IS_TOP_LEVEL})
 
 # generate dynamic code 
 find_package(PythonInterp 3.10 REQUIRED)
@@ -33,10 +33,56 @@ target_include_directories(
 				$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 
+# if selected, set up the build for installing.
+if(CTLE_INSTALL_LIBRARY)
+	message(STATUS "Setting up ctle library for install")
+
+	# locations are provided by GNUInstallDirs
+	install(
+		TARGETS ${PROJECT_NAME} 
+		EXPORT 	${PROJECT_NAME}_targets
+		ARCHIVE	DESTINATION	${CMAKE_INSTALL_LIBDIR}
+		LIBRARY	DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		RUNTIME	DESTINATION	${CMAKE_INSTALL_BINDIR}
+		)
+
+	include(CMakePackageConfigHelpers)
+		write_basic_package_version_file(
+		"${PROJECT_NAME}ConfigVersion.cmake"
+		VERSION			${PROJECT_VERSION}
+		COMPATIBILITY 	SameMajorVersion
+		)
+
+	configure_package_config_file(
+		"${PROJECT_SOURCE_DIR}/cmake/CtleProjectConfig.cmake.in"
+		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+		INSTALL_DESTINATION 	${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		EXPORT 		${PROJECT_NAME}_targets
+		FILE 		${PROJECT_NAME}Targets.cmake
+		NAMESPACE 	${PROJECT_NAME}::
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		FILES 		${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+					${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+		)
+
+	install(
+		DIRECTORY 	${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
+		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+		)
+
+endif(CTLE_INSTALL_LIBRARY)
+
 # if selected, build the testing code
 # (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
-	message(STATUS "Building ctle test project")
+	message(STATUS "Creating ctle test project")
 	
 	include(FetchContent)
 				
@@ -129,51 +175,6 @@ if(CTLE_BUILD_TESTS)
 
 # testing
 endif(CTLE_BUILD_TESTS)
-
-if(CTLE_INSTALL_LIBRARY)
-	message(STATUS "Installing ctle library")
-
-	# locations are provided by GNUInstallDirs
-	install(
-		TARGETS ${PROJECT_NAME} 
-		EXPORT 	${PROJECT_NAME}_targets
-		ARCHIVE	DESTINATION	${CMAKE_INSTALL_LIBDIR}
-		LIBRARY	DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		RUNTIME	DESTINATION	${CMAKE_INSTALL_BINDIR}
-		)
-
-	include(CMakePackageConfigHelpers)
-		write_basic_package_version_file(
-		"${PROJECT_NAME}ConfigVersion.cmake"
-		VERSION			${PROJECT_VERSION}
-		COMPATIBILITY 	SameMajorVersion
-		)
-
-	configure_package_config_file(
-		"${PROJECT_SOURCE_DIR}/cmake/ProjectConfig.cmake.in"
-		"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-		INSTALL_DESTINATION 	${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
-		)
-
-	install(
-		EXPORT 		${PROJECT_NAME}_targets
-		FILE 		${PROJECT_NAME}Targets.cmake
-		NAMESPACE 	${PROJECT_NAME}::
-		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
-		)
-
-	install(
-		FILES 		${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-					${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
-		)
-
-	install(
-		DIRECTORY 	${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
-		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-		)
-
-endif(CTLE_INSTALL_LIBRARY)
 
 
 
