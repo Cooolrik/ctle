@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
+file(READ "./version" CTLE_VERSION)
 project( 
 	"ctle" 
-	VERSION 		1.7.1
+	VERSION 		"${CTLE_VERSION}"
 	DESCRIPTION 	"A header-only library with template extensions for Linux and Windows. Only depends on standard template library."
 	HOMEPAGE_URL 	"https://github.com/Cooolrik/ctle"
 	)
+message(STATUS "ctle library version: ${PROJECT_VERSION}")
 include(GNUInstallDirs)
 
 # if this is the main project, create test project as default, and install it
