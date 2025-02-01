@@ -1,30 +1,33 @@
 cmake_minimum_required(VERSION 3.21)
 project( 
 	"ctle" 
-	VERSION 		1.7.0
-	DESCRIPTION 	"A header-only library with template extensions to STL C++ for Linux and Windows"
+	VERSION 		1.7.1
+	DESCRIPTION 	"A header-only library with template extensions for Linux and Windows. Only depends on standard template library."
 	HOMEPAGE_URL 	"https://github.com/Cooolrik/ctle"
 	)
 include(GNUInstallDirs)
 
 # if this is the main project, create test project as default, and install it
-option(CTLE_INSTALL_LIBRARY "Install ctle as a library" OFF )
-option(CTLE_BUILD_TESTS "Build and run ctle tests" ${PROJECT_IS_TOP_LEVEL})
+option(CTLE_BUILD_INSTALL "Build the library install path" ON )
+option(CTLE_BUILD_TESTS "Build all tests" OFF )
+option(CTLE_GENERATE_CODE "Run code generation in the cmake process" OFF )
 
-# generate dynamic code 
-find_package(PythonInterp 3.10 REQUIRED)
-find_package(Python 3.10 REQUIRED)
-execute_process( 
-	COMMAND 			${PYTHON_EXECUTABLE} generate.py
-	WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}/code_gen
-	RESULT_VARIABLE 	py_result
-)
-message(STATUS "Result of running code gen - generate.py: ${py_result}")
+# if selected, generate dynamic code 
+if(CTLE_GENERATE_CODE) 
+	find_package(PythonInterp 3.10 REQUIRED)
+	find_package(Python 3.10 REQUIRED)
+	execute_process( 
+		COMMAND 			${PYTHON_EXECUTABLE} generate.py
+		WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}/code_gen
+		RESULT_VARIABLE 	py_result
+	)
+	message(STATUS "Result of running code gen - generate.py: ${py_result}")
+endif()
 
-# list all header and inline files in 'include/ctle'. This is the library in full.
+# list all header and inline files in 'include/ctle' into CTLE_FILE_SET. This is the library in full.
 file(GLOB CTLE_FILE_SET CONFIGURE_DEPENDS "include/ctle/*.h" "include/ctle/*.inl")
 
-# add our library, define the build and install interface variants
+# add our library, define as a header-only library
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(
 	${PROJECT_NAME} 
@@ -32,11 +35,10 @@ target_include_directories(
 				$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 
-# if selected, set up the build for installing.
+# if selected, generate the install path
 if(CTLE_INSTALL_LIBRARY)
-	message(STATUS "Setting up ctle library for install")
+	message(STATUS "Building the library install path")
 
-	# locations are provided by GNUInstallDirs
 	install(
 		TARGETS ${PROJECT_NAME} 
 		EXPORT 	${PROJECT_NAME}_targets
@@ -75,14 +77,13 @@ if(CTLE_INSTALL_LIBRARY)
 		DIRECTORY 	${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
 		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 		)
-
 endif(CTLE_INSTALL_LIBRARY)
 
 # if selected, build the testing code
-# (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 if(CTLE_BUILD_TESTS)			
 	message(STATUS "Creating ctle test project")
-	
+
+	# (note: the fetched modules are only needed to test behavior and interops, not needed for use in a project)
 	include(FetchContent)
 				
 	# googletest
@@ -113,7 +114,6 @@ if(CTLE_BUILD_TESTS)
 		GIT_REPOSITORY https://github.com/Cyan4973/xxHash.git
 		GIT_TAG		   bbb27a5efb85b92a0486cf361a8635715a53f6ba # (2023 Jul 21)
 	)
-
 
 	FetchContent_MakeAvailable( 
 		googletest 
