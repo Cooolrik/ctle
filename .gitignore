@@ -4,26 +4,15 @@
 /build
 
 # test folders and results
-/build_c++11
 /build_c++14
 /build_c++17
 /build_c++20
-/results_c++11
 /results_c++14
 /results_c++17
 /results_c++20
-/code_gen/__pycache__/*.pyc
-/ctle_code_gen/__pycache__
 
-status.h
-fwd.h
-prop.h
-ntup.h
-base_types.h
-
-/ctle/_macros.inl
-/ctle/_undef_macros.inl
-/unit_tests/unit_tests_variants.cpp
+# python temp & cache files
+/code_gen/__pycache__
 /code_gen/ctlepy/__pycache__/*.pyc
 /unit_tests/ctlepy_tests/outputs
 /pypi_dist/LICENSE
@@ -33,4 +22,3 @@ base_types.h
 /pypi_dist/setup.cfg
 /pypi_dist/src
 
-random_value_output
