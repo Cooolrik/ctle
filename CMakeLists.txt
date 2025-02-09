@@ -10,7 +10,7 @@ message(STATUS "ctle library version: ${PROJECT_VERSION}")
 include(GNUInstallDirs)
 
 # if this is the main project, create test project as default, and install it
-option(CTLE_BUILD_INSTALL "Build the library install path" ON )
+option(CTLE_BUILD_INSTALL "Build the library install make path" ON )
 option(CTLE_BUILD_TESTS "Build all tests" OFF )
 option(CTLE_GENERATE_CODE "Run code generation in the cmake process" OFF )
 
@@ -38,7 +38,7 @@ target_include_directories(
 	)
 
 # if selected, generate the install path
-if(CTLE_INSTALL_LIBRARY)
+if(CTLE_BUILD_INSTALL)
 	message(STATUS "Building the library install path")
 
 	install(
@@ -79,7 +79,7 @@ if(CTLE_INSTALL_LIBRARY)
 		DIRECTORY 	${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}
 		DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 		)
-endif(CTLE_INSTALL_LIBRARY)
+endif(CTLE_BUILD_INSTALL)
 
 # if selected, build the testing code
 if(CTLE_BUILD_TESTS)			

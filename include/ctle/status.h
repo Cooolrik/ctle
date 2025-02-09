@@ -769,7 +769,7 @@ namespace ctle
 // stream operator for writing a status to a stream
 std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 {
-	os << _status.name() << std::string(" (\"") << _status.description() << std::string("\")");
+	os << std::string(_status.name()) << std::string(" (\"") << std::string(_status.description()) << std::string("\")");
 	return os;
 }
 				  
