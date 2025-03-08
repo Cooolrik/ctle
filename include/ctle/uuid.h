@@ -19,12 +19,17 @@ struct uuid
 {
 	union
 	{
-		uint64_t _data_q[2] = {};
 		uint8_t data[16];
+		uint64_t _data_q[2] = {}; // a quadword memory overload, for faster comparisons
 	};
 
 	// the constant nil object
 	static const uuid nil;
+
+	// constexpr values for inferior/min (zero & inf) value or superior/max values
+	static constexpr const uuid zero();
+	static constexpr const uuid inf();
+	static constexpr const uuid sup();
 
 	// compare operators
 	bool operator==( const ctle::uuid &other ) const noexcept;
@@ -35,6 +40,10 @@ struct uuid
 	/// @details The generate call is thread-safe and uses a mutex to avoid collisions
 	static uuid generate();
 };
+
+constexpr const uuid uuid::zero() { uuid ret; for( size_t inx=0; inx<2; ++inx) { ret._data_q[inx] = 0; } return ret; } 
+constexpr const uuid uuid::inf() { return zero(); }
+constexpr const uuid uuid::sup() { uuid ret; for( size_t inx=0; inx<2; ++inx) {	ret._data_q[inx] = UINT64_MAX; } return ret; } 
 
 inline bool uuid::operator<( const ctle::uuid &right ) const noexcept
 {
@@ -106,7 +115,7 @@ std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
 
 namespace ctle
 {
-const uuid uuid::nil;
+const uuid uuid::nil = uuid::zero();
 
 template <> std::string to_string( const uuid &value )
 {

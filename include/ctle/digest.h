@@ -37,11 +37,20 @@ struct digest
 		uint64_t _data_q[_Size / 64] = {}; // a quadword memory overload, for faster comparisons
 	};
 
+	// constexpr methods which returns inferior/min (zero & inf) value or superior/max value
+	static constexpr const digest zero();
+	static constexpr const digest inf();
+	static constexpr const digest sup();
+
 	// compare operators
 	bool operator<(const digest& other) const noexcept;
 	bool operator==(const digest& other) const noexcept;
 	bool operator!=(const digest& other) const noexcept;
 };
+
+template<size_t _Size> constexpr const digest<_Size> digest<_Size>::zero() { digest ret; for( size_t inx=0; inx<_Size/64; ++inx) { ret._data_q[inx] = 0; } return ret; }
+template<size_t _Size> constexpr const digest<_Size> digest<_Size>::inf() { return zero(); }
+template<size_t _Size> constexpr const digest<_Size> digest<_Size>::sup() { digest ret; for( size_t inx=0; inx<_Size/64; ++inx) { ret._data_q[inx] = UINT64_MAX; } return ret; }
 
 template<size_t _Size>
 inline bool digest<_Size>::operator<(const digest& right) const noexcept
