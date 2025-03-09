@@ -19,7 +19,7 @@ namespace ctle
 /// @tparam _Alloc The allocator to use 
 template <
 	class _Ty, 
-	class _Alloc = /*std::allocator<_Ty>*/
+	class _Alloc /*=std::allocator<_Ty>*/
 > class optional_vector 
 {
 public:
