@@ -32,6 +32,9 @@ typedef double f64;
 enum class status_code : int;
 class status;
 
+// from status_return.h
+template<class _StatusType, class _ValueType> class status_return;
+
 // from data_source.h
 class file_data_source;
 
