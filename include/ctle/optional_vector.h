@@ -8,14 +8,19 @@
 /// @brief Contains the optional_vector class template, a version of std::vector which adds a flag to indicate if it the vector is allocated or not. 
 
 #include <vector>
+#include "fwd.h"
 #include "optional_value.h"
 
 namespace ctle
 {
 
-// optional_vector: optional std::vector 
-template <class _Ty, class _Alloc = std::allocator<_Ty>>
-class optional_vector 
+/// @brief optional_vector: a vector of values, which can be optionally allocated or not
+/// @tparam _Ty The value type.
+/// @tparam _Alloc The allocator to use 
+template <
+	class _Ty, 
+	class _Alloc = /*std::allocator<_Ty>*/
+> class optional_vector 
 {
 public:
 	using value_type = _Ty;

@@ -10,6 +10,8 @@
 #include <memory>
 #include <stdexcept>
 
+#include "fwd.h"
+
 namespace ctle
 {
 class bad_optional_value_access : public std::runtime_error

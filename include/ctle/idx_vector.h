@@ -23,8 +23,8 @@ namespace ctle
 /// @tparam _VecTy The values vector type, defaults to std::vector<_Ty>.
 template <
 	class _Ty,
-	class _IdxTy /* = std::vector<i32>*/,
-	class _VecTy /* = std::vector<_Ty>*/
+	class _IdxTy /*= std::vector<i32>*/ ,
+	class _VecTy /*= std::vector<_Ty>*/
 > class idx_vector
 {
 public:
