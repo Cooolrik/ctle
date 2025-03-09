@@ -23,6 +23,9 @@ fwd_classes = [
 	['digest.h', ['template<size_t _Size> struct digest']],
 	['uuid.h', ['struct uuid']],
 	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']],
+	['optional_value.h', ['template<class _Ty> class optional_value']],
+	['optional_vector.h', ['template <class _Ty, class _Alloc = std::allocator<_Ty>> class optional_vector']],
+	['optional_idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector']],
 	['string_funcs.h', ['template<class _Ty> struct string_span']],
 ]
 
