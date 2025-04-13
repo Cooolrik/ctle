@@ -77,10 +77,10 @@ struct uuid;
 template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector;
 
 // from optional_value.h
-template<class _Ty> class optional_value;
+template<class _Ty, class _PtrTy = std::unique_ptr<_Ty>> class optional_value;
 
 // from optional_vector.h
-template <class _Ty, class _Alloc = std::allocator<_Ty>> class optional_vector;
+template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector;
 
 // from optional_idx_vector.h
 template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector;

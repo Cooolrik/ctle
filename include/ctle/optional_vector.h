@@ -16,23 +16,25 @@ namespace ctle
 
 /// @brief optional_vector: a vector of values, which can be optionally allocated or not
 /// @tparam _Ty The value type.
-/// @tparam _Alloc The allocator to use 
+/// @tparam _VecTy The vector type to use 
 template <
 	class _Ty, 
-	class _Alloc /*=std::allocator<_Ty>*/
+	class _VecTy /*= std::vector<_Ty>*/
 > class optional_vector 
 {
 public:
 	using value_type = _Ty;
-	using allocator_type = _Alloc;
-	using pointer = typename std::vector<_Ty,_Alloc>::pointer;
-	using const_pointer = typename std::vector<_Ty,_Alloc>::const_pointer;
-	using reference = typename std::vector<_Ty,_Alloc>::reference;
-	using const_reference = typename std::vector<_Ty,_Alloc>::const_reference;
-	using size_type = typename std::vector<_Ty,_Alloc>::size_type;
+	using values_vector_type = _VecTy;
+
+	using allocator_type = typename values_vector_type::allocator_type;
+	using pointer = typename values_vector_type::pointer;
+	using const_pointer = typename values_vector_type::const_pointer;
+	using reference = typename values_vector_type::reference;
+	using const_reference = typename values_vector_type::const_reference;
+	using size_type = typename values_vector_type::size_type;
 
 private:
-	std::vector<_Ty,_Alloc> vector_m;
+	values_vector_type vector_m;
 	bool has_value_m = false;
 
 public:
@@ -52,34 +54,34 @@ public:
 	void set() { this->has_value_m = true; this->vector_m.clear(); }
 
 	/// @brief Set the value of the optional_vector. has_value() will return true.
-	void set(const std::vector<_Ty, _Alloc>& _values) { this->has_value_m = true; this->vector_m = _values; }
+	void set(const values_vector_type& _values) { this->has_value_m = true; this->vector_m = _values; }
 
 	/// @brief Check if the optional_vector has a value.
 	bool has_value() const { return this->has_value_m; }
 
 	/// @brief Get the vector of the optional_vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	std::vector<_Ty, _Alloc>& vector() { if (!this->has_value_m) { throw ctle::bad_optional_value_access("optional_vector has no value"); } return this->vector_m; }
+	values_vector_type& vector() { if (!this->has_value_m) { throw ctle::bad_optional_value_access("optional_vector has no value"); } return this->vector_m; }
 
 	/// @brief Get the vector of the optional_vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	const std::vector<_Ty, _Alloc>& vector() const { if (!this->has_value_m) { throw ctle::bad_optional_value_access("optional_vector has no value"); } return this->vector_m; }
+	const values_vector_type& vector() const { if (!this->has_value_m) { throw ctle::bad_optional_value_access("optional_vector has no value"); } return this->vector_m; }
 
 	/// @brief Get a reference to the vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	std::vector<_Ty, _Alloc>& values() { return vector(); }
+	values_vector_type& values() { return vector(); }
 
 	/// @brief Get a const reference to the vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	const std::vector<_Ty, _Alloc>& values() const { return vector(); }
+	const values_vector_type& values() const { return vector(); }
 
 	/// @brief Get a reference to the vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	operator std::vector<_Ty, _Alloc> &() { return vector(); }
+	operator values_vector_type &() { return vector(); }
 
 	/// @brief Get a const reference to the vector.
 	/// @throw ctle::bad_optional_value_access if the optional_vector has no value.
-	operator const std::vector<_Ty, _Alloc>& () const { return vector(); }
+	operator const values_vector_type& () const { return vector(); }
 };
 
 template <class _Ty, class _Alloc>
