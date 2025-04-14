@@ -87,6 +87,8 @@ template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector
 
 // from string_funcs.h
 template<class _Ty> struct string_span;
+template<class _Ty> std::string to_string(const _Ty& val);
+template<class _Ty> std::string to_hex_string(const _Ty& val);
 
 
 }

@@ -27,7 +27,7 @@ fwd_classes = [
 	['optional_value.h', ['template<class _Ty, class _PtrTy = std::unique_ptr<_Ty>> class optional_value']],
 	['optional_vector.h', ['template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector']],
 	['optional_idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector']],
-	['string_funcs.h', ['template<class _Ty> struct string_span']],
+	['string_funcs.h', ['template<class _Ty> struct string_span','template<class _Ty> std::string to_string(const _Ty& val)','template<class _Ty> std::string to_hex_string(const _Ty& val)']],
 ]
 
 def generate_types_dict():
