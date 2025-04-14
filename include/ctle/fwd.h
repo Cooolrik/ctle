@@ -12,6 +12,7 @@
 #include <cinttypes>
 #include <cstddef>
 #include <vector>
+#include <string>
 
 namespace ctle
 {

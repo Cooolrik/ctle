@@ -112,6 +112,7 @@ def list_fwd_classes( out:formatted_output ):
 	out.ln('#include <cinttypes>')
 	out.ln('#include <cstddef>')
 	out.ln('#include <vector>')
+	out.ln('#include <string>')
 	out.ln()
 
 	out.ln('namespace ctle')
