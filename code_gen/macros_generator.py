@@ -92,9 +92,10 @@ def generate_macros( path:str, undef_path:str ):
 	add_macro( 'ctLogThis', '#define ctLogThis ctLogInfo << this << ctLogEnd;' )
 	def_text.ln()
 
-	def_text.comment_ln('Checks an expression, and logs an error and returns if the statement is not true')
+	def_text.comment_ln('Checks an expression, and logs an error and returns if the statement is not true. Replace ctValidateEnd with ctValidateThrow to throw an exception instead of returning the error.')
 	add_macro( 'ctValidate', '#define ctValidate( statement , error_code_on_error ) if( !(statement) ) { const ctle::status _ctle_error_code = error_code_on_error; ctLogError' )
 	add_macro( 'ctValidateEnd', '#define ctValidateEnd ctLogEnd; return _ctle_error_code; }' )
+	add_macro( 'ctValidateThrow', '#define ctValidateThrow ctLogEnd; throw ctle::status_error( _ctle_error_code ); }' )
 	def_text.ln()
 
 	def_text.comment_ln('In debug mode, checks expressions which are assumed to be true. if not, throws a runtime error')
