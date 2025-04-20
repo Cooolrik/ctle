@@ -53,9 +53,11 @@
 // Logs the current this pointer to the log, for tracing
 #define ctLogThis ctLogInfo << this << ctLogEnd;
 
-// Checks an expression, and logs an error and returns if the statement is not true
+// Checks an expression, and logs an error and returns if the statement is not true. Replace ctValidateEnd with
+// ctValidateThrow to throw an exception instead of returning the error.
 #define ctValidate( statement , error_code_on_error ) if( !(statement) ) { const ctle::status _ctle_error_code = error_code_on_error; ctLogError
 #define ctValidateEnd ctLogEnd; return _ctle_error_code; }
+#define ctValidateThrow ctLogEnd; throw ctle::status_error( _ctle_error_code ); }
 
 // In debug mode, checks expressions which are assumed to be true. if not, throws a runtime error
 #ifndef NDEBUG
