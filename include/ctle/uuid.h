@@ -110,6 +110,7 @@ std::ostream &operator<<( std::ostream &os, const ctle::uuid &_uuid );
 #include <memory>
 #include <array>
 #include <mutex>
+#include <iostream>
 
 #include "string_funcs.h"
 
