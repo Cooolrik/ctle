@@ -102,7 +102,7 @@ class formatted_output:
 				self.ln( self.tab_str + '}')
 			else:
 				self.ln('}')
-			self.comment_ln('// namespace ' + name)
+			self.comment_ln('namespace ' + name)
 
 	def ln(self, lin:str = None, no_indent = False, append = False, intent_adjust = 0 ):
 		'''Add a single line, at current indentation, (or no indentation if no_indent is True).'''
