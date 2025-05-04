@@ -79,7 +79,7 @@ class formatted_output:
 			self.indentation -= 1
 
 	@contextmanager
-	def ns(self, name:str):
+	def ns(self, name:str, add_empty_line:bool = True):
 		'''Add a namespace block of code'''
 		try:
 			self.ln('namespace ' + name)
@@ -87,11 +87,15 @@ class formatted_output:
 				self.ln( self.tab_str + '{')
 			else:
 				self.ln('{')
+			if add_empty_line:
+				self.ln()
 			if self.indent_namespace:
 				self.indentation += 1	
 			yield self
 
 		finally:
+			if add_empty_line:
+				self.ln()
 			if self.indent_namespace:
 				self.indentation -= 1
 			if self.indent_braces:
@@ -172,13 +176,17 @@ class formatted_output:
 		self.ln(f'#endif//{guard_def}')
 
 	@contextmanager
-	def header_guard(self, file_name:str, project_name:str=default_project_name, prefix:str='', postfix:str=''):
+	def header_guard(self, file_name:str, project_name:str=default_project_name, prefix:str='', postfix:str='', add_empty_line:bool = True):
 		'''Add a header guard surrounding the block of code.'''
 		try:
 			guard_str = self.begin_header_guard(file_name, project_name, prefix, postfix)
+			if add_empty_line:
+				self.ln()
 			yield self
 
 		finally:
+			if add_empty_line:
+				self.ln()
 			end_header_guard = self.end_header_guard(guard_str)
 
 	def inline_file(self, path:str):
