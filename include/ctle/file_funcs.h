@@ -192,12 +192,10 @@ status write_file( const std::string &filepath, const void *src, size_t src_size
 }
 //namespace ctle
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
-#include <io.h>
+#define _ADD_CTLE_HEADERS_WIN_STD
+#include "os.inl"
 
 namespace ctle
 {
@@ -367,9 +365,10 @@ status _file_object::write(const u8* src, const u64 size)
 }
 //namespace ctle
 
-#elif defined(__GNUC__)
+#elif defined(__linux__)
 
-#include <unistd.h>
+#define _ADD_CTLE_HEADERS_LINUX_STD
+#include "os.inl"
 
 namespace ctle
 {
