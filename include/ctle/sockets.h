@@ -155,16 +155,11 @@ private:
 #include <signal.h>
 
 #if defined(_WIN32)
-#include <WinSock2.h>
-#include <WS2tcpip.h>
+#define _ADD_CTLE_HEADERS_WIN_SOCKETS
 #elif defined(linux)
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
+#define _ADD_CTLE_HEADERS_LINUX_SOCKETS
 #endif
+#include "os.inl"
 
 #include "log.h"
 #include "_macros.inl"
