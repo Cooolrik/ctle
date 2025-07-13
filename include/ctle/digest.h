@@ -33,8 +33,8 @@ struct digest
 	union
 	{
 		/// @brief The data as bytes, stored as most significant byte at index 0, least significant byte at the last index (7, 15, 31 or 63).
-		uint8_t data[_Size / 8];
 		uint64_t _data_q[_Size / 64] = {}; // a quadword memory overload, for faster comparisons
+		uint8_t data[_Size / 8];
 	};
 
 	// constexpr methods which returns inferior/min (zero & inf) value or superior/max value
@@ -48,9 +48,17 @@ struct digest
 	bool operator!=(const digest& other) const noexcept;
 };
 
-template<size_t _Size> constexpr const digest<_Size> digest<_Size>::zero() { digest ret; for( size_t inx=0; inx<_Size/64; ++inx) { ret._data_q[inx] = 0; } return ret; }
-template<size_t _Size> constexpr const digest<_Size> digest<_Size>::inf() { return zero(); }
-template<size_t _Size> constexpr const digest<_Size> digest<_Size>::sup() { digest ret; for( size_t inx=0; inx<_Size/64; ++inx) { ret._data_q[inx] = UINT64_MAX; } return ret; }
+template<> inline constexpr const digest<64> digest<64>::zero() { return digest{ 0 }; }
+template<> inline constexpr const digest<128> digest<128>::zero() { return digest{ 0, 0 }; }
+template<> inline constexpr const digest<256> digest<256>::zero() { return digest{ 0, 0, 0, 0 }; }
+template<> inline constexpr const digest<512> digest<512>::zero() { return digest{ 0, 0, 0, 0, 0, 0, 0, 0 }; }
+
+template<> inline constexpr const digest<64> digest<64>::sup() { return digest{ UINT64_MAX }; }
+template<> inline constexpr const digest<128> digest<128>::sup() { return digest{ UINT64_MAX, UINT64_MAX }; }
+template<> inline constexpr const digest<256> digest<256>::sup() { return digest{ UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX }; }
+template<> inline constexpr const digest<512> digest<512>::sup() { return digest{ UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX }; }
+
+template<size_t _Size> inline constexpr const digest<_Size> digest<_Size>::inf() { return zero(); }
 
 template<size_t _Size>
 inline bool digest<_Size>::operator<(const digest& right) const noexcept
