@@ -1,0 +1,21 @@
+name: Make sure that version file is updated
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if version file was modified
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD)
+          echo "$CHANGED_FILES" | grep -q "version" || {
+            echo "Error: version was not updated in this PR."
+            exit 1
+          }
