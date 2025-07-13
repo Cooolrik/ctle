@@ -11,6 +11,7 @@ color_names = ['r','g','b','a']
 # forward definition of all ctle classes
 fwd_classes = [
     ['status.h', ['enum class status_code : int','status']],
+	['status_return.h', ['template<class _StatusType, class _ValueType> class status_return']],
 	['data_source.h', ['file_data_source']],
 	['data_destination.h', ['file_data_destination']],
 	['hasher.h', ['hasher_sha256', 'hasher_xxh64', 'hasher_xxh128', 'template <size_t _Size> class hasher_noop']],
@@ -20,9 +21,13 @@ fwd_classes = [
 	['bimap.h', ['template<class _Kty, class _Vty> class bimap']],
 	['bitmap_font.h', ['enum class bitmap_font_flags : int']],
 	['file_funcs.h', ['enum class access_mode : unsigned int','_file_object']],
-	['hash.h', ['template<size_t _Size> struct hash']],
+	['digest.h', ['template<size_t _Size> struct digest']],
+	['uuid.h', ['struct uuid']],
 	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']],
-	['string_funcs.h', ['template<class _Ty> struct string_span']],
+	['optional_value.h', ['template<class _Ty, class _PtrTy = std::unique_ptr<_Ty>> class optional_value']],
+	['optional_vector.h', ['template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector']],
+	['optional_idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector']],
+	['string_funcs.h', ['template<class _Ty> struct string_span','template<class _Ty> std::string to_string(const _Ty& val)','template<class _Ty> std::string to_hex_string(const _Ty& val)']],
 ]
 
 def generate_types_dict():
@@ -107,6 +112,8 @@ def list_fwd_classes( out:formatted_output ):
 	out.ln('#include <cinttypes>')
 	out.ln('#include <cstddef>')
 	out.ln('#include <vector>')
+	out.ln('#include <string>')
+	out.ln('#include <memory>')
 	out.ln()
 
 	out.ln('namespace ctle')
@@ -114,16 +121,16 @@ def list_fwd_classes( out:formatted_output ):
 		out.ln()
 		out.comment_ln('Standard integer and real values short-hand')
 		for s in int_bit_sizes:
-			out.ln(f'using i{s} = std::int{s}_t;')
-			out.ln(f'using u{s} = std::uint{s}_t;')
-		out.ln('using f32 = float;')
-		out.ln('using f64 = double;')
+			out.ln(f'typedef std::int{s}_t i{s};')
+			out.ln(f'typedef std::uint{s}_t u{s};')
+		out.ln('typedef float f32;')
+		out.ln('typedef double f64;')
 		out.ln()
 
 		for fl in fwd_classes:
 			out.comment_ln(f'from {fl[0]}')
 			for cl in fl[1]:
-				if cl.startswith('template') or cl.startswith('enum'):
+				if cl.startswith('template') or cl.startswith('struct') or cl.startswith('enum'):
 					out.ln(f'{cl};')
 				else:
 					out.ln(f'class {cl};')

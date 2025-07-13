@@ -8,6 +8,10 @@
 
 using namespace ctle;
 
+constexpr const ctle::uuid uuid_zero = ctle::uuid::zero();
+constexpr const ctle::uuid uuid_inf = ctle::uuid::inf();
+constexpr const ctle::uuid uuid_sup = ctle::uuid::sup();
+
 TEST( uuid, basic_test )
 {
 	const uuid ido0 = from_hex_string<uuid>( "00000000-0000-0000-0000-000000000000" ); // lowest
@@ -29,8 +33,16 @@ TEST( uuid, basic_test )
 	EXPECT_TRUE( id != uuid::nil );
 	EXPECT_TRUE( id2 != uuid::nil );
 
+	EXPECT_TRUE( id != uuid_zero );
+	EXPECT_TRUE( id < uuid_sup );
+	EXPECT_TRUE( uuid_inf < id );
+
 	uuid id_nil = from_hex_string<uuid>( "00000000-0000-0000-0000-000000000000" );
 	EXPECT_TRUE( id_nil == uuid::nil );
+
+	EXPECT_TRUE( id_nil == uuid_zero );
+	EXPECT_TRUE( id < uuid_sup );
+	EXPECT_TRUE( uuid_inf == id_nil );
 
 	std::stringstream str;
 	str << id;

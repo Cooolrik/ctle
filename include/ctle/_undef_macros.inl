@@ -90,6 +90,11 @@
 #endif//ctValidateEnd
 #undef ctValidateEnd
 
+#ifndef ctValidateThrow
+#error The expected macro ctValidateThrow does not exist.
+#endif//ctValidateThrow
+#undef ctValidateThrow
+
 #ifndef ctSanityCheck
 #error The expected macro ctSanityCheck does not exist.
 #endif//ctSanityCheck

@@ -10,6 +10,8 @@
 #include <memory>
 #include <stdexcept>
 
+#include "fwd.h"
+
 namespace ctle
 {
 class bad_optional_value_access : public std::runtime_error
@@ -18,21 +20,27 @@ public:
 	explicit bad_optional_value_access( char const *const _Message ) noexcept : std::runtime_error( _Message ) {}
 };
 
-template<class T> class optional_value
+/// @brief optional_value: an optional value, which may be allocated or not. Uses global new for allocatimg the object.
+/// @tparam _Ty The value type.
+/// @tparam _PtrTy The pointer type to use, defaults to unique_ptr
+template<
+	class _Ty, 
+	class _PtrTy /*= std::unique_ptr<_Ty>*/ 
+> class optional_value
 {
 protected:
-	std::unique_ptr<T> value_m;
+	_PtrTy value_m;
 
 public:
 	optional_value() = default;
-	optional_value( const T &_value ) : value_m( new T( _value ) ) {}
-	optional_value( const optional_value &other ) noexcept : value_m( other.value_m ? std::unique_ptr<T>( new T( *other.value_m ) ) : nullptr )	{}
-	optional_value &operator = ( const optional_value &_other )	{ this->value_m = _other.value_m ? std::unique_ptr<T>( new T( *_other.value_m ) ) : nullptr; return *this; }
+	optional_value( const _Ty &_value ) : value_m( new _Ty( _value ) ) {}
+	optional_value( const optional_value &other ) noexcept : value_m( other.value_m ? _PtrTy( new _Ty( *other.value_m ) ) : nullptr )	{}
+	optional_value &operator = ( const optional_value &_other )	{ this->value_m = _other.value_m ? _PtrTy( new _Ty( *_other.value_m ) ) : nullptr; return *this; }
 	optional_value( optional_value &&other ) noexcept : value_m( std::move( other.value_m ) ) {}
 	optional_value &operator = ( optional_value &&_other ) { this->value_m = std::move( _other.value_m ); return *this;	}
 
-	bool operator==( const T &_other ) const;
-	bool operator!=( const T &_other ) const;
+	bool operator==( const _Ty &_other ) const;
+	bool operator!=( const _Ty &_other ) const;
 	bool operator==( const optional_value &_other ) const;
 	bool operator!=( const optional_value &_other ) const;
 
@@ -41,13 +49,13 @@ public:
 
 	/// @brief Set the value of the optional_value. has_value() will return true.
 	/// @param _value the value to set the optional_value to.
-	void set(const T& _value = {}) { this->value_m = std::unique_ptr<T>(new T(_value)); }
+	void set(const _Ty& _value = {}) { this->value_m = _PtrTy(new _Ty(_value)); }
 
 	/// @brief Check if the optional_value has a value.
 	bool has_value() const noexcept { return bool(this->value_m); }
 
 	/// @brief Get the value of the optional_value.
-	T& value()
+	_Ty& value()
 	{
 		if( !this->has_value() )
 		{
@@ -56,7 +64,7 @@ public:
 	}
 
 	/// @brief Get the value of the optional_value.
-	const T& value() const
+	const _Ty& value() const
 	{
 		if( !this->has_value() )
 		{
@@ -65,36 +73,36 @@ public:
 	}
 
 	/// @brief Get the value of the optional_value.
-	operator T& ()
+	operator _Ty& ()
 	{
 		return value();
 	}
 
 	/// @brief Get the value of the optional_value.
-	operator const T& () const
+	operator const _Ty& () const
 	{
 		return value();
 	}
 };
 
-template<class T>
-bool optional_value<T>::operator==( const T &_other ) const
+template<class _Ty, class _PtrTy>
+inline bool optional_value<_Ty,_PtrTy>::operator==( const _Ty &_other ) const
 {
 	if( !this->value_m )
 		return false;
 	return *( this->value_m ) == _other;
 }
 
-template<class T>
-bool optional_value<T>::operator!=( const T &_other ) const
+template<class _Ty, class _PtrTy>
+inline bool optional_value<_Ty,_PtrTy>::operator!=( const _Ty &_other ) const
 {
 	if( !this->value_m )
 		return true;
 	return *( this->value_m ) != _other;
 }
 
-template<class T>
-bool optional_value<T>::operator==( const optional_value &_other ) const
+template<class _Ty, class _PtrTy>
+inline bool optional_value<_Ty,_PtrTy>::operator==( const optional_value &_other ) const
 {
 	if( this->value_m )
 	{
@@ -110,8 +118,8 @@ bool optional_value<T>::operator==( const optional_value &_other ) const
 	}
 }
 
-template<class T>
-bool optional_value<T>::operator!=( const optional_value &_other ) const
+template<class _Ty, class _PtrTy>
+inline bool optional_value<_Ty,_PtrTy>::operator!=( const optional_value &_other ) const
 {
 	if( this->value_m )
 	{

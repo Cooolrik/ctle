@@ -44,6 +44,7 @@ TEST( hasher, test_expected_hash_values )
 	test_expected_hash<hasher_sha256>(hashing_testdata,sizeof(hashing_testdata),"0A2591AAF3340AD92FAECBC5908E74D04B51EE5D2DEEE78F089F1607570E2E91");
 	test_expected_hash<hasher_xxh64>(hashing_testdata,sizeof(hashing_testdata),"625A8B25C833FD36");
 	test_expected_hash<hasher_xxh128>(hashing_testdata,sizeof(hashing_testdata),"828D13C68D1BAC3AA5AA63C0925F9C1E");
+	test_expected_hash<hasher_2x_xxh128_dcb7be9cd0fcf505>(hashing_testdata,sizeof(hashing_testdata),"828D13C68D1BAC3AA5AA63C0925F9C1EEA0301A0F7F3CE81062211DDAAD62522");
 
 	// test no-op hashers as well, expect zero strings
 	test_expected_hash<hasher_noop<64>>(hashing_testdata,sizeof(hashing_testdata) ,"0000000000000000");
@@ -89,4 +90,5 @@ TEST( hasher, test_determenism )
 	test_hash_determenism<hasher_sha256>( random_data.data(), random_data.size(), block_size1, block_size2 );
 	test_hash_determenism<hasher_xxh64>( random_data.data(), random_data.size(), block_size1, block_size2 );
 	test_hash_determenism<hasher_xxh128>( random_data.data(), random_data.size(), block_size1, block_size2 );
+	test_hash_determenism<hasher_2x_xxh128_dcb7be9cd0fcf505>( random_data.data(), random_data.size(), block_size1, block_size2 );
 }

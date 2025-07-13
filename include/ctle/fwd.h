@@ -12,25 +12,30 @@
 #include <cinttypes>
 #include <cstddef>
 #include <vector>
+#include <string>
+#include <memory>
 
 namespace ctle
 {
 
 // Standard integer and real values short-hand
-using i8 = std::int8_t;
-using u8 = std::uint8_t;
-using i16 = std::int16_t;
-using u16 = std::uint16_t;
-using i32 = std::int32_t;
-using u32 = std::uint32_t;
-using i64 = std::int64_t;
-using u64 = std::uint64_t;
-using f32 = float;
-using f64 = double;
+typedef std::int8_t i8;
+typedef std::uint8_t u8;
+typedef std::int16_t i16;
+typedef std::uint16_t u16;
+typedef std::int32_t i32;
+typedef std::uint32_t u32;
+typedef std::int64_t i64;
+typedef std::uint64_t u64;
+typedef float f32;
+typedef double f64;
 
 // from status.h
 enum class status_code : int;
 class status;
+
+// from status_return.h
+template<class _StatusType, class _ValueType> class status_return;
 
 // from data_source.h
 class file_data_source;
@@ -64,14 +69,28 @@ enum class bitmap_font_flags : int;
 enum class access_mode : unsigned int;
 class _file_object;
 
-// from hash.h
-template<size_t _Size> struct hash;
+// from digest.h
+template<size_t _Size> struct digest;
+
+// from uuid.h
+struct uuid;
 
 // from idx_vector.h
 template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector;
 
+// from optional_value.h
+template<class _Ty, class _PtrTy = std::unique_ptr<_Ty>> class optional_value;
+
+// from optional_vector.h
+template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector;
+
+// from optional_idx_vector.h
+template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector;
+
 // from string_funcs.h
 template<class _Ty> struct string_span;
+template<class _Ty> std::string to_string(const _Ty& val);
+template<class _Ty> std::string to_hex_string(const _Ty& val);
 
 
 }

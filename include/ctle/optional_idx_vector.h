@@ -15,8 +15,11 @@
 namespace ctle
 {
 // optional_idx_vector: optional idx_vector 
-template <class _Ty, class _IdxTy = std::vector<std::int32_t>, class _VecTy = std::vector<_Ty>>
-class optional_idx_vector
+template <
+	class _Ty, 
+	class _IdxTy /*= std::vector<i32>*/ ,
+	class _VecTy /*= std::vector<_Ty>*/
+> class optional_idx_vector
 {
 public:
 	using value_type = _Ty;

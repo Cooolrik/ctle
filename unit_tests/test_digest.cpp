@@ -22,6 +22,10 @@ static digest<_Size> random_hash()
 	return val;
 }
 
+constexpr const ctle::digest<256> hsh_zero = ctle::digest<256>::zero();
+constexpr const ctle::digest<256> hsh_inf = ctle::digest<256>::inf();
+constexpr const ctle::digest<256> hsh_sup = ctle::digest<256>::sup();
+
 TEST( hash, basic_test )
 {
 	using hash = ctle::digest<256>;
@@ -30,6 +34,11 @@ TEST( hash, basic_test )
 	const hash hsh1 = from_string<hash>( "0000000000000000ffffffffffffffffffffffffffffffffffffffffffffffff" );
 	const hash hsh2 = from_string<hash>( "00000200ffffffffffffffffffffffffffffffffffffffffffffffffffffffff" );
 	const hash hsh3 = from_string<hash>( "ffffffffffffffffffffffffffffffffffff0000000000000000000000000000" ); // highest
+
+	EXPECT_TRUE( hsh0 == hsh_zero );
+	EXPECT_TRUE( hsh_inf < hsh1 );
+	EXPECT_TRUE( hsh1 < hsh_sup );
+	EXPECT_TRUE( hsh3 < hsh_sup );
 
 	std::string hshstr = to_string( hsh1 );
 	auto hshval2 = from_string<hash>( hshstr.c_str() );

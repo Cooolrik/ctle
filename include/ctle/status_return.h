@@ -34,7 +34,9 @@ private:
 
 public:
 	status_return( const status_return &other ) = default;
+	status_return &operator=( const status_return &other ) = default;
 	status_return( status_return &&other ) = default;
+	status_return &operator=( status_return &&other ) = default;
 
 	status_return( _StatusType _status ) : sstatus( _status ) {}
 	status_return( _StatusType _status, const _ValueType &_value ) : sstatus( _status ), svalue( _value ) {}
@@ -81,7 +83,9 @@ private:
 
 public:
 	status_return( const status_return &other ) = default;
+	status_return &operator=( const status_return &other ) = default;
 	status_return( status_return &&other ) = default;
+	status_return &operator=( status_return &&other ) = default;
 
 	status_return( const _StatusType _status ) : sstatus( _status ) {};
 
