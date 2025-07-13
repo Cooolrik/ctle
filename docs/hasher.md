@@ -20,6 +20,9 @@ int main()
 	//ctle::hasher_xxh64 hasher;
     //ctle::hasher_xxh128 hasher;
 
+	// two XXH 128 hashes are concatenated into one 256 bit hash with a fixed salt of 'dcb7be9cd0fcf505' on the second hash 
+	// ctle::hasher_2x_xxh128_dcb7be9cd0fcf505 hasher;
+
 	// no-operation hashers (just 0 hashes) 64-512 bits sizes:
     //ctle::hasher_noop<64> hasher;
     //ctle::hasher_noop<128> hasher;
@@ -34,7 +37,7 @@ int main()
     auto result = hasher.finish();
     if (result.status == ctle::status::ok) 
 	{
-        std::cout << "No-op hash generated successfully." << std::endl;
+        std::cout << "Hash generated successfully." << std::endl;
         auto hash_value = result.value;
         std::cout << "Hash value: ";
         for (size_t i = 0; i < sizeof(hash_value.data); ++i) 
@@ -45,7 +48,7 @@ int main()
     } 
 	else 
 	{
-        std::cerr << "Failed to generate no-op hash." << std::endl;
+        std::cerr << "Failed to generate hash value." << std::endl;
     }
 
     return 0;

@@ -105,6 +105,25 @@ private:
 	void *context = nullptr;
 };
 
+/// @brief Implementation of XXH3 XXH128 hasher, using xxHash, concatenated into one 256 bit hash. Note that the second part of the hash is generated from an added salt of dcb7be9cd0fcf505, (big endian).
+/// @note To use, include xxHash in the build before hasher.h to implement (see the example implementation in the documentation for ctle.h).
+class hasher_2x_xxh128_dcb7be9cd0fcf505 
+{
+public:
+	hasher_2x_xxh128_dcb7be9cd0fcf505();
+	~hasher_2x_xxh128_dcb7be9cd0fcf505();
+	using hash_type = digest<256>;
+
+	/// @copydoc hasher_noop::update
+	status update(const uint8_t* data, size_t size);
+
+	/// @copydoc hasher_noop::finish
+	status_return<status, digest<256>> finish();
+
+private:
+	void *context = nullptr;
+};
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,6 +224,48 @@ status_return<status,digest<128>> hasher_xxh128::finish()
 
 	digest<128> ret;
 	memcpy( ret.data, canonical.digest, sizeof(ret.data) );
+	return ret;
+}
+
+
+///////////////////
+
+hasher_2x_xxh128_dcb7be9cd0fcf505::hasher_2x_xxh128_dcb7be9cd0fcf505()
+{
+	this->context = (void*)XXH3_createState();
+	XXH3_128bits_reset((XXH3_state_t*)this->context);
+}
+
+hasher_2x_xxh128_dcb7be9cd0fcf505::~hasher_2x_xxh128_dcb7be9cd0fcf505()
+{
+	XXH3_freeState((XXH3_state_t*)this->context);
+}
+
+status hasher_2x_xxh128_dcb7be9cd0fcf505::update(const uint8_t* data, size_t size)
+{
+	XXH3_128bits_update((XXH3_state_t*)this->context, data, size);
+	return status::ok;
+}
+
+status_return<status,digest<256>> hasher_2x_xxh128_dcb7be9cd0fcf505::finish()
+{
+	digest<256> ret;
+
+	// get the first hash result, and copy to return
+	XXH128_hash_t result = XXH3_128bits_digest((XXH3_state_t*)this->context);
+	XXH128_canonical_t canonical;
+	XXH128_canonicalFromHash( &canonical, result );
+	memcpy( &ret.data[0], canonical.digest, sizeof(canonical.digest) );
+
+	// append the randomly generated salt 'dcb7be9cd0fcf505' to the state
+	const static u8 salt[8] = {0xdc,0xb7,0xbe,0x9c,0xd0,0xfc,0xf5,0x05};
+	XXH3_128bits_update((XXH3_state_t*)this->context, salt, sizeof(salt) );
+
+	// get the second hash result, and copy to second part of return
+	result = XXH3_128bits_digest((XXH3_state_t*)this->context);
+	XXH128_canonicalFromHash( &canonical, result );
+	memcpy( &ret.data[16], canonical.digest, sizeof(canonical.digest) );
+
 	return ret;
 }
 
