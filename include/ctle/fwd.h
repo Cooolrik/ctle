@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace ctle
 {
