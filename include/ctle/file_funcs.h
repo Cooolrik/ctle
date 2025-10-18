@@ -249,7 +249,7 @@ status _file_object::open_read(const std::string& filepath)
 	// convert the utf8 string to wstring fullpath for the API call
 	const auto wpath = utf8string_to_wstringfullpath(filepath);
 
-	this->file_handle = ::CreateFileW(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
+	this->file_handle = ::CreateFileW(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
 	if (this->file_handle == INVALID_HANDLE_VALUE)
 	{
 		// failed to open the file
@@ -275,7 +275,7 @@ status _file_object::open_write(const std::string& filepath, bool overwrite_exis
 
 	// convert the utf8 string to wstring fullpath for the API call
 	const auto wpath = utf8string_to_wstringfullpath(filepath);
-	this->file_handle = (void*)::CreateFileW( wpath.c_str(), GENERIC_WRITE,	FILE_SHARE_WRITE, nullptr, ( overwrite_existing ) ? ( CREATE_ALWAYS ) : ( CREATE_NEW ),	FILE_ATTRIBUTE_NORMAL, nullptr );
+	this->file_handle = (void*)::CreateFileW( wpath.c_str(), GENERIC_WRITE,	FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, ( overwrite_existing ) ? ( CREATE_ALWAYS ) : ( CREATE_NEW ),	FILE_ATTRIBUTE_NORMAL, nullptr );
 	if( this->file_handle == INVALID_HANDLE_VALUE )
 	{
 		// file open failed. return reason in error code
@@ -327,6 +327,10 @@ status _file_object::read(u8* dest, const u64 size)
 			// failed to read from the file
 			return status::cant_read;
 		}
+		if( bytes_that_were_read == 0 )
+		{
+			break; // EOF reached
+		}
 
 		// update number of bytes that were read
 		bytes_read += bytes_that_were_read;
@@ -346,7 +350,7 @@ status _file_object::write(const u8* src, const u64 size)
 		// check how much to write, capped at UINT_MAX
 		const u64 bytes_left = size - bytes_written;
 		const DWORD bytes_to_write_this_time = (bytes_left < UINT_MAX) ? ((DWORD)bytes_left) : (UINT_MAX);
-		
+
 		// write the bytes to file
 		DWORD bytes_that_were_written = 0;
 		if( !::WriteFile( this->file_handle, &src[bytes_written], (DWORD)bytes_to_write_this_time, &bytes_that_were_written, nullptr ) )
@@ -354,6 +358,7 @@ status _file_object::write(const u8* src, const u64 size)
 			// failed to write to file
 			return status::cant_write;
 		}
+		ctSanityCheck( bytes_that_were_written != 0 ); // this should not happen with a regular file
 
 		// update number of bytes that were written
 		bytes_written += bytes_that_were_written;
