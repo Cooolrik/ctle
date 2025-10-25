@@ -669,12 +669,28 @@ static class _utf_8_locale
 public:
 	_utf_8_locale()
 	{
-		utf8_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", nullptr);
+		static const std::vector<const char *> utf8_locales = 
+		{
+			"C.UTF-8",        // Common on Debian/Ubuntu
+			"en_US.UTF-8",    // Widely supported
+			"POSIX",          // Fallback, not UTF-8 but safe
+			"C"               // Minimal fallback
+		};
+
+		for (const auto& loc_name : utf8_locales) 
+		{
+			this->utf8_locale = newlocale(LC_CTYPE_MASK, loc_name, (locale_t)0);
+			if (this->utf8_locale != nullptr) 
+				return;
+		}
 	}
+
 	~_utf_8_locale()
 	{
-		freelocale(utf8_locale);
+		if( utf8_locale )
+			freelocale(utf8_locale);
 	}
+
 	locale_t get_locale() const noexcept
 	{
 		return utf8_locale;
@@ -687,29 +703,33 @@ private:
 
 bool string_to_wstring( const std::string &srcStr, std::wstring &destStr )
 {
-	locale_t old_locale = uselocale( utf_8_locale.get_locale() );
+	locale_t old_locale = 0;
+	if( utf_8_locale.get_locale() )
+		old_locale = uselocale( utf_8_locale.get_locale() );
 
 	size_t size = std::mbstowcs( nullptr, srcStr.c_str(), 0 );
 	if( size==static_cast<size_t>(-1) )
 	{
-		uselocale( old );
-		ec = std::make_error_code( std::errc::illegal_byte_sequence );
+		uselocale( old_locale );
 		return false;
 	}
 
 	destStr.resize( size );
 	std::mbstowcs( destStr.data(), srcStr.c_str(), size );
 
-	uselocale( old_locale );
-	return out;
+	if( old_locale )
+		uselocale( old_locale );
+	return true;
 }
 
 bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
 {
-	locale_t old_locale = uselocale( utf_8_locale.get_locale() );
+	locale_t old_locale = 0;
+	if( utf_8_locale.get_locale() )
+		old_locale = uselocale( utf_8_locale.get_locale() );
 
 	size_t size = std::wcstombs( nullptr, srcStr.c_str(), 0 );
-	if( len!=static_cast<size_t>(-1) )
+	if( size==static_cast<size_t>(-1) )
 	{
 		uselocale( old_locale );
 		return false;
@@ -718,7 +738,8 @@ bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
 	destStr.resize( size );
 	std::wcstombs( destStr.data(), srcStr.c_str(), size );
 
-	uselocale( old_locale );
+	if( old_locale )
+		uselocale( old_locale );
 	return true;
 }
 
