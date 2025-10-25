@@ -201,3 +201,20 @@ TEST(string_funcs, from_to_string_tests)
 	test_to_from_string<uint64_t>(23456545218359, "23456545218359");
 	test_to_from_hex_string<uint64_t>(0x83645918243, "0000083645918243");		
 }
+
+TEST( string_funcs, wstring_conversion_tests )
+{
+	const std::string utf8_str = "Greek letter alpha: \xc9\x91";
+#if defined(_WIN32)
+	const std::wstring wide_str = L"Greek letter alpha: \x0251";
+#elif defined(__linux__)
+	const std::wstring wide_str = L"Greek letter alpha: \x00000251";
+#endif
+
+	std::wstring converted_wide;
+	EXPECT_TRUE( string_to_wstring( utf8_str, converted_wide ) );
+	EXPECT_TRUE( converted_wide==wide_str );
+	std::string converted_utf8;
+	EXPECT_TRUE( wstring_to_string( wide_str, converted_utf8 ) );
+	EXPECT_TRUE( converted_utf8==utf8_str );
+}

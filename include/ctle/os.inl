@@ -32,6 +32,7 @@
 #ifdef _ADD_CTLE_HEADERS_LINUX_STD
 
 #include <unistd.h>
+#include <locale.h>
 
 #undef _ADD_CTLE_HEADERS_LINUX_STD
 #endif//_ADD_CTLE_HEADERS_LINUX_STD
