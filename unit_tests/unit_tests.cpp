@@ -240,3 +240,21 @@ template<> mn_tup<f64,4,2> random_value<mn_tup<f64,4,2>>() { return mn_tup<f64,4
 template<> mn_tup<f64,4,3> random_value<mn_tup<f64,4,3>>() { return mn_tup<f64,4,3>(random_value<n_tup<f64,4>>(), random_value<n_tup<f64,4>>(), random_value<n_tup<f64,4>>()); }
 template<> mn_tup<f64,4,4> random_value<mn_tup<f64,4,4>>() { return mn_tup<f64,4,4>(random_value<n_tup<f64,4>>(), random_value<n_tup<f64,4>>(), random_value<n_tup<f64,4>>(), random_value<n_tup<f64,4>>()); }
 
+int main(int argc, char** argv) 
+{
+	// Pingback mechanism for test harnesses
+	if( argc >= 2 )
+	{
+		if( strcmp( argv[1], "--pingback" ) == 0 )
+		{
+			std::string input;
+			std::getline(std::cin, input);
+			std::cout << "Pong: " << input << std::endl;
+			return -123;
+		}
+	}
+
+	// regular test execution
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
