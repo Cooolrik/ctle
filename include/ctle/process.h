@@ -127,13 +127,14 @@ process::process( const std::vector<std::string> &_command_arguments,
 process::~process()
 {
 	// if the process is still running, terminate it
-	// if( this->process_data != nullptr )
-	// {
-	// 	int exit_code = 0;
-	// 	this->get_exit_code( exit_code );
-	// 	if( exit_code == STILL_ACTIVE )
-	// 		this->terminate();
-	// }
+	if( this->process_data != nullptr )
+	{
+		if( !this->has_exit_code )
+		{
+			if( this->wait( std::chrono::milliseconds( 1 ) ) == status::not_ready )
+				this->terminate();
+		}
+	}
 
 	// wait for the IO threads to finish
 	if( this->stdin_thread.joinable() )
@@ -268,13 +269,38 @@ status process::start()
 		<< "process::terminate: process already started."
 		<< ctValidateEnd;
 
+	// combine all command arguments into a single command line string
+	std::string command_line;
+	for( const auto &arg : this->command_arguments )
+	{
+		if( !command_line.empty() )
+			command_line += " ";
+		// if the argument contains spaces, quote it
+		if( arg.find_first_of( " \t\"" ) != std::string::npos )
+		{
+			command_line += "\"";
+			for( const char c : arg )
+			{
+				if( c == '"' )
+					command_line += "\\\"";
+				else
+					command_line += c;
+			}
+			command_line += "\"";
+		}
+		else
+		{
+			command_line += arg;
+		}
+	}
+
 	// make sure we can convert command line and work directory to wide strings
 	std::wstring wcmd = {};
 	std::wstring wdir = {};
-	if( !ctle::string_to_wstring( this->command_line, wcmd ) 
+	if( !ctle::string_to_wstring( command_line, wcmd ) 
 	 || !ctle::string_to_wstring( this->work_directory, wdir ) )
 	{
-		ctLogError << "process::start: when trying to run: '" << this->command_line << "' "
+		ctLogError << "process::start: when trying to run: '" << this->command_arguments[0] << "' "
 				   << "in work directory: '" << this->work_directory << "' "
 				   << "could not convert command line and/or work directory to wide strings." 
 				   << ctLogEnd;
@@ -332,7 +358,7 @@ status process::start()
 
 	// check if the process was created successfully
 	ctValidate( success, status::cant_access ) 
-		<< "process::start: when trying to run: '" << this->command_line << "' "
+		<< "process::start: when trying to run: '" << this->command_arguments[0] << "' "
 		<< "in work directory: '" << this->work_directory << "' "
 		<< "the CreateProcessW function failed with error code: " << GetLastError()
 		<< ctValidateEnd;
@@ -350,7 +376,7 @@ status process::start()
 	if( this->stderr_callback )
 		this->stderr_thread = std::thread( process::os_data::read_from_pipe, _stderr_read, this->stderr_callback );
 
-	ctLogVerbose << "process::start: running: '" << this->command_line << "' "
+	ctLogVerbose << "process::start: running: '" << this->command_arguments[0] << "' "
 				 << "in work directory: '" << this->work_directory << "' "
 				 << ctLogEnd;
 
@@ -362,6 +388,10 @@ status process::wait( std::chrono::milliseconds time_out )
 	ctValidate( this->process_data != nullptr, status::not_initialized ) 
 		<< "process::terminate: process not started or already terminated." 
 		<< ctValidateEnd;
+
+	if( this->has_exit_code )
+		return status::ok;
+
 	const DWORD wait_time = (time_out.count() == 0)?(INFINITE):((DWORD)time_out.count());
 	auto res = ::WaitForSingleObject( this->process_data->process_handle->get_handle(), wait_time );
 	ctValidate( res != WAIT_FAILED, status::undefined_error ) << "process::wait: WaitForSingleObject failed with error code: " << GetLastError() << ctValidateEnd;
@@ -370,29 +400,45 @@ status process::wait( std::chrono::milliseconds time_out )
 	return status::ok;
 }
 
-status process::terminate( int exit_code )
+status process::terminate( int _exit_code )
 {
 	ctValidate( this->process_data != nullptr, status::not_initialized ) 
 		<< "process::terminate: process not started or already terminated." 
 		<< ctValidateEnd;
-	auto res = ::TerminateProcess( this->process_data->process_handle->get_handle(), exit_code );
+
+	if( this->has_exit_code )
+		return status::ok;
+
+	auto res = ::TerminateProcess( this->process_data->process_handle->get_handle(), _exit_code );
 	ctValidate( res != 0, status::cant_access ) 
 		<< "process::terminate: TerminateProcess failed with error code: " << GetLastError() 
 		<< ctValidateEnd;
+	this->exit_code = _exit_code;
+	this->has_exit_code = true;
 	return status::ok;
 }
 
-status process::get_exit_code( int &exit_code )
+status process::get_exit_code( int &_exit_code )
 {
 	ctValidate( this->process_data != nullptr, status::not_initialized ) 
 		<< "process::get_exit_code: process not started or already terminated." 
 		<< ctValidateEnd;
+
+	if( this->has_exit_code )
+	{
+		_exit_code = this->exit_code;
+		return status::ok;
+	}
+
 	DWORD code = 0;
 	auto res = ::GetExitCodeProcess( this->process_data->process_handle->get_handle(), &code );
 	ctValidate( res != 0, status::undefined_error ) 
 		<< "process::get_exit_code: GetExitCodeProcess failed with error code: " << GetLastError() 
 		<< ctValidateEnd;
-	exit_code = (int)( code );
+
+	this->exit_code = (int)( code );
+	this->has_exit_code = true;
+	_exit_code = this->exit_code;
 	return status::ok;
 }
 
