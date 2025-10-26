@@ -155,8 +155,10 @@ private:
 #include <signal.h>
 
 #if defined(_WIN32)
+#define _ADD_CTLE_HEADERS_WIN_STD
 #define _ADD_CTLE_HEADERS_WIN_SOCKETS
 #elif defined(linux)
+#define _ADD_CTLE_HEADERS_LINUX_STD
 #define _ADD_CTLE_HEADERS_LINUX_SOCKETS
 #endif
 #include "os.inl"

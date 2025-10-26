@@ -205,12 +205,24 @@ template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const
 void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, bool& success) noexcept;
 std::string _bytes_to_hex_string(const void* bytes, size_t count);
 
+/// @brief Convert an utf-8 string to a unicode wide string.
+bool string_to_wstring( const std::string &srcStr, std::wstring &destStr );
+
+/// @brief Convert a unicode wide string to a wide string.
+bool wstring_to_string( const std::wstring &srcStr, std::string &destStr );
+
 }
 // namespace ctle
 
 #ifdef CTLE_IMPLEMENTATION
-
 #include "endianness.h"
+
+#if defined(_WIN32)
+#define _ADD_CTLE_HEADERS_WIN_STD
+#elif defined(linux)
+#define _ADD_CTLE_HEADERS_LINUX_STD
+#endif
+#include "os.inl"
 
 namespace ctle				  
 {
@@ -612,6 +624,126 @@ template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* s
 }
 template bool lex_t<char>(std::vector<string_span<char>>* dest, const char* start, const char* end, const char* separators, const char* quotes, const char* whitespaces ) noexcept;
 template bool lex_t<wchar_t>(std::vector<string_span<wchar_t>>* dest, const wchar_t* start, const wchar_t* end, const wchar_t* separators, const wchar_t* quotes, const wchar_t* whitespaces ) noexcept;
+
+#if defined(_WIN32)
+
+bool string_to_wstring( const std::string &srcStr, std::wstring &destStr )
+{
+	int size = MultiByteToWideChar( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), nullptr, 0 );
+	if( size==0 )
+	{
+		return false;
+	}
+
+	destStr.resize( size );
+	if( MultiByteToWideChar( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), destStr.data(), size )==0 )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
+{
+	int size = WideCharToMultiByte( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), nullptr, 0, nullptr, nullptr );
+	if( size==0 )
+	{
+		return false;
+	}
+
+	destStr.resize( size );
+	if( WideCharToMultiByte( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), destStr.data(), size, nullptr, nullptr )==0 )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+#elif defined( __linux__ )
+
+// keep a utf-8 locale around for conversions
+static class _utf_8_locale
+{
+public:
+	_utf_8_locale()
+	{
+		static const std::vector<const char *> utf8_locales = 
+		{
+			"C.UTF-8",        // Common on Debian/Ubuntu
+			"en_US.UTF-8",    // Widely supported
+			"POSIX",          // Fallback, not UTF-8 but safe
+			"C"               // Minimal fallback
+		};
+
+		for (const auto& loc_name : utf8_locales) 
+		{
+			this->utf8_locale = newlocale(LC_CTYPE_MASK, loc_name, (locale_t)0);
+			if (this->utf8_locale != nullptr) 
+				return;
+		}
+	}
+
+	~_utf_8_locale()
+	{
+		if( utf8_locale )
+			freelocale(utf8_locale);
+	}
+
+	locale_t get_locale() const noexcept
+	{
+		return utf8_locale;
+	}
+
+private:
+	locale_t utf8_locale;
+
+} utf_8_locale;
+
+bool string_to_wstring( const std::string &srcStr, std::wstring &destStr )
+{
+	locale_t old_locale = 0;
+	if( utf_8_locale.get_locale() )
+		old_locale = uselocale( utf_8_locale.get_locale() );
+
+	size_t size = std::mbstowcs( nullptr, srcStr.c_str(), 0 );
+	if( size==static_cast<size_t>(-1) )
+	{
+		uselocale( old_locale );
+		return false;
+	}
+
+	destStr.resize( size );
+	std::mbstowcs( destStr.data(), srcStr.c_str(), size );
+
+	if( old_locale )
+		uselocale( old_locale );
+	return true;
+}
+
+bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
+{
+	locale_t old_locale = 0;
+	if( utf_8_locale.get_locale() )
+		old_locale = uselocale( utf_8_locale.get_locale() );
+
+	size_t size = std::wcstombs( nullptr, srcStr.c_str(), 0 );
+	if( size==static_cast<size_t>(-1) )
+	{
+		uselocale( old_locale );
+		return false;
+	}
+
+	destStr.resize( size );
+	std::wcstombs( destStr.data(), srcStr.c_str(), size );
+
+	if( old_locale )
+		uselocale( old_locale );
+	return true;
+}
+
+#endif// defined(_WIN32) elif defined(linux)
 
 }
 // namespace ctle

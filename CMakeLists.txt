@@ -16,8 +16,7 @@ option(CTLE_GENERATE_CODE "Run code generation in the cmake process" OFF )
 
 # if selected, generate dynamic code 
 if(CTLE_GENERATE_CODE) 
-	find_package(PythonInterp 3.10 REQUIRED)
-	find_package(Python 3.10 REQUIRED)
+	find_package(Python3 3.10 COMPONENTS Interpreter Development REQUIRED)
 	execute_process( 
 		COMMAND 			${PYTHON_EXECUTABLE} generate.py
 		WORKING_DIRECTORY 	${CMAKE_CURRENT_LIST_DIR}/code_gen
@@ -92,7 +91,7 @@ if(CTLE_BUILD_TESTS)
 	FetchContent_Declare(
 		googletest
 		GIT_REPOSITORY 	https://github.com/google/googletest.git
-		GIT_TAG			58d77fa8070e8cec2dc1ed015d66b454c8d78850 # 1.12.1 
+		GIT_TAG			52eb8108c5bdec04579160ae17225d66034bd723 # 1.17.0
 		)
 
 	# glm 
@@ -100,7 +99,7 @@ if(CTLE_BUILD_TESTS)
 	FetchContent_Declare(
 		glm
 		GIT_REPOSITORY https://github.com/g-truc/glm.git
-		GIT_TAG        6fdeff4d67f3db493d47c44da20aa1efaa6574ef # (2020 Aug 06)
+		GIT_TAG        a532f5b1cf27d6a3c099437e6959cf7e398a0a67 # 1.0.2
 	)
 	
 	# picosha2 - used by hasher.h to calculate sha256 hashes
