@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 			std::string input;
 			std::getline(std::cin, input);
 			std::cout << "Pong: " << input << std::endl;
-			return -123;
+			return 123;
 		}
 	}
 

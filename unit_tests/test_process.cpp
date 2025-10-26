@@ -17,8 +17,10 @@ TEST( process, basic_test )
 
 	std::string received_data;
 
+	std::vector<std::string> args = { exepath , std::string("--pingback") };
+
 	auto proc = std::make_unique<process>( 
-		exepath + " --pingback", 
+		args, 
 		".",
 		[]( std::vector<uint8_t> &data ) -> bool
 		{
@@ -30,7 +32,7 @@ TEST( process, basic_test )
 			received_data.insert( received_data.end(), data.begin(), data.end() );
 			return true;
 		},
-		[]( const std::vector<uint8_t> &data ) -> bool
+		[]( const std::vector<uint8_t> & ) -> bool
 		{
 			return false;
 		}
@@ -43,7 +45,7 @@ TEST( process, basic_test )
 	int exit_code = 0;
 	res = proc->get_exit_code( exit_code );
 	ASSERT_EQ( res, status::ok );
-	EXPECT_EQ( exit_code, -123 );
+	EXPECT_EQ( exit_code, 123 );
 	proc.reset();
 
 	const std::string exp = std::string( pingback_msg, 21 );

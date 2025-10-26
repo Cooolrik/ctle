@@ -53,6 +53,22 @@ private:
 
 #include <unistd.h>
 #include <locale.h>
+#include <unistd.h>
+#include <spawn.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <cstring>
+
+// RAII wrapper for Linux file handles
+class linux_file_ref
+{
+public:
+	linux_file_ref( int _handle ) : handle( _handle ) {}
+	~linux_file_ref() { if( handle!=-1 ) { ::close( handle ); } }
+	int get_handle() const noexcept { return this->handle; }
+private:
+	int handle;
+};
 
 #endif//_CTLE_HEADERS_LINUX_STD_ADDED
 #undef _ADD_CTLE_HEADERS_LINUX_STD

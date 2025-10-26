@@ -28,13 +28,13 @@ public:
 	using output_callback = std::function<bool( const std::vector<uint8_t> &data )>;
 
 	/// @brief create a process object
-	/// @param command_line the command line to execute
+	/// @param command_arguments list of arguments to the process, the first one must be the name or path of the process
 	/// @param work_directory the working directory for the process
 	/// @param stdin_callback is called to get data to write to the process stdin. if nullptr, stdin is not connected.
 	/// @param stdout_callback is called when data is available from the process stdout. if nullptr, stdout is not connected.
 	/// @param stderr_callback is called when data is available from the process stderr. if nullptr, stderr is not connected.
 	/// @note the callbacks are called from separate threads, so make sure to synchronize access to shared data.
-	process( const std::string &command_line, 
+	process( const std::vector<std::string> &command_arguments,
 		     const std::string &work_directory, 
 			 input_callback stdin_callback = nullptr,
 			 output_callback stdout_callback = nullptr,
@@ -63,16 +63,19 @@ public:
 private:
 	struct os_data;
 	
-	std::string command_line;
-	std::string work_directory;
+	const std::vector<std::string> command_arguments;
+	const std::string work_directory;
 
-	input_callback stdin_callback;
-	output_callback stdout_callback;
-	output_callback stderr_callback;
+	const input_callback stdin_callback;
+	const output_callback stdout_callback;
+	const output_callback stderr_callback;
 
 	std::thread stdin_thread;
 	std::thread stdout_thread;
 	std::thread stderr_thread;
+
+	bool has_exit_code = false;
+	int exit_code = -1;
 
 	std::unique_ptr<os_data> process_data; // platform specific data
 };
@@ -107,6 +110,40 @@ private:
 
 namespace ctle
 {
+
+process::process( const std::vector<std::string> &_command_arguments,
+				  const std::string &_work_directory,
+				  input_callback _stdin_callback,
+				  output_callback _stdout_callback,
+				  output_callback _stderr_callback )
+	: command_arguments( _command_arguments )
+	, work_directory( _work_directory )
+	, stdin_callback( _stdin_callback )
+	, stdout_callback( _stdout_callback )
+	, stderr_callback( _stderr_callback )
+{
+}
+
+process::~process()
+{
+	// if the process is still running, terminate it
+	// if( this->process_data != nullptr )
+	// {
+	// 	int exit_code = 0;
+	// 	this->get_exit_code( exit_code );
+	// 	if( exit_code == STILL_ACTIVE )
+	// 		this->terminate();
+	// }
+
+	// wait for the IO threads to finish
+	if( this->stdin_thread.joinable() )
+		this->stdin_thread.join();
+	if( this->stdout_thread.joinable() )
+		this->stdout_thread.join();
+	if( this->stderr_thread.joinable() )
+		this->stderr_thread.join();
+}
+
 #ifdef _WIN32
 
 std::string get_current_executable_path() 
@@ -223,39 +260,6 @@ void process::os_data::write_to_pipe( HANDLE pipe, process::input_callback cb )
 	}
 
 	ctLogDebug << "process::os_data::write_to_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
-}
-
-process::process( const std::string &_command_line,
-				  const std::string &_work_directory,
-				  input_callback _stdin_callback,
-				  output_callback _stdout_callback,
-				  output_callback _stderr_callback )
-	: command_line( _command_line )
-	, work_directory( _work_directory )
-	, stdin_callback( _stdin_callback )
-	, stdout_callback( _stdout_callback )
-	, stderr_callback( _stderr_callback )
-{
-}
-
-process::~process()
-{
-	// if the process is still running, terminate it
-	if( this->process_data != nullptr )
-	{
-		int exit_code = 0;
-		this->get_exit_code( exit_code );
-		if( exit_code == STILL_ACTIVE )
-			this->terminate();
-	}
-
-	// wait for the IO threads to finish
-	if( this->stdin_thread.joinable() )
-		this->stdin_thread.join();
-	if( this->stdout_thread.joinable() )
-		this->stdout_thread.join();
-	if( this->stderr_thread.joinable() )
-		this->stderr_thread.join();
 }
 
 status process::start()
@@ -394,132 +398,241 @@ status process::get_exit_code( int &exit_code )
 
 #elif defined(linux)
 
+std::string get_current_executable_path() 
+{
+    std::vector<char> buffer(1024);
+
+	ssize_t len = 0;
+    for(;;)
+	{
+		len = readlink("/proc/self/exe", buffer.data(), buffer.size()-1 );
+		if( (size_t)len < buffer.size() )
+			break;
+
+		// if the call failed, return what error code is generated
+		if( len == -1 )
+		{
+			ctLogError  << "get_current_executable_path: readlink failed with error code: " << errno << ctLogEnd;
+			return {};
+		}
+
+		// the buffer was too small, increase size and retry
+		buffer.resize( buffer.size() * 2 );
+	}
+
+	buffer[len] = '\0';
+	return std::string( buffer.data(), len );
+}
+
 struct process::os_data
 {
-	//std::unique_ptr<windows_handle_ref> process_handle;
-	//std::unique_ptr<windows_handle_ref> process_thread_handle;
-	//std::unique_ptr<windows_handle_ref> stdin_write;
-	//std::unique_ptr<windows_handle_ref> stdout_read;
-	//std::unique_ptr<windows_handle_ref> stderr_read;
+	pid_t pid = -1;
+	std::unique_ptr<linux_file_ref> stdin_write;
+	std::unique_ptr<linux_file_ref> stdout_read;
+	std::unique_ptr<linux_file_ref> stderr_read;
 
-	static void read_from_pipe( HANDLE pipe, process::output_callback cb );
-	static void write_to_pipe( HANDLE pipe, process::input_callback cb );
+	static void read_from_pipe( int pipe, process::output_callback cb );
+	static void write_to_pipe( int pipe, process::input_callback cb );
 };
 
+void process::os_data::read_from_pipe( int pipe, process::output_callback cb )
+{
+	std::vector<uint8_t> buffer( 4096 );
+	
+	ctLogDebug << "process::os_data::read_from_pipe: starting read loop. pipe:" << pipe << ctLogEnd;
+	bool cont = true;
+	while( cont )	
+	{
+		// read data from the pipe (blocking)
+		const ssize_t bytes_read = read( pipe, buffer.data(), buffer.size() );
+		if( bytes_read == 0 )
+		{
+			ctLogDebug << "process::os_data::read_from_pipe: pipe closed. pipe:" << pipe << ctLogEnd;
+			return;
+		}
+		else if( bytes_read < 0 )
+		{
+			ctLogError << "process::os_data::read_from_pipe: pipe:" << pipe << " read() failed with error code: " << errno << ctLogEnd;
+			return;
+		}
 
-////#ifdef _WIN32
-//	void *hProcess = nullptr;
-//	void *hThread = nullptr;
-//	void *hStdinWrite = nullptr;
-//	void *hStdoutRead = nullptr;
-//	void *hStderrRead = nullptr;
-//
-//	void readStream( void *handle, OutputCallback callback );
-////#else
-////	pid_t pid_ = -1;
-////	int stdinPipe_[2];
-////	int stdoutPipe_[2];
-////	int stderrPipe_[2];
-////
-////	void readStream( int fd, OutputCallback callback );
-////#endif
-//
-//
-//
-//LPVOID process::buildEnvironmentBlock()
-//{
-//	if( environment_.empty() ) return nullptr;
-//	std::wstring block;
-//	for( const auto &e:environment_ ) block += toUtf16( e )+L'\0';
-//	block += L'\0';
-//	return (LPVOID)block.c_str();
-//}
+		// call the callback with the data read
+		cont = cb( std::vector<uint8_t>( buffer.data(), buffer.data() + bytes_read ) );
+	} 
 
+	ctLogDebug << "process::os_data::read_from_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
+}
 
+void process::os_data::write_to_pipe( int pipe, process::input_callback cb )
+{
+	std::vector<uint8_t> buffer;
+	
+	ctLogDebug << "process::os_data::write_to_pipe: starting write loop. pipe:" << pipe << ctLogEnd;
+	bool cont = true;
+	while( cont )
+	{
+		cont = cb( buffer );
+		if( buffer.empty() ) 
+			continue;
 
-//
-//bool process::start()
-//{
-//	pipe( stdinPipe_ );
-//	pipe( stdoutPipe_ );
-//	pipe( stderrPipe_ );
-//
-//	pid_ = fork();
-//	if( pid_==0 )
-//	{
-//		dup2( stdinPipe_[0], STDIN_FILENO );
-//		dup2( stdoutPipe_[1], STDOUT_FILENO );
-//		dup2( stderrPipe_[1], STDERR_FILENO );
-//
-//		close( stdinPipe_[1] );
-//		close( stdoutPipe_[0] );
-//		close( stderrPipe_[0] );
-//
-//		if( !environment_.empty() )
-//		{
-//			std::vector<char *> envp;
-//			for( auto &e:environment_ ) envp.push_back( const_cast<char *>(e.c_str()) );
-//			envp.push_back( nullptr );
-//			execl( "/bin/sh", "sh", "-c", commandLine_.c_str(), nullptr, envp.data() );
-//		}
-//		else
-//		{
-//			execl( "/bin/sh", "sh", "-c", commandLine_.c_str(), nullptr );
-//		}
-//		_exit( 1 );
-//	}
-//
-//	close( stdinPipe_[0] );
-//	close( stdoutPipe_[1] );
-//	close( stderrPipe_[1] );
-//
-//	if( !input_.empty() )
-//	{
-//		write( stdinPipe_[1], input_.c_str(), input_.size() );
-//		close( stdinPipe_[1] );
-//	}
-//
-//	stdoutThread_ = std::thread( [this]
-//		{
-//			readStream( stdoutPipe_[0], onStdout_ );
-//		} );
-//	stderrThread_ = std::thread( [this]
-//		{
-//			readStream( stderrPipe_[0], onStderr_ );
-//		} );
-//
-//	return true;
-//}
-//
-//void process::readStream( int fd, OutputCallback callback )
-//{
-//	char buffer[4096];
-//	while( true )
-//	{
-//		ssize_t count = read( fd, buffer, sizeof( buffer ) );
-//		if( count<=0 ) break;
-//		if( callback ) callback( std::string( buffer, count ) );
-//	}
-//	close( fd );
-//}
-//
-//void process::wait()
-//{
-//	waitpid( pid_, nullptr, 0 );
-//	if( stdoutThread_.joinable() ) stdoutThread_.join();
-//	if( stderrThread_.joinable() ) stderrThread_.join();
-//}
-//
-//void process::terminate()
-//{
-//	kill( pid_, SIGTERM );
-//}
-//
-//process::~process()
-//{
-//	// No handles to clean up on Linux
-//}
-//
+		// write data to the pipe 
+		const ssize_t bytes_written = write( pipe, buffer.data(), buffer.size() );
+		if( bytes_written == 0 
+		 || (bytes_written < 0 && errno == EPIPE ) )
+		{
+			ctLogDebug << "process::os_data::write_to_pipe: pipe closed. pipe:" << pipe << ctLogEnd;
+			return;
+		}
+		else if( bytes_written < 0 )
+		{
+			ctLogError << "process::os_data::write_to_pipe: pipe:" << pipe << " WriteFile failed with error code: " << errno << ctLogEnd;
+			return;
+		}
+		buffer.clear();
+	}
+
+	ctLogDebug << "process::os_data::write_to_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
+}
+
+status process::start()
+{
+	this->process_data = std::make_unique<os_data>();
+
+	int stdin_pipe[2];
+	int stdout_pipe[2];
+	int stderr_pipe[2];
+
+	pipe( stdin_pipe );
+	pipe( stdout_pipe );
+	pipe( stderr_pipe );
+
+	posix_spawn_file_actions_t file_actions;
+    posix_spawn_file_actions_init(&file_actions);
+
+	// Redirect child's stdin
+    posix_spawn_file_actions_adddup2(&file_actions, stdin_pipe[0], STDIN_FILENO);
+    posix_spawn_file_actions_addclose(&file_actions, stdin_pipe[1]);
+
+    // Redirect child's stdout
+    posix_spawn_file_actions_adddup2(&file_actions, stdout_pipe[1], STDOUT_FILENO);
+    posix_spawn_file_actions_addclose(&file_actions, stdout_pipe[0]);
+
+    // Redirect child's stderr
+    posix_spawn_file_actions_adddup2(&file_actions, stderr_pipe[1], STDERR_FILENO);
+    posix_spawn_file_actions_addclose(&file_actions, stderr_pipe[0]);
+
+	// store the handles we are going to keep open in the parent process
+	this->process_data->stdin_write = std::make_unique<linux_file_ref>( stdin_pipe[1] );
+	this->process_data->stdout_read = std::make_unique<linux_file_ref>( stdout_pipe[0] );
+	this->process_data->stderr_read = std::make_unique<linux_file_ref>( stderr_pipe[0] );
+
+	std::vector<char*> argv;
+	for (const auto& arg : command_arguments) 
+	{
+        argv.push_back(const_cast<char*>(arg.c_str()));
+    }
+    argv.push_back(nullptr);
+
+	// spawn process using posix_spawn
+    pid_t pid = -1;
+    auto result = posix_spawn(&pid, this->command_arguments[0].data(), &file_actions, nullptr, argv.data(), nullptr );
+    posix_spawn_file_actions_destroy(&file_actions);
+	ctValidate( result == 0, status::cant_access )
+		<< "process::start: posix_spawn failed. Error string " << std::string(strerror(result)) 
+		<< ctValidateEnd;
+
+	if( this->stdin_callback )
+		this->stdin_thread = std::thread( process::os_data::write_to_pipe, stdin_pipe[1], this->stdin_callback );
+
+	if( this->stdout_callback )
+		this->stdout_thread = std::thread( process::os_data::read_from_pipe, stdout_pipe[0], this->stdout_callback );
+
+	if( this->stderr_callback )
+		this->stderr_thread = std::thread( process::os_data::read_from_pipe, stderr_pipe[0], this->stderr_callback );
+
+	// save the process id, and close unused ends in parent
+	this->process_data->pid = pid;
+    close(stdin_pipe[0]);
+    close(stdout_pipe[1]);
+    close(stderr_pipe[1]);
+
+	return status::ok;
+}
+
+status process::wait( std::chrono::milliseconds time_out )
+{
+	ctValidate( this->process_data != nullptr, status::not_initialized ) 
+		<< "process::wait: process not started or has already terminated." 
+		<< ctValidateEnd;
+
+	if( this->has_exit_code )
+		return status::ok;
+
+	int proc_status = 0;
+    auto start_time = std::chrono::steady_clock::now();
+
+    while(true) 
+	{
+        pid_t result = waitpid(this->process_data->pid, &proc_status, WNOHANG);
+		if(result > 0) 
+			break;	
+        ctValidate( result != -1, status::undefined_error ) << "process::wait: waitpid failed with error: " << strerror(errno) << ctValidateEnd;
+
+		// if we are not waiting indefinitely, check time
+		if( time_out.count() != 0 )
+		{
+			auto now_time = std::chrono::steady_clock::now();
+			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now_time - start_time);
+			if (elapsed >= time_out)
+				return status::not_ready;
+		}
+
+		// avoid busy waiting, yield time
+        std::this_thread::yield();
+    }
+
+	// done, collect the exit code
+	ctValidate( WIFEXITED(proc_status), status::undefined_error ) << "process::get_exit_code: Process terminated abnormally." << ctValidateEnd;
+
+	this->exit_code = WEXITSTATUS(proc_status);
+	this->has_exit_code = true;
+	return status::ok;
+}
+
+status process::get_exit_code( int &_exit_code )
+{
+	ctValidate( this->process_data != nullptr, status::not_initialized ) 
+		<< "process::get_exit_code: process not started or has already terminated." 
+		<< ctValidateEnd;
+
+	if( this->has_exit_code )
+	{
+		_exit_code = this->exit_code;
+		return status::ok;
+	}
+
+	// wait for process to end
+	ctStatusCall( this->wait() );
+	_exit_code = this->exit_code;
+	return status::ok;
+}
+
+status process::terminate( int _exit_code )
+{
+	ctValidate( this->process_data != nullptr, status::not_initialized ) 
+		<< "process::get_exit_code: process not started or has already terminated." 
+		<< ctValidateEnd;
+
+	if( this->has_exit_code )
+		return status::ok;
+
+	// wait for process to end
+	kill( this->process_data->pid, SIGTERM );
+	this->exit_code = _exit_code;
+	this->has_exit_code = true;
+	return status::ok;
+}
+
 #endif//defined(_WIN32) elif defined(linux)
 
 }
