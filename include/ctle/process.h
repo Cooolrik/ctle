@@ -11,8 +11,11 @@
 #include <vector>
 #include <functional>
 #include <thread>
+#include <mutex>
 
+#include "fwd.h"
 #include "status.h"
+#include "status_return.h"
 
 namespace ctle
 {
@@ -24,31 +27,32 @@ std::string get_current_executable_path();
 class process
 {
 public:
-	using input_callback = std::function<bool( std::vector<uint8_t> &data )>;
 	using output_callback = std::function<bool( const std::vector<uint8_t> &data )>;
 
-	/// @brief create a process object
+	/// @brief create a new process instance and start the process
 	/// @param command_arguments list of arguments to the process, the first one must be the name or path of the process
 	/// @param work_directory the working directory for the process
-	/// @param stdin_callback is called to get data to write to the process stdin. if nullptr, stdin is not connected.
 	/// @param stdout_callback is called when data is available from the process stdout. if nullptr, stdout is not connected.
 	/// @param stderr_callback is called when data is available from the process stderr. if nullptr, stderr is not connected.
+	/// @param use_stdin if true, use put_stdin to send data to the process stdin. if false, stdin is not connected.
 	/// @note the callbacks are called from separate threads, so make sure to synchronize access to shared data.
-	process( const std::vector<std::string> &command_arguments,
-		     const std::string &work_directory, 
-			 input_callback stdin_callback = nullptr,
-			 output_callback stdout_callback = nullptr,
-			 output_callback stderr_callback = nullptr );
+	static value_return<std::unique_ptr<process>> start(
+		const std::vector<std::string> &command_arguments,
+		const std::string &work_directory,
+		output_callback stdout_callback = nullptr,
+		output_callback stderr_callback = nullptr,
+		bool use_stdin = false
+	);
 	~process();
 
-	/// @brief start the process, asychronously
-	/// @return status::ok on success, error code on failure
-	status start();
-
-	/// @brief wait for the process to exit, at most time_out milliseconds. if time_out is 0, wait indefinitely
+	/// @brief wait for the process to exit, at most time_out ms. defaults to waiting indefinitely.
+	/// @note if time_out is zero, the function will return immediately
+	/// @note this function blocks the calling thread until the process exits or the timeout is reached
+	/// @note on some platforms, the maximum time_out value may be limited by the underlying OS API to 32-bit milliseconds (approx 49 days). To rellay wait indefinitely, use the default parameter value of max().
 	/// @param time_out maximum time to wait in milliseconds
+	/// @param exit_code optional pointer to an int that receives the exit code of the process if it has finished
 	/// @return status::ok if the process exited, status::not_ready if the wait timed out, error code on failure
-	status wait( std::chrono::milliseconds time_out = std::chrono::milliseconds(0) );
+	status wait( std::chrono::milliseconds time_out = std::chrono::milliseconds::max(), int *exit_code = nullptr );
 
 	/// @brief terminate the process
 	/// @param exit_code the exit code to set for the process
@@ -60,13 +64,23 @@ public:
 	/// @return status::ok on success, error code on failure
 	status get_exit_code( int &exit_code );
 
-private:
-	struct os_data;
-	
-	const std::vector<std::string> command_arguments;
-	const std::string work_directory;
+	/// @brief checks if the process is still running
+	/// @return true if the process is running, false if it has fisnished, or has not been started yet
+	bool is_running();
 
-	const input_callback stdin_callback;
+	/// @brief checks if a process is finished
+	/// @return true if the process has been started and has run, false if the process has not been started, or is still running
+	bool has_exited();
+
+	/// @brief put_stdin. Send data to the process stdin.
+	status put_stdin( const std::vector<uint8_t> &data );
+
+private:
+	process();
+
+	struct os_data;
+	friend struct os_data;
+
 	const output_callback stdout_callback;
 	const output_callback stderr_callback;
 
@@ -74,8 +88,21 @@ private:
 	std::thread stdout_thread;
 	std::thread stderr_thread;
 
-	bool has_exit_code = false;
+	enum _process_state
+	{
+		running,
+		exited
+	} process_state = {};
+
 	int exit_code = -1;
+
+	bool use_stdin = false;
+	std::mutex stdin_mutex;
+	std::vector<uint8_t> stdin_buffer;
+	std::condition_variable stdin_cv;
+	bool shutdown_stdin_thread = false;
+	bool fetch_stdin_data( std::vector<uint8_t> &dest );
+	void notify_stdin_thread_shutdown() noexcept;
 
 	std::unique_ptr<os_data> process_data; // platform specific data
 };
@@ -111,38 +138,54 @@ private:
 namespace ctle
 {
 
-process::process( const std::vector<std::string> &_command_arguments,
-				  const std::string &_work_directory,
-				  input_callback _stdin_callback,
-				  output_callback _stdout_callback,
-				  output_callback _stderr_callback )
-	: command_arguments( _command_arguments )
-	, work_directory( _work_directory )
-	, stdin_callback( _stdin_callback )
-	, stdout_callback( _stdout_callback )
-	, stderr_callback( _stderr_callback )
-{
-}
+process::process() = default;
 
 process::~process()
 {
 	// if the process is still running, terminate it
-	if( this->process_data != nullptr )
+	if( this->is_running() )
 	{
-		if( !this->has_exit_code )
-		{
-			if( this->wait( std::chrono::milliseconds( 1 ) ) == status::not_ready )
-				this->terminate();
-		}
+		this->terminate();
 	}
 
 	// wait for the IO threads to finish
+	this->notify_stdin_thread_shutdown();
 	if( this->stdin_thread.joinable() )
 		this->stdin_thread.join();
 	if( this->stdout_thread.joinable() )
 		this->stdout_thread.join();
 	if( this->stderr_thread.joinable() )
 		this->stderr_thread.join();
+}
+
+status process::put_stdin( const std::vector<uint8_t> &data )
+{
+	ctValidate( this->use_stdin, status::invalid_param ) << "process::put_stdin: process was not started with stdin enabled." << ctValidateEnd;
+	{
+		std::lock_guard<std::mutex> lock( this->stdin_mutex );
+		this->stdin_buffer.insert( this->stdin_buffer.end(), data.begin(), data.end() );
+	}
+	this->stdin_cv.notify_one();
+	return status::ok;
+}
+
+bool process::fetch_stdin_data( std::vector<uint8_t> &dest )
+{
+	std::unique_lock<std::mutex> lock( this->stdin_mutex );
+	this->stdin_cv.wait( lock, [this]() { return !this->stdin_buffer.empty() || this->shutdown_stdin_thread; } );
+	if( this->shutdown_stdin_thread )
+		return false;
+	dest.swap( this->stdin_buffer );
+	return true;
+}
+
+void process::notify_stdin_thread_shutdown() noexcept 
+{ 
+	{
+		std::lock_guard<std::mutex> lock( this->stdin_mutex );
+		this->shutdown_stdin_thread = true;
+	}
+	this->stdin_cv.notify_one();
 }
 
 #ifdef _WIN32
@@ -179,6 +222,13 @@ std::string get_current_executable_path()
 		return {};
 	}
 
+	// now convert it to a generic utf-8 path (with forward slashes)
+	for( auto &c : utfpath )
+	{
+		if( c == '\\' )
+			c = '/';
+	}
+
 	// conversion succeeded, return the utf-8 path
 	return utfpath;
 }
@@ -192,7 +242,7 @@ struct process::os_data
 	std::unique_ptr<windows_handle_ref> stderr_read;
 
 	static void read_from_pipe( HANDLE pipe, process::output_callback cb );
-	static void write_to_pipe( HANDLE pipe, process::input_callback cb );
+	static void write_to_pipe( process *pProcess, HANDLE pipe );
 };
 
 void process::os_data::read_from_pipe( HANDLE pipe, process::output_callback cb )
@@ -228,7 +278,7 @@ void process::os_data::read_from_pipe( HANDLE pipe, process::output_callback cb 
 	ctLogDebug << "process::os_data::read_from_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
 }
 
-void process::os_data::write_to_pipe( HANDLE pipe, process::input_callback cb )
+void process::os_data::write_to_pipe( process *pProcess, HANDLE pipe )
 {
 	std::vector<uint8_t> buffer;
 	DWORD bytes_written = 0;
@@ -237,7 +287,8 @@ void process::os_data::write_to_pipe( HANDLE pipe, process::input_callback cb )
 	bool cont = true;
 	while( cont )
 	{
-		cont = cb( buffer );
+		// fetch data to write to the pipe. blocking call, returns false if the thread should exit
+		cont = pProcess->fetch_stdin_data( buffer );
 		if( buffer.empty() ) 
 			continue;
 
@@ -263,51 +314,37 @@ void process::os_data::write_to_pipe( HANDLE pipe, process::input_callback cb )
 	ctLogDebug << "process::os_data::write_to_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
 }
 
-status process::start()
+value_return<std::unique_ptr<process>> process::start( const std::vector<std::string> &command_arguments,
+													   const std::string &work_directory,
+													   output_callback stdout_callback,
+													   output_callback stderr_callback,
+													   bool _use_stdin )
 {
-	ctValidate( this->process_data == nullptr, status::already_initialized ) 
-		<< "process::terminate: process already started."
-		<< ctValidateEnd;
-
 	// combine all command arguments into a single command line string
 	std::string command_line;
-	for( const auto &arg : this->command_arguments )
+	for( const auto &arg : command_arguments )
 	{
+		// add space separator if needed
 		if( !command_line.empty() )
 			command_line += " ";
-		// if the argument contains spaces, quote it
-		if( arg.find_first_of( " \t\"" ) != std::string::npos )
-		{
-			command_line += "\"";
-			for( const char c : arg )
-			{
-				if( c == '"' )
-					command_line += "\\\"";
-				else
-					command_line += c;
-			}
-			command_line += "\"";
-		}
-		else
-		{
-			command_line += arg;
-		}
+
+		// quote the argument if needed (escape characters or whitespace)
+		command_line += ctle::quote_string_t<quote_string_options::whitespace>( arg );
 	}
 
 	// make sure we can convert command line and work directory to wide strings
 	std::wstring wcmd = {};
 	std::wstring wdir = {};
 	if( !ctle::string_to_wstring( command_line, wcmd ) 
-	 || !ctle::string_to_wstring( this->work_directory, wdir ) )
+	 || !ctle::string_to_wstring( work_directory, wdir ) )
 	{
-		ctLogError << "process::start: when trying to run: '" << this->command_arguments[0] << "' "
-				   << "in work directory: '" << this->work_directory << "' "
-				   << "could not convert command line and/or work directory to wide strings." 
+		ctLogError << "process::start: when trying to run: '" << command_arguments[0] << "' "
+				   << "in work directory: '" << work_directory << "' "
+				   << "could not convert command line arguments and/or work directory to wide strings." 
 				   << ctLogEnd;
 		return status::invalid_param;
 	}
-	this->process_data = std::make_unique<os_data>();
-
+	
 	// set up security attributes to allow handle inheritance
 	SECURITY_ATTRIBUTES sa = {};
 	sa.nLength = sizeof( SECURITY_ATTRIBUTES );
@@ -322,11 +359,6 @@ status process::start()
 	CreatePipe( &_stdin_read, &_stdin_write, &sa, 0 );
 	CreatePipe( &_stdout_read, &_stdout_write, &sa, 0 );
 	CreatePipe( &_stderr_read, &_stderr_write, &sa, 0 );
-
-	// store the handles we are going to keep open
-	this->process_data->stdin_write = std::make_unique<windows_handle_ref>( _stdin_write );
-	this->process_data->stdout_read = std::make_unique<windows_handle_ref>( _stdout_read );
-	this->process_data->stderr_read = std::make_unique<windows_handle_ref>( _stderr_read );
 
 	// set up the handles for the child process
 	STARTUPINFOW si = {};
@@ -358,88 +390,119 @@ status process::start()
 
 	// check if the process was created successfully
 	ctValidate( success, status::cant_access ) 
-		<< "process::start: when trying to run: '" << this->command_arguments[0] << "' "
-		<< "in work directory: '" << this->work_directory << "' "
+		<< "process::start: when trying to run: '" << command_arguments[0] << "' "
+		<< "in work directory: '" << work_directory << "' "
 		<< "the CreateProcessW function failed with error code: " << GetLastError()
 		<< ctValidateEnd;
 
-	// process has successfully started, store the process and thread handles as well
-	this->process_data->process_handle = std::make_unique<windows_handle_ref>( pi.hProcess );
-	this->process_data->process_thread_handle = std::make_unique<windows_handle_ref>( pi.hThread );
+	// create the process instance
+	auto pThis = std::unique_ptr<process>( new process() );
+	pThis->process_data = std::make_unique<os_data>();
+	
+	// start the IO threads as needed
+	pThis->use_stdin = _use_stdin;
+	if( _use_stdin )
+		pThis->stdin_thread = std::thread( process::os_data::write_to_pipe, pThis.get(), _stdin_write );
+	if( stdout_callback )
+		pThis->stdout_thread = std::thread( process::os_data::read_from_pipe, _stdout_read, stdout_callback );
+	if( stderr_callback )
+		pThis->stderr_thread = std::thread( process::os_data::read_from_pipe, _stderr_read, stderr_callback );
 
-	if( this->stdin_callback )
-		this->stdin_thread = std::thread( process::os_data::write_to_pipe, _stdin_write, this->stdin_callback );
-
-	if( this->stdout_callback )
-		this->stdout_thread = std::thread( process::os_data::read_from_pipe, _stdout_read, this->stdout_callback );
-
-	if( this->stderr_callback )
-		this->stderr_thread = std::thread( process::os_data::read_from_pipe, _stderr_read, this->stderr_callback );
-
-	ctLogVerbose << "process::start: running: '" << this->command_arguments[0] << "' "
-				 << "in work directory: '" << this->work_directory << "' "
+	ctLogVerbose << "process::start: running: '" << command_arguments[0] << "' "
+				 << "in work directory: '" << work_directory << "' "
 				 << ctLogEnd;
 
-	return status::ok;
+	// store away the needed handles
+	pThis->process_data->stdin_write = std::make_unique<windows_handle_ref>( _stdin_write );
+	pThis->process_data->stdout_read = std::make_unique<windows_handle_ref>( _stdout_read );
+	pThis->process_data->stderr_read = std::make_unique<windows_handle_ref>( _stderr_read );
+	pThis->process_data->process_handle = std::make_unique<windows_handle_ref>( pi.hProcess );
+	pThis->process_data->process_thread_handle = std::make_unique<windows_handle_ref>( pi.hThread );
+
+	pThis->process_state = running;
+	return pThis;
 }
 
-status process::wait( std::chrono::milliseconds time_out )
+status process::wait( std::chrono::milliseconds time_out, int *_exit_code )
 {
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::terminate: process not started or already terminated." 
-		<< ctValidateEnd;
-
-	if( this->has_exit_code )
+	// check if the process has already exited
+	if( this->process_state == exited )
+	{
+		if( _exit_code ) 
+			*_exit_code = this->exit_code;
 		return status::ok;
+	}
+	ctSanityCheck( this->process_state == running );
 
-	const DWORD wait_time = (time_out.count() == 0)?(INFINITE):((DWORD)time_out.count());
+	// get the wait time in milliseconds
+	const DWORD wait_time =
+		(time_out == std::chrono::milliseconds::max()) ?
+		(INFINITE) :
+		((DWORD)std::min( time_out, std::chrono::milliseconds( UINT_MAX - 1 ) ).count());
+
 	auto res = ::WaitForSingleObject( this->process_data->process_handle->get_handle(), wait_time );
 	ctValidate( res != WAIT_FAILED, status::undefined_error ) << "process::wait: WaitForSingleObject failed with error code: " << GetLastError() << ctValidateEnd;
 	if( res == WAIT_TIMEOUT )
 		return status::not_ready;
+
+	// process has exited, update the process state and get the exit code
+	this->process_state = exited;
+
+	res = ::GetExitCodeProcess( this->process_data->process_handle->get_handle(), (LPDWORD)(&this->exit_code) );
+	ctValidate( res != 0, status::undefined_error ) 
+		<< "process::get_exit_code: GetExitCodeProcess failed with error code: " << GetLastError() 
+		<< ctValidateEnd;
+
+	if( _exit_code ) 
+		*_exit_code = this->exit_code;
 	return status::ok;
 }
 
 status process::terminate( int _exit_code )
 {
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::terminate: process not started or already terminated." 
-		<< ctValidateEnd;
+	// must be in state running or exited
+	if( this->process_state == running )
+	{
+		// process is running, terminate it
+		auto res = ::TerminateProcess( this->process_data->process_handle->get_handle(), _exit_code );
+		ctValidate( res != 0, status::cant_access ) 
+			<< "process::terminate: TerminateProcess failed with error code: " << GetLastError() 
+			<< ctValidateEnd;
 
-	if( this->has_exit_code )
-		return status::ok;
+		this->process_state = exited;
+	}
+	ctSanityCheck( this->process_state == exited );
 
-	auto res = ::TerminateProcess( this->process_data->process_handle->get_handle(), _exit_code );
-	ctValidate( res != 0, status::cant_access ) 
-		<< "process::terminate: TerminateProcess failed with error code: " << GetLastError() 
-		<< ctValidateEnd;
 	this->exit_code = _exit_code;
-	this->has_exit_code = true;
+	
 	return status::ok;
 }
 
 status process::get_exit_code( int &_exit_code )
 {
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::get_exit_code: process not started or already terminated." 
-		<< ctValidateEnd;
+	// is still running, cannot get exit code
+	if( this->is_running() )
+		return status::not_ready;
+	ctSanityCheck( this->process_state == exited );
 
-	if( this->has_exit_code )
-	{
-		_exit_code = this->exit_code;
-		return status::ok;
-	}
-
-	DWORD code = 0;
-	auto res = ::GetExitCodeProcess( this->process_data->process_handle->get_handle(), &code );
-	ctValidate( res != 0, status::undefined_error ) 
-		<< "process::get_exit_code: GetExitCodeProcess failed with error code: " << GetLastError() 
-		<< ctValidateEnd;
-
-	this->exit_code = (int)( code );
-	this->has_exit_code = true;
 	_exit_code = this->exit_code;
 	return status::ok;
+}
+
+bool process::is_running()
+{
+	if( this->process_state == exited )
+		return false;
+
+	// may be running, or has just exited, update the process state by waiting with zero timeout, then check state
+	this->wait( std::chrono::milliseconds( 0 ) );
+
+	return (this->process_state == running);
+}
+
+bool process::has_exited()
+{
+	return !this->is_running();
 }
 
 #elif defined(linux)

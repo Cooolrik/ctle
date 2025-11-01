@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <type_traits>
 
 namespace ctle
 {
@@ -187,6 +188,27 @@ template<class _Ty> int64_t stoi64_t(const _Ty* start, const _Ty* end) noexcept;
 template<class _Ty> inline int64_t stoi64_t(const string_span<_Ty>& span) noexcept { return stoi64_t(span.start, span.end); }
 template<class _Ty> inline int64_t stoi64_t(const std::basic_string<_Ty>& str) noexcept { return stoi64_t(str.data(), str.data() + str.size()); }
 
+/// @brief Options for quoting strings. Used by quote_string_t.
+enum class quote_string_options : uint32_t
+{
+	escape_chars = 0x0,			///< quote the string if it contains escape characters (this is the minimum, and is always done)
+	whitespace	 = 0x1,			///< quote the string if it contains whitespace
+	always		 = 0xffffffff,	///< always quote the string, regardless of content
+};
+
+/// @brief given a start and end pointer to a string, return a quoted version of the string, with escape characters handled.
+/// @details The implementation does not modify the input string, and does not hold any internal state. If the string does not need quoting, the original string is returned.
+/// @tparam _Ty The string character type, char or wchar_t.
+/// @param start The beginning of the string span to quote.
+/// @param end The end of the string span to quote.
+/// @returns The quoted string, if the string needed quoting, otherwise the original string is returned.
+template<quote_string_options _opts = quote_string_options::always, class _Ty> 
+std::basic_string<_Ty> quote_string_t(const _Ty* start, const _Ty* end ) noexcept;
+template<quote_string_options _opts = quote_string_options::always, class _Ty> 
+inline std::basic_string<_Ty> quote_string_t(const string_span<_Ty>& span ) noexcept { return quote_string_t<_opts,_Ty>(span.start, span.end); }
+template<quote_string_options _opts = quote_string_options::always, class _Ty> 
+inline std::basic_string<_Ty> quote_string_t(const std::basic_string<_Ty>& str ) noexcept { return quote_string_t<_opts,_Ty>(str.data(), str.data() + str.size()); }
+
 /// @brief given a start and end pointer to a string, lex into a vector of tokens. 
 /// @details The lexer handles whitespace and quoted strings, as well as separator characters. 
 /// @note For performance, pre-reserve the vector the estimated nunber of tokens
@@ -213,6 +235,10 @@ bool wstring_to_string( const std::wstring &srcStr, std::string &destStr );
 
 }
 // namespace ctle
+
+#include "_macros.inl"
+_CTLE_DEFINE_BITWISE_OPERATORS( ctle::quote_string_options )
+#include "_undef_macros.inl"
 
 #ifdef CTLE_IMPLEMENTATION
 #include "endianness.h"
@@ -514,6 +540,78 @@ template<class _Ty> int64_t stoi64_t(const _Ty* start, const _Ty* end) noexcept
 }
 template int64_t stoi64_t<char>(const char* start, const char* end) noexcept;
 template int64_t stoi64_t<wchar_t>(const wchar_t* start, const wchar_t* end) noexcept;
+
+template<quote_string_options _opts, class _Ty> 
+std::basic_string<_Ty> quote_string_t(const _Ty* start, const _Ty* end ) noexcept
+{
+	static const _Ty ws_chars[] = { (_Ty)' ', (_Ty)'\t', (_Ty)'\r', (_Ty)'\n' };
+	static const _Ty esc_chars[] = { (_Ty)'\\', (_Ty)'"', (_Ty)'\'' };
+
+	// determine if we need quoting
+	bool needs_quoting = (_opts == quote_string_options::always);
+
+	// if we have not already decided to quote the string, check for whitespace if needed
+	if (!needs_quoting 
+	 && ((_opts & quote_string_options::whitespace) == quote_string_options::whitespace) )
+	{
+		// scan for whitespace
+		const _Ty* ptr = start;
+		while (ptr < end)
+		{
+			for( const _Ty c : ws_chars )
+			{
+				if (*ptr == c)
+				{
+					needs_quoting = true;
+					break;
+				}
+			}
+			++ptr;
+		}
+	}
+
+	// if we have not already decided to quote the string, check for characters are used in escaping, since they need to be escaped
+	if (!needs_quoting)
+	{
+		const _Ty* ptr = start;
+		while (ptr < end)
+		{
+			for( const _Ty c : esc_chars )
+			{
+				if (*ptr == c)
+				{
+					needs_quoting = true;
+					break;
+				}
+			}
+			++ptr;
+		}
+	}
+
+	// quote if needed, always using double quotes as the quote character, and escaping backslashes and double quotes
+	if (needs_quoting)
+	{
+		std::basic_string<_Ty> ret;
+		ret.reserve( (end - start) + 20 ); // reserve some extra space for escapes
+		ret += _Ty('"');
+		const _Ty* ptr = start;
+		while (ptr < end)
+		{
+			if (*ptr == _Ty('\\') || *ptr == _Ty('"'))
+			{
+				ret += _Ty('\\');
+			}
+			ret += *ptr;
+			++ptr;
+		}
+		ret += _Ty('"');
+		return ret;
+	}
+	else
+	{
+		return std::basic_string<_Ty>(start, end);
+	}
+}
 
 template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* start, const _Ty* end, const _Ty* separators, const _Ty* quotes, const _Ty* whitespaces) noexcept
 {

@@ -158,6 +158,38 @@ def generate_macros( path:str, undef_path:str ):
 	}
 ''' )
 
+	def_text.comment_ln('Used to declare & define all bitwise operators for an enum class that uses bit patterns which can be combined. Note to use in the correct namespace (usually the global namespace)')
+	add_macro( '_CTLE_DEFINE_BITWISE_OPERATORS', '''
+#define _CTLE_DEFINE_BITWISE_OPERATORS(enum_type)\\
+	inline enum_type operator|(enum_type lhs, enum_type rhs) { \\
+		using _Ty = std::underlying_type_t<enum_type>; \\
+		return (enum_type)((_Ty)(lhs) | (_Ty)(rhs)); \\
+	}\\
+	inline enum_type operator&(enum_type lhs, enum_type rhs) { \\
+		using _Ty = std::underlying_type_t<enum_type>; \\
+		return (enum_type)((_Ty)(lhs) & (_Ty)(rhs)); \\
+	}\\
+	inline enum_type operator^(enum_type lhs, enum_type rhs) { \\
+		using _Ty = std::underlying_type_t<enum_type>; \\
+		return (enum_type)((_Ty)(lhs) ^ (_Ty)(rhs)); \\
+	}\\
+	inline enum_type operator~(enum_type value) {\\
+		using _Ty = std::underlying_type_t<enum_type>; \\
+		return (enum_type)(~(_Ty)(value)); \\
+	}\\
+	inline enum_type& operator|=(enum_type& lhs, enum_type rhs) {\\
+		lhs = lhs | rhs; \\
+		return lhs;\\
+	}\\
+	inline enum_type& operator&=(enum_type& lhs, enum_type rhs) {\\
+		lhs = lhs & rhs; \\
+		return lhs;\\
+	}\\
+	inline enum_type& operator^=(enum_type& lhs, enum_type rhs) {\\
+		lhs = lhs ^ rhs; \\
+		return lhs;\\
+	}                                                                
+''' )
 
 	out = formatted_output()
 	out.lines.extend( header_text.lines )
