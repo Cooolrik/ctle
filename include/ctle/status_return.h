@@ -44,6 +44,16 @@ public:
 	status_return( const _ValueType &_value ) : svalue( _value ) {}
 	status_return( _ValueType &&_value ) noexcept : svalue( std::move( _value ) ) {}
 
+	// comparison operators with the status type
+	bool operator==( const _StatusType &val ) const
+	{
+		return ( this->sstatus == val );
+	}
+	bool operator!=( const _StatusType &val ) const
+	{
+		return ( this->sstatus != val );
+	}
+
 	// returns the status as a bool, requires that status can be converted to a bool implicitly
 	operator bool() const
 	{
@@ -88,6 +98,16 @@ public:
 	status_return &operator=( status_return &&other ) = default;
 
 	status_return( const _StatusType _status ) : sstatus( _status ) {};
+
+	// comparison operators with the status type
+	bool operator==( const _StatusType &val ) const
+	{
+		return ( this->sstatus == val );
+	}
+	bool operator!=( const _StatusType &val ) const
+	{
+		return ( this->sstatus != val );
+	}
 
 	// returns the status as a bool, requires that status can be converted to a bool implicitly
 	operator bool() const

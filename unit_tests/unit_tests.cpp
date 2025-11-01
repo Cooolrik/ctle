@@ -249,7 +249,8 @@ int main(int argc, char** argv)
 		{
 			std::string input;
 			std::getline(std::cin, input);
-			std::cout << "Pong: " << input << std::endl;
+			std::cout << "Pong: " << input << std::endl << std::flush;
+			std::cerr << "Pang: " << input << std::endl << std::flush;
 			return 123;
 		}
 	}

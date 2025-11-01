@@ -120,3 +120,8 @@
 #endif//ctStatusCallThrow
 #undef ctStatusCallThrow
 
+#ifndef _CTLE_DEFINE_BITWISE_OPERATORS
+#error The expected macro _CTLE_DEFINE_BITWISE_OPERATORS does not exist.
+#endif//_CTLE_DEFINE_BITWISE_OPERATORS
+#undef _CTLE_DEFINE_BITWISE_OPERATORS
+
