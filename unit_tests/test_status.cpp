@@ -17,6 +17,8 @@ TEST( status, basic_test )
 	EXPECT_TRUE( res != status_code::cant_allocate );
 	EXPECT_FALSE( res == status_code::cant_allocate );
 
+	EXPECT_FALSE( status_code::already_exists == status_code::cant_allocate );
+
 	EXPECT_TRUE( ( res ) );
 	EXPECT_FALSE( !( res ) );
 
@@ -25,8 +27,15 @@ TEST( status, basic_test )
 	EXPECT_TRUE( res != status_code::ok );
 	EXPECT_FALSE( res == status_code::ok );
 
+	EXPECT_TRUE( res != status_code::cant_read );
+	EXPECT_FALSE( res == status_code::cant_read );
+	EXPECT_TRUE( res != status::cant_read );
+	EXPECT_FALSE( res == status::cant_read );
+
 	EXPECT_TRUE( res == status_code::cant_write );
 	EXPECT_FALSE( res != status_code::cant_write );
+	EXPECT_TRUE( res == status::cant_write );
+	EXPECT_FALSE( res != status::cant_write );
 
 	EXPECT_FALSE( ( res ) );
 	EXPECT_TRUE( !( res ) );

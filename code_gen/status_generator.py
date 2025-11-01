@@ -209,6 +209,9 @@ namespace ctle
 		status( const status_code &_value ) noexcept : svalue( _value ) {}
 		const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
 
+		bool operator == ( const status &_other ) const noexcept { return this->svalue == _other.svalue; }
+		bool operator != ( const status &_other ) const noexcept { return this->svalue != _other.svalue; }
+
 #ifdef _SYSTEM_ERROR_
 		// convert from STL std::errc
 		static status_code to_status_code( std::errc _value ) noexcept;

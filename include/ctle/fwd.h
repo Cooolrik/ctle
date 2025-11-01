@@ -75,6 +75,9 @@ template<size_t _Size> struct digest;
 // from uuid.h
 struct uuid;
 
+// from process.h
+class process;
+
 // from idx_vector.h
 template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector;
 

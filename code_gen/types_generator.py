@@ -23,6 +23,7 @@ fwd_classes = [
 	['file_funcs.h', ['enum class access_mode : unsigned int','_file_object']],
 	['digest.h', ['template<size_t _Size> struct digest']],
 	['uuid.h', ['struct uuid']],
+	['process.h', ['process']],
 	['idx_vector.h', ['template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class idx_vector']],
 	['optional_value.h', ['template<class _Ty, class _PtrTy = std::unique_ptr<_Ty>> class optional_value']],
 	['optional_vector.h', ['template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector']],
