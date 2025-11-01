@@ -12,6 +12,8 @@
 #include <functional>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
+#include <climits>
 
 #include "fwd.h"
 #include "status.h"
@@ -80,9 +82,6 @@ private:
 
 	struct os_data;
 	friend struct os_data;
-
-	const output_callback stdout_callback;
-	const output_callback stderr_callback;
 
 	std::thread stdin_thread;
 	std::thread stdout_thread;
@@ -242,7 +241,7 @@ struct process::os_data
 	std::unique_ptr<windows_handle_ref> stderr_read;
 
 	static void read_from_pipe( HANDLE pipe, process::output_callback cb );
-	static void write_to_pipe( process *pProcess, HANDLE pipe );
+	static void write_to_pipe( HANDLE pipe, process *pProcess );
 };
 
 void process::os_data::read_from_pipe( HANDLE pipe, process::output_callback cb )
@@ -278,7 +277,7 @@ void process::os_data::read_from_pipe( HANDLE pipe, process::output_callback cb 
 	ctLogDebug << "process::os_data::read_from_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
 }
 
-void process::os_data::write_to_pipe( process *pProcess, HANDLE pipe )
+void process::os_data::write_to_pipe( HANDLE pipe, process *pProcess )
 {
 	std::vector<uint8_t> buffer;
 	DWORD bytes_written = 0;
@@ -402,7 +401,7 @@ value_return<std::unique_ptr<process>> process::start( const std::vector<std::st
 	// start the IO threads as needed
 	pThis->use_stdin = _use_stdin;
 	if( _use_stdin )
-		pThis->stdin_thread = std::thread( process::os_data::write_to_pipe, pThis.get(), _stdin_write );
+		pThis->stdin_thread = std::thread( process::os_data::write_to_pipe, _stdin_write, pThis.get() );
 	if( stdout_callback )
 		pThis->stdout_thread = std::thread( process::os_data::read_from_pipe, _stdout_read, stdout_callback );
 	if( stderr_callback )
@@ -541,7 +540,7 @@ struct process::os_data
 	std::unique_ptr<linux_file_ref> stderr_read;
 
 	static void read_from_pipe( int pipe, process::output_callback cb );
-	static void write_to_pipe( int pipe, process::input_callback cb );
+	static void write_to_pipe( int pipe, process *pProcess );
 };
 
 void process::os_data::read_from_pipe( int pipe, process::output_callback cb )
@@ -572,7 +571,7 @@ void process::os_data::read_from_pipe( int pipe, process::output_callback cb )
 	ctLogDebug << "process::os_data::read_from_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
 }
 
-void process::os_data::write_to_pipe( int pipe, process::input_callback cb )
+void process::os_data::write_to_pipe( int pipe, process *pProcess )
 {
 	std::vector<uint8_t> buffer;
 	
@@ -580,7 +579,8 @@ void process::os_data::write_to_pipe( int pipe, process::input_callback cb )
 	bool cont = true;
 	while( cont )
 	{
-		cont = cb( buffer );
+		// fetch data to write to the pipe. blocking call, returns false if the thread should exit
+		cont = pProcess->fetch_stdin_data( buffer );
 		if( buffer.empty() ) 
 			continue;
 
@@ -603,10 +603,12 @@ void process::os_data::write_to_pipe( int pipe, process::input_callback cb )
 	ctLogDebug << "process::os_data::write_to_pipe: callback requested to stop. pipe:" << pipe << ctLogEnd;
 }
 
-status process::start()
+value_return<std::unique_ptr<process>> process::start( const std::vector<std::string> &command_arguments,
+													   const std::string &work_directory,
+													   output_callback stdout_callback,
+													   output_callback stderr_callback,
+													   bool _use_stdin )
 {
-	this->process_data = std::make_unique<os_data>();
-
 	int stdin_pipe[2];
 	int stdout_pipe[2];
 	int stderr_pipe[2];
@@ -615,67 +617,86 @@ status process::start()
 	pipe( stdout_pipe );
 	pipe( stderr_pipe );
 
-	posix_spawn_file_actions_t file_actions;
-    posix_spawn_file_actions_init(&file_actions);
-
-	// Redirect child's stdin
-    posix_spawn_file_actions_adddup2(&file_actions, stdin_pipe[0], STDIN_FILENO);
-    posix_spawn_file_actions_addclose(&file_actions, stdin_pipe[1]);
-
-    // Redirect child's stdout
-    posix_spawn_file_actions_adddup2(&file_actions, stdout_pipe[1], STDOUT_FILENO);
-    posix_spawn_file_actions_addclose(&file_actions, stdout_pipe[0]);
-
-    // Redirect child's stderr
-    posix_spawn_file_actions_adddup2(&file_actions, stderr_pipe[1], STDERR_FILENO);
-    posix_spawn_file_actions_addclose(&file_actions, stderr_pipe[0]);
-
-	// store the handles we are going to keep open in the parent process
-	this->process_data->stdin_write = std::make_unique<linux_file_ref>( stdin_pipe[1] );
-	this->process_data->stdout_read = std::make_unique<linux_file_ref>( stdout_pipe[0] );
-	this->process_data->stderr_read = std::make_unique<linux_file_ref>( stderr_pipe[0] );
-
-	std::vector<char*> argv;
-	for (const auto& arg : command_arguments) 
+	pid_t pid = vfork();
+	ctValidate(pid != -1, status::cant_access) << "process::start: vfork failed." << ctValidateEnd;
+	if (pid == 0) 
 	{
-        argv.push_back(const_cast<char*>(arg.c_str()));
-    }
-    argv.push_back(nullptr);
+		// Child process
+		chdir( work_directory.c_str() );
 
-	// spawn process using posix_spawn
-    pid_t pid = -1;
-    auto result = posix_spawn(&pid, this->command_arguments[0].data(), &file_actions, nullptr, argv.data(), nullptr );
-    posix_spawn_file_actions_destroy(&file_actions);
-	ctValidate( result == 0, status::cant_access )
-		<< "process::start: posix_spawn failed. Error string " << std::string(strerror(result)) 
-		<< ctValidateEnd;
+		// Redirect stdin
+		close(stdin_pipe[1]); // close write end
+		dup2(stdin_pipe[0], STDIN_FILENO);
+		close(stdin_pipe[0]);
 
-	if( this->stdin_callback )
-		this->stdin_thread = std::thread( process::os_data::write_to_pipe, stdin_pipe[1], this->stdin_callback );
+		// Redirect stdout
+		close(stdout_pipe[0]); // close read end
+		dup2(stdout_pipe[1], STDOUT_FILENO);
+		close(stdout_pipe[1]);
 
-	if( this->stdout_callback )
-		this->stdout_thread = std::thread( process::os_data::read_from_pipe, stdout_pipe[0], this->stdout_callback );
+		// Redirect stderr
+		close(stderr_pipe[0]); // close read end
+		dup2(stderr_pipe[1], STDERR_FILENO);
+		close(stderr_pipe[1]);
 
-	if( this->stderr_callback )
-		this->stderr_thread = std::thread( process::os_data::read_from_pipe, stderr_pipe[0], this->stderr_callback );
+		// Build argv
+		std::vector<std::string> args = command_arguments;
+		std::vector<char*> argv;
+		for (auto& arg : args) 
+		{
+			argv.emplace_back( arg.data() );
+		}
+		argv.push_back(nullptr);
+
+		// Execute the command, this exits this function on success
+		execvp(argv[0], argv.data());
+
+		// If exec fails, exit with failure
+		_exit(127);
+	} 
+	else 
+	{
+		// Parent process, close unused pipes
+		close(stdin_pipe[0]);  // parent writes to child's stdin
+		close(stdout_pipe[1]); // parent reads from child's stdout
+		close(stderr_pipe[1]); // parent reads from child's stderr
+	}
+	
+	auto pThis = std::unique_ptr<process>( new process );
+	pThis->process_data = std::make_unique<os_data>();
+
+	pThis->use_stdin = _use_stdin;
+	if( _use_stdin )
+		pThis->stdin_thread = std::thread( process::os_data::write_to_pipe, stdin_pipe[1], pThis.get() );
+	if( stdout_callback )
+		pThis->stdout_thread = std::thread( process::os_data::read_from_pipe, stdout_pipe[0], stdout_callback );
+	if( stderr_callback )
+		pThis->stderr_thread = std::thread( process::os_data::read_from_pipe, stderr_pipe[0], stderr_callback );
 
 	// save the process id, and close unused ends in parent
-	this->process_data->pid = pid;
+	pThis->process_data->pid = pid;
+	pThis->process_data->stdin_write = std::make_unique<linux_file_ref>( stdin_pipe[1] );
+	pThis->process_data->stdout_read = std::make_unique<linux_file_ref>( stdout_pipe[0] );
+	pThis->process_data->stderr_read = std::make_unique<linux_file_ref>( stderr_pipe[0] );
+
     close(stdin_pipe[0]);
     close(stdout_pipe[1]);
     close(stderr_pipe[1]);
 
-	return status::ok;
+	pThis->process_state = running;
+	return pThis;
 }
 
-status process::wait( std::chrono::milliseconds time_out )
+status process::wait( std::chrono::milliseconds time_out, int *_exit_code )
 {
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::wait: process not started or has already terminated." 
-		<< ctValidateEnd;
-
-	if( this->has_exit_code )
+	// check if the process has already exited
+	if( this->process_state == exited )
+	{
+		if( _exit_code ) 
+			*_exit_code = this->exit_code;
 		return status::ok;
+	}
+	ctSanityCheck( this->process_state == running );
 
 	int proc_status = 0;
     auto start_time = std::chrono::steady_clock::now();
@@ -688,7 +709,7 @@ status process::wait( std::chrono::milliseconds time_out )
         ctValidate( result != -1, status::undefined_error ) << "process::wait: waitpid failed with error: " << strerror(errno) << ctValidateEnd;
 
 		// if we are not waiting indefinitely, check time
-		if( time_out.count() != 0 )
+		if( time_out != std::chrono::milliseconds::max() )
 		{
 			auto now_time = std::chrono::steady_clock::now();
 			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now_time - start_time);
@@ -696,50 +717,69 @@ status process::wait( std::chrono::milliseconds time_out )
 				return status::not_ready;
 		}
 
-		// avoid busy waiting, yield time
-        std::this_thread::yield();
+		// sleep briefly to avoid busy-waiting
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+	// process has exited, update the process state and get the exit code
+	this->process_state = exited;
+
 	// done, collect the exit code
-	ctValidate( WIFEXITED(proc_status), status::undefined_error ) << "process::get_exit_code: Process terminated abnormally." << ctValidateEnd;
-
-	this->exit_code = WEXITSTATUS(proc_status);
-	this->has_exit_code = true;
-	return status::ok;
-}
-
-status process::get_exit_code( int &_exit_code )
-{
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::get_exit_code: process not started or has already terminated." 
-		<< ctValidateEnd;
-
-	if( this->has_exit_code )
+	if( WIFEXITED(proc_status) ) 
 	{
-		_exit_code = this->exit_code;
-		return status::ok;
+		this->exit_code = WEXITSTATUS(proc_status);
 	}
-
-	// wait for process to end
-	ctStatusCall( this->wait() );
-	_exit_code = this->exit_code;
+	else
+	{
+		ctLogError << "process::get_exit_code: Process terminated abnormally, cannot fetch exit code, defaulting to INT_MIN." << ctLogEnd;
+		this->exit_code = INT_MIN;
+	}
+	
+	if( _exit_code ) 
+		*_exit_code = this->exit_code;
 	return status::ok;
 }
 
 status process::terminate( int _exit_code )
 {
-	ctValidate( this->process_data != nullptr, status::not_initialized ) 
-		<< "process::get_exit_code: process not started or has already terminated." 
-		<< ctValidateEnd;
+	if( this->process_state == running )
+	{
+		// wait for process to end
+		kill( this->process_data->pid, SIGTERM );
+		this->process_state = exited;
+	}
+	ctSanityCheck( this->process_state == exited );
 
-	if( this->has_exit_code )
-		return status::ok;
-
-	// wait for process to end
-	kill( this->process_data->pid, SIGTERM );
 	this->exit_code = _exit_code;
-	this->has_exit_code = true;
+	
 	return status::ok;
+}
+
+status process::get_exit_code( int &_exit_code )
+{
+	// if still running, cannot get exit code
+	if( this->is_running() )
+		return status::not_ready;
+	ctSanityCheck( this->process_state == exited );
+
+	_exit_code = this->exit_code;
+	return status::ok;
+}
+
+bool process::is_running()
+{
+	if( this->process_state == exited )
+		return false;
+
+	// may be running, or has just exited, update the process state by waiting with zero timeout, then check state
+	this->wait( std::chrono::milliseconds( 0 ) );
+
+	return (this->process_state == running);
+}
+
+bool process::has_exited()
+{
+	return !this->is_running();
 }
 
 #endif//defined(_WIN32) elif defined(linux)

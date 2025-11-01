@@ -49,7 +49,7 @@ public:
 	{
 		return ( this->sstatus == val );
 	}
-	bool operator!=( const _StatusType &other ) const
+	bool operator!=( const _StatusType &val ) const
 	{
 		return ( this->sstatus != val );
 	}
@@ -104,7 +104,7 @@ public:
 	{
 		return ( this->sstatus == val );
 	}
-	bool operator!=( const _StatusType &other ) const
+	bool operator!=( const _StatusType &val ) const
 	{
 		return ( this->sstatus != val );
 	}
