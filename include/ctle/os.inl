@@ -33,6 +33,8 @@ class windows_handle_ref
 public:
 	windows_handle_ref( HANDLE _handle ) : handle( _handle ) {}
 	~windows_handle_ref() { if( handle!=INVALID_HANDLE_VALUE ) { ::CloseHandle( handle ); } }
+	windows_handle_ref( const windows_handle_ref & ) = delete;
+	const windows_handle_ref &operator = ( const windows_handle_ref & ) = delete;
 	HANDLE get_handle() const noexcept { return this->handle; }
 private:
 	HANDLE handle;
@@ -65,6 +67,8 @@ class linux_file_ref
 public:
 	linux_file_ref( int _handle ) : handle( _handle ) {}
 	~linux_file_ref() { if( handle!=-1 ) { ::close( handle ); } }
+	linux_file_ref( const linux_file_ref & ) = delete;
+	const linux_file_ref &operator = ( const linux_file_ref & ) = delete;
 	int get_handle() const noexcept { return this->handle; }
 private:
 	int handle;
