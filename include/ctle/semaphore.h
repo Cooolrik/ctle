@@ -131,6 +131,6 @@ status semaphore::release()
 }
 //namespace ctle
 
-#endif CTLE_IMPLEMENTATION
+#endif//CTLE_IMPLEMENTATION
 
 #endif//_CTLE_SEMAPHORE_H_

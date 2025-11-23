@@ -12,7 +12,7 @@ color_names = ['r','g','b','a']
 fwd_classes = [
 	['status.h', ['enum class status_code : int','status']],
 	['status_return.h', ['template<class _StatusType, class _ValueType> class status_return']],
-	['', ['template<typename _Ty> using value_return = status_return<status, _Ty>;']],
+	['combined status.h & status_return.h', ['template<typename _Ty> using value_return = status_return<status, _Ty>']],
 	['data_source.h', ['file_data_source']],
 	['data_destination.h', ['file_data_destination']],
 	['hasher.h', ['hasher_sha256', 'hasher_xxh64', 'hasher_xxh128', 'template <size_t _Size> class hasher_noop']],

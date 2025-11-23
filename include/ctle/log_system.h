@@ -9,7 +9,9 @@
  * @brief 
  */
 
+#include "fwd.h"
 #include "log.h"
+#include "status.h"
 
 namespace ctle
 {
@@ -19,11 +21,11 @@ struct log_system_msg
 	log_level level = {};
 	
 	uint64_t timestamp = 0;
-	uint32_t process_id = 0;
-	uint32_t thread_id = 0;
+	uint process_id = 0;
+	uint thread_id = 0;
 
 	std::string function_name;
-	uint32_t file_line = 0;
+	uint file_line = 0;
 
 	std::string message;
 };
