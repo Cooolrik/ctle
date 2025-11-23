@@ -9,7 +9,7 @@ using namespace ctle;
 
 TEST( status, basic_test )
 {
-	status res = status_code::ok;
+	status res = status::ok;
 
 	EXPECT_TRUE( res == status_code::ok );
 	EXPECT_FALSE( res != status_code::ok );

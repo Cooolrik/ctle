@@ -30,6 +30,8 @@ namespace ctle
 		not_ready                                           = -111, // one or multiple objects are not ready, or out of sync
 		cant_access                                         = -112, // access is not allowed
 		already_exists                                      = -113, // a file or item already exists
+		cant_acquire                                        = -114, // could not acquire a resource
+		cant_release                                        = -115, // could not release a resource
 
 		// stl portable errors (from errc)
 		stl_unrecognized_error_code                         = -1000, // unknown/unrecognized STL error, which could not be mapped to a specific error value
@@ -168,6 +170,8 @@ namespace ctle
 		static const status not_ready;                                            // one or multiple objects are not ready, or out of sync
 		static const status cant_access;                                          // access is not allowed
 		static const status already_exists;                                       // a file or item already exists
+		static const status cant_acquire;                                         // could not acquire a resource
+		static const status cant_release;                                         // could not release a resource
 
 		// stl portable errors (from errc)
 		static const status stl_unrecognized_error_code;                          // unknown/unrecognized STL error, which could not be mapped to a specific error value
@@ -287,7 +291,7 @@ namespace ctle
 		status() = default;
 		status( const status &other ) = default;
 
-		status( const status_code &_value ) noexcept : svalue( _value ) {}
+		explicit status( const status_code &_value ) noexcept : svalue( _value ) {}
 		const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
 
 		bool operator == ( const status &_other ) const noexcept { return this->svalue == _other.svalue; }
@@ -338,134 +342,136 @@ namespace ctle
 {
 
 	// no error, success
-	const status status::ok = status_code::ok;
+	const status status::ok( status_code::ok );
 
 	// general errors
-	const status status::undefined_error = status_code::undefined_error;
-	const status status::invalid_param = status_code::invalid_param;
-	const status status::not_initialized = status_code::not_initialized;
-	const status status::already_initialized = status_code::already_initialized;
-	const status status::cant_allocate = status_code::cant_allocate;
-	const status status::cant_open = status_code::cant_open;
-	const status status::cant_read = status_code::cant_read;
-	const status status::corrupted = status_code::corrupted;
-	const status status::invalid = status_code::invalid;
-	const status status::cant_write = status_code::cant_write;
-	const status status::not_found = status_code::not_found;
-	const status status::not_ready = status_code::not_ready;
-	const status status::cant_access = status_code::cant_access;
-	const status status::already_exists = status_code::already_exists;
+	const status status::undefined_error( status_code::undefined_error );
+	const status status::invalid_param( status_code::invalid_param );
+	const status status::not_initialized( status_code::not_initialized );
+	const status status::already_initialized( status_code::already_initialized );
+	const status status::cant_allocate( status_code::cant_allocate );
+	const status status::cant_open( status_code::cant_open );
+	const status status::cant_read( status_code::cant_read );
+	const status status::corrupted( status_code::corrupted );
+	const status status::invalid( status_code::invalid );
+	const status status::cant_write( status_code::cant_write );
+	const status status::not_found( status_code::not_found );
+	const status status::not_ready( status_code::not_ready );
+	const status status::cant_access( status_code::cant_access );
+	const status status::already_exists( status_code::already_exists );
+	const status status::cant_acquire( status_code::cant_acquire );
+	const status status::cant_release( status_code::cant_release );
 
 	// stl portable errors (from errc)
-	const status status::stl_unrecognized_error_code = status_code::stl_unrecognized_error_code;
-	const status status::stl_address_family_not_supported = status_code::stl_address_family_not_supported;
-	const status status::stl_address_in_use = status_code::stl_address_in_use;
-	const status status::stl_address_not_available = status_code::stl_address_not_available;
-	const status status::stl_already_connected = status_code::stl_already_connected;
-	const status status::stl_argument_list_too_long = status_code::stl_argument_list_too_long;
-	const status status::stl_argument_out_of_domain = status_code::stl_argument_out_of_domain;
-	const status status::stl_bad_address = status_code::stl_bad_address;
-	const status status::stl_bad_file_descriptor = status_code::stl_bad_file_descriptor;
-	const status status::stl_bad_message = status_code::stl_bad_message;
-	const status status::stl_broken_pipe = status_code::stl_broken_pipe;
-	const status status::stl_connection_aborted = status_code::stl_connection_aborted;
-	const status status::stl_connection_already_in_progress = status_code::stl_connection_already_in_progress;
-	const status status::stl_connection_refused = status_code::stl_connection_refused;
-	const status status::stl_connection_reset = status_code::stl_connection_reset;
-	const status status::stl_cross_device_link = status_code::stl_cross_device_link;
-	const status status::stl_destination_address_required = status_code::stl_destination_address_required;
-	const status status::stl_device_or_resource_busy = status_code::stl_device_or_resource_busy;
-	const status status::stl_directory_not_empty = status_code::stl_directory_not_empty;
-	const status status::stl_executable_format_error = status_code::stl_executable_format_error;
-	const status status::stl_file_exists = status_code::stl_file_exists;
-	const status status::stl_file_too_large = status_code::stl_file_too_large;
-	const status status::stl_filename_too_long = status_code::stl_filename_too_long;
-	const status status::stl_function_not_supported = status_code::stl_function_not_supported;
-	const status status::stl_host_unreachable = status_code::stl_host_unreachable;
-	const status status::stl_identifier_removed = status_code::stl_identifier_removed;
-	const status status::stl_illegal_byte_sequence = status_code::stl_illegal_byte_sequence;
-	const status status::stl_inappropriate_io_control_operation = status_code::stl_inappropriate_io_control_operation;
-	const status status::stl_interrupted = status_code::stl_interrupted;
-	const status status::stl_invalid_argument = status_code::stl_invalid_argument;
-	const status status::stl_invalid_seek = status_code::stl_invalid_seek;
-	const status status::stl_io_error = status_code::stl_io_error;
-	const status status::stl_is_a_directory = status_code::stl_is_a_directory;
-	const status status::stl_message_size = status_code::stl_message_size;
-	const status status::stl_network_down = status_code::stl_network_down;
-	const status status::stl_network_reset = status_code::stl_network_reset;
-	const status status::stl_network_unreachable = status_code::stl_network_unreachable;
-	const status status::stl_no_buffer_space = status_code::stl_no_buffer_space;
-	const status status::stl_no_child_process = status_code::stl_no_child_process;
-	const status status::stl_no_link = status_code::stl_no_link;
-	const status status::stl_no_lock_available = status_code::stl_no_lock_available;
-	const status status::stl_no_message_available = status_code::stl_no_message_available;
-	const status status::stl_no_message = status_code::stl_no_message;
-	const status status::stl_no_protocol_option = status_code::stl_no_protocol_option;
-	const status status::stl_no_space_on_device = status_code::stl_no_space_on_device;
-	const status status::stl_no_stream_resources = status_code::stl_no_stream_resources;
-	const status status::stl_no_such_device_or_address = status_code::stl_no_such_device_or_address;
-	const status status::stl_no_such_device = status_code::stl_no_such_device;
-	const status status::stl_no_such_file_or_directory = status_code::stl_no_such_file_or_directory;
-	const status status::stl_no_such_process = status_code::stl_no_such_process;
-	const status status::stl_not_a_directory = status_code::stl_not_a_directory;
-	const status status::stl_not_a_socket = status_code::stl_not_a_socket;
-	const status status::stl_not_a_stream = status_code::stl_not_a_stream;
-	const status status::stl_not_connected = status_code::stl_not_connected;
-	const status status::stl_not_enough_memory = status_code::stl_not_enough_memory;
-	const status status::stl_not_supported = status_code::stl_not_supported;
-	const status status::stl_operation_canceled = status_code::stl_operation_canceled;
-	const status status::stl_operation_in_progress = status_code::stl_operation_in_progress;
-	const status status::stl_operation_not_permitted = status_code::stl_operation_not_permitted;
-	const status status::stl_operation_not_supported = status_code::stl_operation_not_supported;
-	const status status::stl_operation_would_block = status_code::stl_operation_would_block;
-	const status status::stl_owner_dead = status_code::stl_owner_dead;
-	const status status::stl_permission_denied = status_code::stl_permission_denied;
-	const status status::stl_protocol_error = status_code::stl_protocol_error;
-	const status status::stl_protocol_not_supported = status_code::stl_protocol_not_supported;
-	const status status::stl_read_only_file_system = status_code::stl_read_only_file_system;
-	const status status::stl_resource_deadlock_would_occur = status_code::stl_resource_deadlock_would_occur;
-	const status status::stl_resource_unavailable_try_again = status_code::stl_resource_unavailable_try_again;
-	const status status::stl_result_out_of_range = status_code::stl_result_out_of_range;
-	const status status::stl_state_not_recoverable = status_code::stl_state_not_recoverable;
-	const status status::stl_stream_timeout = status_code::stl_stream_timeout;
-	const status status::stl_text_file_busy = status_code::stl_text_file_busy;
-	const status status::stl_timed_out = status_code::stl_timed_out;
-	const status status::stl_too_many_files_open_in_system = status_code::stl_too_many_files_open_in_system;
-	const status status::stl_too_many_files_open = status_code::stl_too_many_files_open;
-	const status status::stl_too_many_links = status_code::stl_too_many_links;
-	const status status::stl_too_many_symbolic_link_levels = status_code::stl_too_many_symbolic_link_levels;
-	const status status::stl_value_too_large = status_code::stl_value_too_large;
-	const status status::stl_wrong_protocol_type = status_code::stl_wrong_protocol_type;
+	const status status::stl_unrecognized_error_code( status_code::stl_unrecognized_error_code );
+	const status status::stl_address_family_not_supported( status_code::stl_address_family_not_supported );
+	const status status::stl_address_in_use( status_code::stl_address_in_use );
+	const status status::stl_address_not_available( status_code::stl_address_not_available );
+	const status status::stl_already_connected( status_code::stl_already_connected );
+	const status status::stl_argument_list_too_long( status_code::stl_argument_list_too_long );
+	const status status::stl_argument_out_of_domain( status_code::stl_argument_out_of_domain );
+	const status status::stl_bad_address( status_code::stl_bad_address );
+	const status status::stl_bad_file_descriptor( status_code::stl_bad_file_descriptor );
+	const status status::stl_bad_message( status_code::stl_bad_message );
+	const status status::stl_broken_pipe( status_code::stl_broken_pipe );
+	const status status::stl_connection_aborted( status_code::stl_connection_aborted );
+	const status status::stl_connection_already_in_progress( status_code::stl_connection_already_in_progress );
+	const status status::stl_connection_refused( status_code::stl_connection_refused );
+	const status status::stl_connection_reset( status_code::stl_connection_reset );
+	const status status::stl_cross_device_link( status_code::stl_cross_device_link );
+	const status status::stl_destination_address_required( status_code::stl_destination_address_required );
+	const status status::stl_device_or_resource_busy( status_code::stl_device_or_resource_busy );
+	const status status::stl_directory_not_empty( status_code::stl_directory_not_empty );
+	const status status::stl_executable_format_error( status_code::stl_executable_format_error );
+	const status status::stl_file_exists( status_code::stl_file_exists );
+	const status status::stl_file_too_large( status_code::stl_file_too_large );
+	const status status::stl_filename_too_long( status_code::stl_filename_too_long );
+	const status status::stl_function_not_supported( status_code::stl_function_not_supported );
+	const status status::stl_host_unreachable( status_code::stl_host_unreachable );
+	const status status::stl_identifier_removed( status_code::stl_identifier_removed );
+	const status status::stl_illegal_byte_sequence( status_code::stl_illegal_byte_sequence );
+	const status status::stl_inappropriate_io_control_operation( status_code::stl_inappropriate_io_control_operation );
+	const status status::stl_interrupted( status_code::stl_interrupted );
+	const status status::stl_invalid_argument( status_code::stl_invalid_argument );
+	const status status::stl_invalid_seek( status_code::stl_invalid_seek );
+	const status status::stl_io_error( status_code::stl_io_error );
+	const status status::stl_is_a_directory( status_code::stl_is_a_directory );
+	const status status::stl_message_size( status_code::stl_message_size );
+	const status status::stl_network_down( status_code::stl_network_down );
+	const status status::stl_network_reset( status_code::stl_network_reset );
+	const status status::stl_network_unreachable( status_code::stl_network_unreachable );
+	const status status::stl_no_buffer_space( status_code::stl_no_buffer_space );
+	const status status::stl_no_child_process( status_code::stl_no_child_process );
+	const status status::stl_no_link( status_code::stl_no_link );
+	const status status::stl_no_lock_available( status_code::stl_no_lock_available );
+	const status status::stl_no_message_available( status_code::stl_no_message_available );
+	const status status::stl_no_message( status_code::stl_no_message );
+	const status status::stl_no_protocol_option( status_code::stl_no_protocol_option );
+	const status status::stl_no_space_on_device( status_code::stl_no_space_on_device );
+	const status status::stl_no_stream_resources( status_code::stl_no_stream_resources );
+	const status status::stl_no_such_device_or_address( status_code::stl_no_such_device_or_address );
+	const status status::stl_no_such_device( status_code::stl_no_such_device );
+	const status status::stl_no_such_file_or_directory( status_code::stl_no_such_file_or_directory );
+	const status status::stl_no_such_process( status_code::stl_no_such_process );
+	const status status::stl_not_a_directory( status_code::stl_not_a_directory );
+	const status status::stl_not_a_socket( status_code::stl_not_a_socket );
+	const status status::stl_not_a_stream( status_code::stl_not_a_stream );
+	const status status::stl_not_connected( status_code::stl_not_connected );
+	const status status::stl_not_enough_memory( status_code::stl_not_enough_memory );
+	const status status::stl_not_supported( status_code::stl_not_supported );
+	const status status::stl_operation_canceled( status_code::stl_operation_canceled );
+	const status status::stl_operation_in_progress( status_code::stl_operation_in_progress );
+	const status status::stl_operation_not_permitted( status_code::stl_operation_not_permitted );
+	const status status::stl_operation_not_supported( status_code::stl_operation_not_supported );
+	const status status::stl_operation_would_block( status_code::stl_operation_would_block );
+	const status status::stl_owner_dead( status_code::stl_owner_dead );
+	const status status::stl_permission_denied( status_code::stl_permission_denied );
+	const status status::stl_protocol_error( status_code::stl_protocol_error );
+	const status status::stl_protocol_not_supported( status_code::stl_protocol_not_supported );
+	const status status::stl_read_only_file_system( status_code::stl_read_only_file_system );
+	const status status::stl_resource_deadlock_would_occur( status_code::stl_resource_deadlock_would_occur );
+	const status status::stl_resource_unavailable_try_again( status_code::stl_resource_unavailable_try_again );
+	const status status::stl_result_out_of_range( status_code::stl_result_out_of_range );
+	const status status::stl_state_not_recoverable( status_code::stl_state_not_recoverable );
+	const status status::stl_stream_timeout( status_code::stl_stream_timeout );
+	const status status::stl_text_file_busy( status_code::stl_text_file_busy );
+	const status status::stl_timed_out( status_code::stl_timed_out );
+	const status status::stl_too_many_files_open_in_system( status_code::stl_too_many_files_open_in_system );
+	const status status::stl_too_many_files_open( status_code::stl_too_many_files_open );
+	const status status::stl_too_many_links( status_code::stl_too_many_links );
+	const status status::stl_too_many_symbolic_link_levels( status_code::stl_too_many_symbolic_link_levels );
+	const status status::stl_value_too_large( status_code::stl_value_too_large );
+	const status status::stl_wrong_protocol_type( status_code::stl_wrong_protocol_type );
 
 	// Vulkan errors
-	const status status::vulkan_unrecognized_error_code = status_code::vulkan_unrecognized_error_code;
-	const status status::vulkan_out_of_host_memory = status_code::vulkan_out_of_host_memory;
-	const status status::vulkan_out_of_device_memory = status_code::vulkan_out_of_device_memory;
-	const status status::vulkan_initialization_failed = status_code::vulkan_initialization_failed;
-	const status status::vulkan_device_lost = status_code::vulkan_device_lost;
-	const status status::vulkan_memory_map_failed = status_code::vulkan_memory_map_failed;
-	const status status::vulkan_layer_not_present = status_code::vulkan_layer_not_present;
-	const status status::vulkan_extension_not_present = status_code::vulkan_extension_not_present;
-	const status status::vulkan_feature_not_present = status_code::vulkan_feature_not_present;
-	const status status::vulkan_incompatible_driver = status_code::vulkan_incompatible_driver;
-	const status status::vulkan_too_many_objects = status_code::vulkan_too_many_objects;
-	const status status::vulkan_format_not_supported = status_code::vulkan_format_not_supported;
-	const status status::vulkan_fragmented_pool = status_code::vulkan_fragmented_pool;
-	const status status::vulkan_unknown = status_code::vulkan_unknown;
-	const status status::vulkan_out_of_pool_memory = status_code::vulkan_out_of_pool_memory;
-	const status status::vulkan_invalid_external_handle = status_code::vulkan_invalid_external_handle;
-	const status status::vulkan_fragmentation = status_code::vulkan_fragmentation;
-	const status status::vulkan_invalid_opaque_capture_address = status_code::vulkan_invalid_opaque_capture_address;
-	const status status::vulkan_surface_lost_khr = status_code::vulkan_surface_lost_khr;
-	const status status::vulkan_native_window_in_use_khr = status_code::vulkan_native_window_in_use_khr;
-	const status status::vulkan_out_of_date_khr = status_code::vulkan_out_of_date_khr;
-	const status status::vulkan_incompatible_display_khr = status_code::vulkan_incompatible_display_khr;
-	const status status::vulkan_validation_failed_ext = status_code::vulkan_validation_failed_ext;
-	const status status::vulkan_invalid_shader_nv = status_code::vulkan_invalid_shader_nv;
-	const status status::vulkan_invalid_drm_format_modifier_plane_layout_ext = status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext;
-	const status status::vulkan_not_permitted_khr = status_code::vulkan_not_permitted_khr;
-	const status status::vulkan_full_screen_exclusive_mode_lost_ext = status_code::vulkan_full_screen_exclusive_mode_lost_ext;
-	const status status::vulkan_compression_exhausted_ext = status_code::vulkan_compression_exhausted_ext;
+	const status status::vulkan_unrecognized_error_code( status_code::vulkan_unrecognized_error_code );
+	const status status::vulkan_out_of_host_memory( status_code::vulkan_out_of_host_memory );
+	const status status::vulkan_out_of_device_memory( status_code::vulkan_out_of_device_memory );
+	const status status::vulkan_initialization_failed( status_code::vulkan_initialization_failed );
+	const status status::vulkan_device_lost( status_code::vulkan_device_lost );
+	const status status::vulkan_memory_map_failed( status_code::vulkan_memory_map_failed );
+	const status status::vulkan_layer_not_present( status_code::vulkan_layer_not_present );
+	const status status::vulkan_extension_not_present( status_code::vulkan_extension_not_present );
+	const status status::vulkan_feature_not_present( status_code::vulkan_feature_not_present );
+	const status status::vulkan_incompatible_driver( status_code::vulkan_incompatible_driver );
+	const status status::vulkan_too_many_objects( status_code::vulkan_too_many_objects );
+	const status status::vulkan_format_not_supported( status_code::vulkan_format_not_supported );
+	const status status::vulkan_fragmented_pool( status_code::vulkan_fragmented_pool );
+	const status status::vulkan_unknown( status_code::vulkan_unknown );
+	const status status::vulkan_out_of_pool_memory( status_code::vulkan_out_of_pool_memory );
+	const status status::vulkan_invalid_external_handle( status_code::vulkan_invalid_external_handle );
+	const status status::vulkan_fragmentation( status_code::vulkan_fragmentation );
+	const status status::vulkan_invalid_opaque_capture_address( status_code::vulkan_invalid_opaque_capture_address );
+	const status status::vulkan_surface_lost_khr( status_code::vulkan_surface_lost_khr );
+	const status status::vulkan_native_window_in_use_khr( status_code::vulkan_native_window_in_use_khr );
+	const status status::vulkan_out_of_date_khr( status_code::vulkan_out_of_date_khr );
+	const status status::vulkan_incompatible_display_khr( status_code::vulkan_incompatible_display_khr );
+	const status status::vulkan_validation_failed_ext( status_code::vulkan_validation_failed_ext );
+	const status status::vulkan_invalid_shader_nv( status_code::vulkan_invalid_shader_nv );
+	const status status::vulkan_invalid_drm_format_modifier_plane_layout_ext( status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext );
+	const status status::vulkan_not_permitted_khr( status_code::vulkan_not_permitted_khr );
+	const status status::vulkan_full_screen_exclusive_mode_lost_ext( status_code::vulkan_full_screen_exclusive_mode_lost_ext );
+	const status status::vulkan_compression_exhausted_ext( status_code::vulkan_compression_exhausted_ext );
 
 	struct status_code_string_description
 	{
@@ -493,6 +499,8 @@ namespace ctle
 		{ status_code::not_ready , { "not_ready", "one or multiple objects are not ready, or out of sync" } } , 
 		{ status_code::cant_access , { "cant_access", "access is not allowed" } } , 
 		{ status_code::already_exists , { "already_exists", "a file or item already exists" } } , 
+		{ status_code::cant_acquire , { "cant_acquire", "could not acquire a resource" } } , 
+		{ status_code::cant_release , { "cant_release", "could not release a resource" } } , 
 		
 		// stl portable errors (from errc)
 		{ status_code::stl_unrecognized_error_code , { "stl_unrecognized_error_code", "unknown/unrecognized STL error, which could not be mapped to a specific error value" } } , 
