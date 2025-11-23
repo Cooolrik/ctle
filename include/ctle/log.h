@@ -6,9 +6,9 @@
 
 /**
  * @file log.h
- * @brief A simple logging system for ctle, with log levels and a global log function.
- * @details The log system is a simple logging system, which can be used to log messages with different log levels.
- * To use the log system with a set of macros, see the example below.
+ * @brief Simple logging for ctle, with log levels and a global log function.
+ * @details Log adds a minimum logging support for an application, which can be used to log messages with different log levels.
+ * It is recommended to use log with macros for convenience and clarity. See the example macros below.
  * @code{.cpp}
  * // Example macros for logging with the ctle log system
  * 
@@ -51,6 +51,7 @@ namespace ctle
 {
 
 /// @brief The log levels, used to filter log messages.
+/// @details The log levels are used to filter log messages. The global log level is set using set_global_log_level, and the log messages are filtered based on the log level.
 enum class log_level : unsigned int
 {
 	error = 0,		///< log errors
@@ -78,10 +79,13 @@ const char* get_log_level_as_string(log_level level);
 // set/get the global log function, which receives the log messages
 
 /// @brief Set the global log function, which receives the log messages. This will replace any current log function.
+/// @note If no log function is set, a default log function is used, which logs to std::cout.
+/// @note The set_global_log_function is not thread safe, so it should be called before any logging is done.
 /// @param func the log function to set
 void set_global_log_function(log_function func);
 
 /// @brief Get the global log function, which receives the log messages.
+/// @note The get_global_log_function is not thread safe, so it should be called before any logging is done.
 /// @return the current global log function
 log_function get_global_log_function();
 

@@ -50,17 +50,17 @@ TEST( status_return, basic_test )
 
 static status_return<status, std::string> TestStatusReturnString()
 {
-	return { status_code::ok , "hej" };
+	return { status::ok , "hej" };
 }
 
 static status_return<status, std::unique_ptr<int>> TestStatusReturnUniquePtr()
 {
 	auto ptr = std::unique_ptr<int>( new int( 1000 ) );
-	return { status_code::invalid_param , std::move( ptr ) };
+	return { status::invalid_param , std::move( ptr ) };
 }
 static status_return<status, std::unique_ptr<int>> TestStatusDontReturnUniquePtr()
 {
-	return { status_code::vulkan_extension_not_present };
+	return { status::vulkan_extension_not_present };
 }
 static status_return<status, void> TestStatusReturnJustStatus()
 {

@@ -37,8 +37,8 @@ class status;
 // from status_return.h
 template<class _StatusType, class _ValueType> class status_return;
 
-// from
-template<typename _Ty> using value_return = status_return<status, _Ty>;;
+// from combined status.h & status_return.h
+template<typename _Ty> using value_return = status_return<status, _Ty>;
 
 // from data_source.h
 class file_data_source;
