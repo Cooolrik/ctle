@@ -39,6 +39,12 @@ static void testReadWriteAccess()
 
 	// make sure the containers are the same
 	EXPECT_TRUE( cont == dest );
+
+	// delete file
+	EXPECT_TRUE( delete_file( filename ) );
+
+	// make sure file does not exists
+	EXPECT_FALSE( file_exists( filename.c_str() ) );
 }
 
 TEST( file_funcs, basic_test )

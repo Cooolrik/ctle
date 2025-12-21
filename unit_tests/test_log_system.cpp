@@ -11,7 +11,16 @@ using namespace ctle;
 
 TEST( log_system, basic_test )
 {
-	//log_system log_sys;
-
+	//log_system::handler log_sys; 
+	//
 	//ctle_log_error << "log test" << ctle_log_end;
+	//
+	//using namespace std::chrono_literals;
+	//std::this_thread::sleep_for( 1000ms );
+	//
+	//log_system::message_queue messages;
+	//log_sys.get_messages( messages );
+	//
+
+
 }

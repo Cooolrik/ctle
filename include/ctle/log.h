@@ -184,15 +184,15 @@ inline bool trim_function_signature_span( string_span<char> &sig )
 {
 	// try finding a '(', start of function
 	size_t rightTrim = strchr_t( sig, '(' );
-	if( rightTrim < sig.length() )
+	if( rightTrim < sig.size() )
 	{
-		sig.end = sig.start + rightTrim; // up to, but dont inclue the '('
+		sig.end_ = sig.begin_ + rightTrim; // up to, but dont inclue the '('
 
 		// now, search back for the first whitespace
 		size_t leftTrim = strcrspn_t( sig, " \t\n\r" );
-		if( leftTrim < sig.length() )
+		if( leftTrim < sig.size() )
 		{
-			sig.start = sig.start + leftTrim + 1; // up to, but dont inclue the whitespace
+			sig.begin_ += leftTrim + 1; // up to, but dont inclue the whitespace
 		}
 
 		return true;

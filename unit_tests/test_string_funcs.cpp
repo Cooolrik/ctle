@@ -66,28 +66,28 @@ TEST( string_funcs, basic_test )
 
 	// get the tokens of the string
 	auto tok = strtok_t( testString2_start, testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "A" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "A" );
 	tok = strtok_t( &testString2_start[3], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "BCD" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "BCD" );
 	tok = strtok_t( &testString2_start[6], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "EFF" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "EFF" );
 	tok = strtok_t( &testString2_start[11], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "GH" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "GH" );
 	tok = strtok_t( &testString2_start[12], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "H" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "H" );
 	tok = strtok_t( &testString2_start[13], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ) == "123" );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ) == "123" );
 	tok = strtok_t( &testString2_start[18], testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ).empty() );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ).empty() );
 	// test invalid & empty strings
 	tok = strtok_t( testString2_end, testString2_start, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ).empty() );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ).empty() );
 	tok = strtok_t( testString2_start, testString2_start, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ).empty() );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ).empty() );
 	tok = strtok_t( testString2_end, testString2_end, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ).empty() );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ).empty() );
 	tok = strtok_t<char>( nullptr, nullptr, " " );
-	EXPECT_TRUE( std::string( tok.start, tok.end ).empty() );
+	EXPECT_TRUE( std::string( tok.begin_, tok.end_ ).empty() );
 	// test atou64
 	EXPECT_TRUE( stou64_t( testString1_start, testString1_end ) == 123456789 );
 	EXPECT_TRUE( stou64_t( testString2_start, testString2_end ) == 0 );
@@ -115,16 +115,16 @@ TEST( string_funcs, basic_test )
 	// tokenize and read back
 	auto current_span = get_span( tokens );
 	size_t token_index = 0;
-	while( current_span.start < current_span.end )
+	while( current_span.begin_ < current_span.end_ )
 	{
 		// get the next token in the remaining span
 		auto token = strtok_t( current_span, source_delims.c_str() );
-		if( token.start == token.end )
+		if( token.begin_ == token.end_ )
 			break; // no more tokens
 		// get value, make sure it matches
 		EXPECT_TRUE( stoi64_t( token ) == random_vals[token_index] );
 		// move the span to beyond the token
-		current_span.start = token.end;
+		current_span.begin_ = token.end_;
 		++token_index;
 	}
 	EXPECT_TRUE( token_index == random_vals_count );

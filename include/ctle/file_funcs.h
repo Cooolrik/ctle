@@ -44,6 +44,16 @@ bool file_exists(const std::string& path); ///< @copydoc ctle::file_exists
 status file_access(const char* path, access_mode amode);
 status file_access(const std::string& path, access_mode amode); ///< @copydoc ctle::file_access
 
+/// @brief Delete a file
+/// @param path the file path
+/// @return 
+///	- status::ok if the file can be accessed using the specified access mode
+///	- status::cant_access if the file can't be accessed 
+///	- status::not_found if the file doesn't exist
+///	- status::invalid_param if the path is nullptr
+status delete_file(const char* path);
+status delete_file(const std::string &path); ///< @copydoc ctle::delete_file
+
 /// @brief Read a file in binary mode into a vector of bytes
 /// @param filepath the source file path
 /// @param dest the destination vector
@@ -160,6 +170,13 @@ status file_access( const char *path, access_mode amode )
 	return file_access( std::string( path ), amode );
 }
 
+status delete_file( const char *path )
+{
+	if( !path )
+		return status::invalid_param;
+	return delete_file( std::string( path ) );
+}
+
 status read_file(const std::string& filepath, std::vector<uint8_t>& dest)
 {
 	_file_object f;
@@ -199,20 +216,6 @@ status write_file( const std::string &filepath, const void *src, size_t src_size
 
 namespace ctle
 {
-status file_access( const std::string &path, access_mode amode )
-{
-	auto res = _access_s( path.c_str(), (int)amode );
-	if( res == 0 )
-		return status::ok;
-	else if( res == EACCES )
-		return status::cant_access;
-	else if( res == ENOENT )
-		return status::not_found;
-	else if( res == EINVAL )
-		return status::invalid_param;
-	else
-		return status::undefined_error;
-}
 
 static std::wstring utf8string_to_wstringfullpath( std::string utf8str )
 {
@@ -229,6 +232,40 @@ static std::wstring utf8string_to_wstringfullpath( std::string utf8str )
 	wfullpath.resize( actual_len );
 
 	return wfullpath;
+}
+
+status file_access( const std::string &path, access_mode amode )
+{
+	const auto wpath = utf8string_to_wstringfullpath(path);
+
+	auto res = ::_waccess_s( wpath.c_str(), (int)amode );
+	if( res == 0 )
+		return status::ok;
+	else if( res == EACCES )
+		return status::cant_access;
+	else if( res == ENOENT )
+		return status::not_found;
+	else if( res == EINVAL )
+		return status::invalid_param;
+	else
+		return status::undefined_error;
+}
+
+status delete_file( const std::string &path )
+{
+	const auto wpath = utf8string_to_wstringfullpath(path);
+
+	if( ::DeleteFileW( wpath.c_str() ) )
+		return status::ok;
+
+	// failed, check reason
+	const DWORD error = GetLastError();
+	if( error == ERROR_FILE_NOT_FOUND )
+		return status::not_found;
+	else if( error == ERROR_ACCESS_DENIED )
+		return status::cant_access;
+	else
+		return status::undefined_error;
 }
 
 _file_object::_file_object()
@@ -388,6 +425,20 @@ status file_access( const std::string &path, access_mode amode )
 		return status::not_found;
 	else if( res == EINVAL )
 		return status::invalid_param;
+	else
+		return status::undefined_error;
+}
+
+status delete_file( const std::string &path )
+{
+	if( remove( path.c_str() ) == 0 )
+		return status::ok;
+
+	// failed, check reason
+	if( errno == ENOENT )
+		return status::not_found;
+	else if( errno == EACCES )
+		return status::cant_access;
 	else
 		return status::undefined_error;
 }

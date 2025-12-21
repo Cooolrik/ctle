@@ -143,11 +143,10 @@ template <> std::string to_hex_string( const uuid &value )
 
 template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &success ) noexcept
 {
-	if( (str.end - str.start) != 36
-		|| str.start[8] != '-'
-		|| str.start[13] != '-'
-		|| str.start[18] != '-'
-		|| str.start[23] != '-' )
+	const char *begin = str.begin();
+	const char *end = str.end();
+
+	if( (end - begin) != 36 || begin[8] != '-' || begin[13] != '-' || begin[18] != '-' || begin[23] != '-' ) 
 	{
 		success = false; // ill-formatted
 		return uuid::nil;
@@ -155,11 +154,11 @@ template <> uuid ctle::from_string<uuid>( const string_span<char> &str, bool &su
 
 	uuid value;
 
-	_bytes_from_hex_string( &value.data[0], 4, &str.start[0], success );
-	_bytes_from_hex_string( &value.data[4], 2, &str.start[9], success );
-	_bytes_from_hex_string( &value.data[6], 2, &str.start[14], success );
-	_bytes_from_hex_string( &value.data[8], 2, &str.start[19], success );
-	_bytes_from_hex_string( &value.data[10], 6, &str.start[24], success );
+	_bytes_from_hex_string( &value.data[0], 4, &begin[0], success );
+	_bytes_from_hex_string( &value.data[4], 2, &begin[9], success );
+	_bytes_from_hex_string( &value.data[6], 2, &begin[14], success );
+	_bytes_from_hex_string( &value.data[8], 2, &begin[19], success );
+	_bytes_from_hex_string( &value.data[10], 6, &begin[24], success );
 
 	return value;
 }

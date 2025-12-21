@@ -7,7 +7,7 @@
 #include "status.h"
 
 /// @file semaphore.h
-/// @brief 
+/// @brief A simple cross-platform semaphore implementation.
 
 namespace ctle
 {
