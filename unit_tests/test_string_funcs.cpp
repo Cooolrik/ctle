@@ -218,3 +218,15 @@ TEST( string_funcs, wstring_conversion_tests )
 	EXPECT_TRUE( wstring_to_string( wide_str, converted_utf8 ) );
 	EXPECT_TRUE( converted_utf8==utf8_str );
 }
+
+constexpr static const uint64_t hash1 = fnv1a_64( "heLLo my dArling!" );
+
+TEST( string_funcs, hash_tests )
+{
+	static char buf1[] = "heLLo my dArling!";
+	auto res = fnv1a_64( buf1 );
+	auto res1 = _internal_fnv1a_64( buf1 );
+
+
+
+}

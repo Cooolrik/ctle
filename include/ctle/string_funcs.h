@@ -16,6 +16,32 @@
 namespace ctle
 {
 
+template<typename _Ty> 
+constexpr uint64_t _internal_fnv1a_64(const _Ty* begin_, const _Ty* end_, uint64_t hash = 1469598103934665603ull )
+{
+	return (begin_ < end_) ? _internal_fnv1a_64( begin_ + 1, end_, (hash ^ uint64_t( *begin_ )) * 1099511628211ull ) : hash;
+}
+
+template<typename _Ty> 
+constexpr uint64_t _internal_fnv1a_64(const _Ty* str_, uint64_t hash = 1469598103934665603ull )
+{
+	return (str_ != nullptr && uint64_t( *str_ ) != 0) ? _internal_fnv1a_64( str_ + 1, (hash ^ uint64_t( *str_ )) * 1099511628211ull ) : hash;
+}
+
+/// @brief Compute the FNV-1a 64-bit hash of a string span, as a constexpr function.
+/// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc. 
+/// @return The FNV-1a 64-bit hash of the string span.
+template<typename _Ty> 
+constexpr uint64_t fnv1a_64(const _Ty* begin_, const _Ty* end_)
+{
+	return _internal_fnv1a_64( begin_, end_ );
+}
+ 
+template<typename _Ty, std::size_t N> 
+constexpr uint64_t fnv1a_64(const _Ty (&str)[N]) {
+    return _internal_fnv1a_64(str, str + (N - 1)); // exclude null terminator
+}
+
 /// @brief A span of characters, with start and end pointers.
 /// @tparam _Ty The type of the characters in the span, char or wchar_t.
 template<class _Ty> class string_span
@@ -36,6 +62,7 @@ public:
 	/// @brief make a copy to a basic_string, returns an empty string if the span is invalid (end<=start)
 	operator std::basic_string<_Ty>() noexcept { return (end_ > begin_) ? (std::basic_string<_Ty>(this->begin_, this->end_)) : (std::basic_string<_Ty>()); }
 };
+
 
 /// @brief Parse a type from a string. 
 /// @details For regular numbers, from_string assumes base - 10 and from_hex_string assumes base - 16 value. from_hex_string is only defined for unsigned integer values.
