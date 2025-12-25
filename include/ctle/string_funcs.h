@@ -15,8 +15,8 @@
 
 namespace ctle
 {
-constexpr const uint64_t fnv1a_64_offset_basis = 0xcbf29ce484222325ull;
-constexpr const uint64_t fnv1a_64_prime = 0x100000001b3ull;
+inline constexpr uint64_t fnv1a_64_offset_basis = 0xcbf29ce484222325ull;
+inline constexpr uint64_t fnv1a_64_prime = 0x100000001b3ull;
 
 /// @brief Compute the FNV-1a 64-bit hash of a string span (begin/end pair), as a constexpr function.
 /// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc.

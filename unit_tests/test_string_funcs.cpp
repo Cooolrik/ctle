@@ -219,16 +219,25 @@ TEST( string_funcs, wstring_conversion_tests )
 	EXPECT_TRUE( converted_utf8==utf8_str );
 }
 
-constexpr static const uint64_t hash1 = fnv1a_64( "!!!!!!!!" );
-static_assert(hash1 == 0x74c43b284b8b234d, "FNV-1a 64-bit hash does not match expected value");
-constexpr static const uint64_t hash2 = fnv1a_64( L"!!!!!!!!" );
+template<uint64_t N> struct print_value;
+
+static constexpr char str_utf8[] = "Hello, World! Greek letter alpha: \xc9" "\x91."; // note: split to avoid intellisense \x issues
+static_assert(sizeof(str_utf8)==38, "str_utf8 is not the expected size");
+static constexpr auto hash_str_utf8 = fnv1a_64( str_utf8 );
+static_assert(hash_str_utf8==0xf2d0dfa4ae19524e, "incorrect constexpr compile time hash value: hash_str_utf8");
+
+static constexpr wchar_t str_wide[] = L"Hello, World! Greek letter alpha: \x0251.";
+static_assert(sizeof(str_wide)/sizeof(wchar_t)==37, "str_wide is not the expected size");
+static constexpr auto hash_str_wide = fnv1a_64( str_wide );
+static_assert(hash_str_wide==0x35e0ce4789c9b7f3, "incorrect constexpr compile time hash value: hash_str_wide");
+//static_assert(hash_str_wide==0, "incorrect constexpr compile time hash value: hash_str_wide");
+
+print_value<hash_str_wide> pv;
 
 TEST( string_funcs, hash_tests )
 {
-	//static char buf1[] = "Hejsan!";
-	//auto res = fnv1a_64( buf1 );
-	//auto res1 = fnv1a_64( buf1, buf1 + sizeof(buf1) - 1 );
-	//
-	//
-	//
+	//auto h_utf8 = fnv1a_64( str_utf8 );
+	//EXPECT_EQ( h_utf8, hash_str_utf8 );
+	//auto h_wide = fnv1a_64( str_wide );
+	//EXPECT_EQ( h_wide, hash_str_wide );
 }
