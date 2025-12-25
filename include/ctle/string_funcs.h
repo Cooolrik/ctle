@@ -15,32 +15,62 @@
 
 namespace ctle
 {
+constexpr const uint64_t fnv1a_64_offset_basis = 0xcbf29ce484222325ull;
+constexpr const uint64_t fnv1a_64_prime = 0x100000001b3ull;
 
-template<typename _Ty> 
-constexpr uint64_t _internal_fnv1a_64(const _Ty* begin_, const _Ty* end_, uint64_t hash = 1469598103934665603ull )
-{
-	return (begin_ < end_) ? _internal_fnv1a_64( begin_ + 1, end_, (hash ^ uint64_t( *begin_ )) * 1099511628211ull ) : hash;
-}
-
-template<typename _Ty> 
-constexpr uint64_t _internal_fnv1a_64(const _Ty* str_, uint64_t hash = 1469598103934665603ull )
-{
-	return (str_ != nullptr && uint64_t( *str_ ) != 0) ? _internal_fnv1a_64( str_ + 1, (hash ^ uint64_t( *str_ )) * 1099511628211ull ) : hash;
-}
-
-/// @brief Compute the FNV-1a 64-bit hash of a string span, as a constexpr function.
-/// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc. 
+/// @brief Compute the FNV-1a 64-bit hash of a string span (begin/end pair), as a constexpr function.
+/// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc.
+/// @param begin The beginning of the span
+/// @param end The character after the last char of the span, so the span is [begin, end)
 /// @return The FNV-1a 64-bit hash of the string span.
 template<typename _Ty> 
-constexpr uint64_t fnv1a_64(const _Ty* begin_, const _Ty* end_)
+constexpr uint64_t fnv1a_64( const _Ty *begin, const _Ty *end )
 {
-	return _internal_fnv1a_64( begin_, end_ );
+	uint64_t hash = fnv1a_64_offset_basis; 
+	for( const _Ty *p = begin; p != end; ++p )
+	{
+		uint64_t val = *p;
+		for( size_t i = 0; i < sizeof( _Ty ); ++i, val >>= 8 )
+		{
+			hash = (hash ^ ( val & 0xff )) * fnv1a_64_prime; 
+		}
+	}
+	return hash;
 }
- 
-template<typename _Ty, std::size_t N> 
-constexpr uint64_t fnv1a_64(const _Ty (&str)[N]) {
-    return _internal_fnv1a_64(str, str + (N - 1)); // exclude null terminator
+
+/// @brief Compute the FNV-1a 64-bit hash of a zero-terminated string, as a constexpr function.
+/// @tparam _Ty The character type of the string, char, wchar_t, char8_t etc.
+/// @param str The string to hash
+/// @return The FNV-1a 64-bit hash of the string. Nullptr strings return the hash of an empty string.
+template<typename _Ty> 
+constexpr uint64_t fnv1a_64( const _Ty *str )
+{
+	uint64_t hash = fnv1a_64_offset_basis; 
+	if( str != nullptr )
+	{
+		for( const _Ty *p = str; *p != 0; ++p )
+		{
+			uint64_t val = *p;
+			for( size_t i = 0; i < sizeof( _Ty ); ++i, val >>= 8 )
+			{
+				hash = (hash ^ ( val & 0xff )) * fnv1a_64_prime; 
+			}
+		}
+	}
+	return hash;
 }
+
+///// @brief Compute the FNV-1a 64-bit hash of const string array, as a constexpr function.
+///// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc. 
+///// @tparam _Num The size of the string array, including the null terminator, which is excluded from the hash.
+///// @param str The string array to hash
+///// @details The function excludes the final character, which is assumed to be the null terminator.
+///// @return The FNV-1a 64-bit hash of the string span.
+//template<typename _Ty, std::size_t _Num> 
+//constexpr uint64_t fnv1a_64(const _Ty (&str)[_Num]) 
+//{
+//	return fnv1a_64( str, str + (_Num - 1) ); // exclude final character (assumed null terminator)
+//}
 
 /// @brief A span of characters, with start and end pointers.
 /// @tparam _Ty The type of the characters in the span, char or wchar_t.
@@ -57,10 +87,13 @@ public:
 	const _Ty* end() const noexcept { return this->end_; }     ///< @brief get the end pointer
 
 	/// @brief get the length of the span, returns 0 if the span is invalid
-	size_t size() const noexcept { return (this->end_ > this->begin_) ? this->end_ - this->begin_ : 0; }
+	constexpr size_t size() const noexcept { return (this->end_ > this->begin_) ? this->end_ - this->begin_ : 0; }
 
 	/// @brief make a copy to a basic_string, returns an empty string if the span is invalid (end<=start)
 	operator std::basic_string<_Ty>() noexcept { return (end_ > begin_) ? (std::basic_string<_Ty>(this->begin_, this->end_)) : (std::basic_string<_Ty>()); }
+
+	/// @brief get the FNV-1a 64-bit hash of the string span
+	constexpr uint64_t fnv1a_64() const noexcept { return ctle::fnv1a_64( this->begin_, this->end_ ); } 
 };
 
 

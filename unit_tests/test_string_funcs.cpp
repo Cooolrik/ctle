@@ -219,14 +219,16 @@ TEST( string_funcs, wstring_conversion_tests )
 	EXPECT_TRUE( converted_utf8==utf8_str );
 }
 
-constexpr static const uint64_t hash1 = fnv1a_64( "heLLo my dArling!" );
+constexpr static const uint64_t hash1 = fnv1a_64( "!!!!!!!!" );
+static_assert(hash1 == 0x74c43b284b8b234d, "FNV-1a 64-bit hash does not match expected value");
+constexpr static const uint64_t hash2 = fnv1a_64( L"!!!!!!!!" );
 
 TEST( string_funcs, hash_tests )
 {
-	static char buf1[] = "heLLo my dArling!";
-	auto res = fnv1a_64( buf1 );
-	auto res1 = _internal_fnv1a_64( buf1 );
-
-
-
+	//static char buf1[] = "Hejsan!";
+	//auto res = fnv1a_64( buf1 );
+	//auto res1 = fnv1a_64( buf1, buf1 + sizeof(buf1) - 1 );
+	//
+	//
+	//
 }
