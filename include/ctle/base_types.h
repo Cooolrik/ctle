@@ -26,7 +26,7 @@ template<> std::string to_string( const f64 &val ) { return std::to_string(val);
 // Parse base types from strings.
 template<> i8 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
+	i64 val = std::stoll( std::string( str.begin(), str.end() ) );
 	if( val < (i64)std::numeric_limits<i8>::min() || val > (i64)std::numeric_limits<i8>::max() ) { result = false; return {}; }
 	return (i8)val;
 }
@@ -39,7 +39,7 @@ template<> i8 from_string( const string_span<char> &str )
 }
 template<> u8 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
+	u64 val = std::stoull( std::string( str.begin(), str.end() ) );
 	if( val > (u64)std::numeric_limits<u8>::max() ) { result = false; return {}; }
 	return (u8)val;
 }
@@ -52,7 +52,7 @@ template<> u8 from_string( const string_span<char> &str )
 }
 template<> i16 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
+	i64 val = std::stoll( std::string( str.begin(), str.end() ) );
 	if( val < (i64)std::numeric_limits<i16>::min() || val > (i64)std::numeric_limits<i16>::max() ) { result = false; return {}; }
 	return (i16)val;
 }
@@ -65,7 +65,7 @@ template<> i16 from_string( const string_span<char> &str )
 }
 template<> u16 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
+	u64 val = std::stoull( std::string( str.begin(), str.end() ) );
 	if( val > (u64)std::numeric_limits<u16>::max() ) { result = false; return {}; }
 	return (u16)val;
 }
@@ -78,7 +78,7 @@ template<> u16 from_string( const string_span<char> &str )
 }
 template<> i32 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
+	i64 val = std::stoll( std::string( str.begin(), str.end() ) );
 	if( val < (i64)std::numeric_limits<i32>::min() || val > (i64)std::numeric_limits<i32>::max() ) { result = false; return {}; }
 	return (i32)val;
 }
@@ -91,7 +91,7 @@ template<> i32 from_string( const string_span<char> &str )
 }
 template<> u32 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
+	u64 val = std::stoull( std::string( str.begin(), str.end() ) );
 	if( val > (u64)std::numeric_limits<u32>::max() ) { result = false; return {}; }
 	return (u32)val;
 }
@@ -104,7 +104,7 @@ template<> u32 from_string( const string_span<char> &str )
 }
 template<> i64 from_string( const string_span<char> &str, bool & ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
+	i64 val = std::stoll( std::string( str.begin(), str.end() ) );
 	return (i64)val;
 }
 template<> i64 from_string( const string_span<char> &str )
@@ -115,7 +115,7 @@ template<> i64 from_string( const string_span<char> &str )
 }
 template<> u64 from_string( const string_span<char> &str, bool & ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
+	u64 val = std::stoull( std::string( str.begin(), str.end() ) );
 	return (u64)val;
 }
 template<> u64 from_string( const string_span<char> &str )
@@ -126,19 +126,19 @@ template<> u64 from_string( const string_span<char> &str )
 }
 template<> f32 from_string( const string_span<char> &str, bool & ) noexcept
 {
-	return std::stof( std::string( str.start, str.end ) );
+	return std::stof( std::string( str.begin(), str.end() ) );
 }
 template<> f32 from_string( const string_span<char> &str )
 {
-	return std::stof( std::string( str.start, str.end ) );
+	return std::stof( std::string( str.begin(), str.end() ) );
 }
 template<> f64 from_string( const string_span<char> &str, bool & ) noexcept
 {
-	return std::stod( std::string( str.start, str.end ) );
+	return std::stod( std::string( str.begin(), str.end() ) );
 }
 template<> f64 from_string( const string_span<char> &str )
 {
-	return std::stod( std::string( str.start, str.end ) );
+	return std::stod( std::string( str.begin(), str.end() ) );
 }
 
 }

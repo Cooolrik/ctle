@@ -206,14 +206,14 @@ inline digest<_Size> digest_from_string(const string_span<char>& str, bool& succ
 	static_assert(sizeof(digest<_Size>) == byte_size, "Error: digest<> invalid size.");
 
 	// must be exactly 2 hex values per byte 
-	if ((str.end - str.start) != (byte_size * 2))
+	if (str.size() != (byte_size * 2))
 	{
 		success = false;
 		return digest<_Size>();
 	}
 
 	digest<_Size> value;
-	_bytes_from_hex_string(&value, byte_size, str.start, success);
+	_bytes_from_hex_string(&value, byte_size, str.begin(), success);
 	return value;
 }
 

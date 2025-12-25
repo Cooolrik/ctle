@@ -56,5 +56,7 @@
 #include "data_destination.h"
 #include "hasher.h"
 #include "process.h"
+#include "semaphore.h"
+#include "log_system.h"
 
 #endif//_CTLE_CTLE_H_

@@ -60,6 +60,8 @@ private:
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <cstring>
+#include <semaphore.h>
+#include <errno.h>
 
 // RAII wrapper for Linux file handles
 class linux_file_ref

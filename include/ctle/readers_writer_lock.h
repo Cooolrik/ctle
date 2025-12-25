@@ -91,7 +91,7 @@ public:
 #ifdef _MSC_VER
 		_Requires_lock_held_( this->writeMutex ) // markup for VS static code analysis to check that the mutex is locked
 #endif
-			this->writeMutex.unlock();
+		this->writeMutex.unlock();
 	}
 
 	/// @brief read_lock class locks for read while in scope

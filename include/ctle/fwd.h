@@ -29,6 +29,7 @@ typedef std::int64_t i64;
 typedef std::uint64_t u64;
 typedef float f32;
 typedef double f64;
+typedef unsigned int uint;
 
 // from status.h
 enum class status_code : int;
@@ -37,8 +38,8 @@ class status;
 // from status_return.h
 template<class _StatusType, class _ValueType> class status_return;
 
-// from
-template<typename _Ty> using value_return = status_return<status, _Ty>;;
+// from combined status.h & status_return.h
+template<typename _Ty> using value_return = status_return<status, _Ty>;
 
 // from data_source.h
 class file_data_source;
@@ -94,7 +95,7 @@ template <class _Ty, class _VecTy = std::vector<_Ty>> class optional_vector;
 template <class _Ty, class _IdxTy = std::vector<i32>, class _VecTy = std::vector<_Ty>> class optional_idx_vector;
 
 // from string_funcs.h
-template<class _Ty> struct string_span;
+template<class _Ty> class string_span;
 template<class _Ty> std::string to_string(const _Ty& val);
 template<class _Ty> std::string to_hex_string(const _Ty& val);
 

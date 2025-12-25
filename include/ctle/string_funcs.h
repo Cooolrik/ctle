@@ -15,23 +15,87 @@
 
 namespace ctle
 {
+inline constexpr uint64_t fnv1a_64_offset_basis = 0xcbf29ce484222325ull;
+inline constexpr uint64_t fnv1a_64_prime = 0x100000001b3ull;
+
+/// @brief Compute the FNV-1a 64-bit hash of a string span (begin/end pair), as a constexpr function.
+/// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc.
+/// @param begin The beginning of the span
+/// @param end The character after the last char of the span, so the span is [begin, end)
+/// @return The FNV-1a 64-bit hash of the string span.
+template<typename _Ty> 
+constexpr uint64_t fnv1a_64( const _Ty *begin, const _Ty *end )
+{
+	uint64_t hash = fnv1a_64_offset_basis; 
+	for( const _Ty *p = begin; p != end; ++p )
+	{
+		uint64_t val = *p;
+		for( size_t i = 0; i < sizeof( _Ty ); ++i, val >>= 8 )
+		{
+			hash = (hash ^ ( val & 0xff )) * fnv1a_64_prime; 
+		}
+	}
+	return hash;
+}
+
+/// @brief Compute the FNV-1a 64-bit hash of a zero-terminated string, as a constexpr function.
+/// @tparam _Ty The character type of the string, char, wchar_t, char8_t etc.
+/// @param str The string to hash
+/// @return The FNV-1a 64-bit hash of the string. Nullptr strings return the hash of an empty string.
+template<typename _Ty> 
+constexpr uint64_t fnv1a_64( const _Ty *str )
+{
+	uint64_t hash = fnv1a_64_offset_basis; 
+	if( str != nullptr )
+	{
+		for( const _Ty *p = str; *p != 0; ++p )
+		{
+			uint64_t val = *p;
+			for( size_t i = 0; i < sizeof( _Ty ); ++i, val >>= 8 )
+			{
+				hash = (hash ^ ( val & 0xff )) * fnv1a_64_prime; 
+			}
+		}
+	}
+	return hash;
+}
+
+///// @brief Compute the FNV-1a 64-bit hash of const string array, as a constexpr function.
+///// @tparam _Ty The character type of the string span, char, wchar_t, char8_t etc. 
+///// @tparam _Num The size of the string array, including the null terminator, which is excluded from the hash.
+///// @param str The string array to hash
+///// @details The function excludes the final character, which is assumed to be the null terminator.
+///// @return The FNV-1a 64-bit hash of the string span.
+//template<typename _Ty, std::size_t _Num> 
+//constexpr uint64_t fnv1a_64(const _Ty (&str)[_Num]) 
+//{
+//	return fnv1a_64( str, str + (_Num - 1) ); // exclude final character (assumed null terminator)
+//}
 
 /// @brief A span of characters, with start and end pointers.
 /// @tparam _Ty The type of the characters in the span, char or wchar_t.
-template<class _Ty> struct string_span
+template<class _Ty> class string_span
 {
+public:
 	string_span() = default;
-	string_span(const _Ty* _start, const _Ty* _end) : start(_start), end(_end) {}
+	string_span(const _Ty* _start, const _Ty* _end) : begin_(_start), end_(_end) {}
 
-	const _Ty* start = {}; // first char of span
-	const _Ty* end = {}; // the character after the last char of the span
+	const _Ty* begin_ = {}; ///< @brief first character of span
+	const _Ty *end_ = {};	///< @brief the character after the last char of the span, so the span is [begin_, end_)
+
+	const _Ty* begin() const noexcept { return this->begin_; } ///< @brief get the begin pointer
+	const _Ty* end() const noexcept { return this->end_; }     ///< @brief get the end pointer
 
 	/// @brief get the length of the span, returns 0 if the span is invalid
-	size_t length() const noexcept { return (end > start) ? end - start : 0; }
+	constexpr size_t size() const noexcept { return (this->end_ > this->begin_) ? this->end_ - this->begin_ : 0; }
 
 	/// @brief make a copy to a basic_string, returns an empty string if the span is invalid (end<=start)
-	operator std::basic_string<_Ty>() noexcept { return (end > start) ? (std::basic_string<_Ty>(this->start, this->end)) : (std::basic_string<_Ty>()); }
+	operator std::basic_string<_Ty>() noexcept { return (end_ > begin_) ? (std::basic_string<_Ty>(this->begin_, this->end_)) : (std::basic_string<_Ty>()); }
+
+	/// @brief get the FNV-1a 64-bit hash of the string span
+	constexpr uint64_t fnv1a_64() const noexcept { return ctle::fnv1a_64( this->begin_, this->end_ ); } 
 };
+
 
 /// @brief Parse a type from a string. 
 /// @details For regular numbers, from_string assumes base - 10 and from_hex_string assumes base - 16 value. from_hex_string is only defined for unsigned integer values.
@@ -49,8 +113,8 @@ template<class _Ty> _Ty from_hex_string(const string_span<char>& str, bool& succ
 /// @param success Set to false if the conversion fails. Set to true before calling the function.
 /// @note The success parameter must be set to true before calling the functions!
 /// @return The parsed value.
-template<class _Ty> inline _Ty from_string(const char* start, const char* end, bool& success) noexcept { return from_string<_Ty>(string_span<char>(start, end), success); }
-template<class _Ty> inline _Ty from_hex_string(const char* start, const char* end, bool& success) noexcept { return from_hex_string<_Ty>(string_span<char>(start, end), success); } ///< @copydoc template<class _Ty> inline _Ty from_string(const char* start, const char* end, bool& success) noexcept
+template<class _Ty> inline _Ty from_string(const char* begin_, const char* end, bool& success) noexcept { return from_string<_Ty>(string_span<char>(begin_, end), success); }
+template<class _Ty> inline _Ty from_hex_string(const char* begin_, const char* end, bool& success) noexcept { return from_hex_string<_Ty>(string_span<char>(begin_, end), success); } ///< @copydoc template<class _Ty> inline _Ty from_string(const char* start, const char* end, bool& success) noexcept
 
 /// @brief Parse a type from a string. 
 /// @details For regular numbers, from_string assumes base - 10 and from_hex_string assumes base - 16 value. from_hex_string is only defined for unsigned integer values.
@@ -77,8 +141,8 @@ template<class _Ty> _Ty from_hex_string(const string_span<char>& str); ///< @cop
 /// @throws std::out_of_range if the result is outside the range of the destination type.
 /// @throws std::invalid_argument if the string is not a valid representation of the destination type.
 /// @return The parsed value.
-template<class _Ty> inline _Ty from_string(const char* start, const char* end) { return from_string<_Ty>(string_span<char>(start, end)); }
-template<class _Ty> inline _Ty from_hex_string(const char* start, const char* end) { return from_hex_string<_Ty>(string_span<char>(start, end)); } ///< @copydoc template<class _Ty> inline _Ty from_string(const char* start, const char* end)
+template<class _Ty> inline _Ty from_string(const char* begin_, const char* end) { return from_string<_Ty>(string_span<char>(begin_, end)); }
+template<class _Ty> inline _Ty from_hex_string(const char* begin_, const char* end) { return from_hex_string<_Ty>(string_span<char>(begin_, end)); } ///< @copydoc template<class _Ty> inline _Ty from_string(const char* start, const char* end)
 
 /// @brief Parse a type from a string. 
 /// @details For regular numbers, from_string assumes base - 10 and from_hex_string assumes base - 16 value. from_hex_string is only defined for unsigned integer values.
@@ -102,8 +166,8 @@ template<class _Ty> std::string to_hex_string(const _Ty& val); ///< @copydoc tem
 /// @returns The number of charactes in the beginning of the string span, which match the control list.
 /// @note No bounds checking is performed, so the control list must be a valid null-terminated string.
 /// @note The chars in control are required to be in the lower ascii set (not extended characters)
-template<class _Ty> size_t strspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept;
-template<class _Ty> inline size_t strspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strspn_t(span.start, span.end, control); } ///< @copydoc template<class _Ty> inline size_t strspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
+template<class _Ty> size_t strspn_t(const _Ty* begin_, const _Ty* end, const _Ty* control) noexcept;
+template<class _Ty> inline size_t strspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strspn_t(span.begin_, span.end_, control); } ///< @copydoc template<class _Ty> inline size_t strspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
 template<class _Ty> inline size_t strspn_t(const std::basic_string<_Ty>& str, const _Ty* control) noexcept { return strspn_t(str.data(), str.data() + str.size(), control); }///< @copydoc template<class _Ty> inline size_t strspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
 
 /// @brief Get number of chars from the beginning of a string span, which DOES NOT match a control list. (opposite of strspn_t)
@@ -114,8 +178,8 @@ template<class _Ty> inline size_t strspn_t(const std::basic_string<_Ty>& str, co
 /// @returns The number of charactes in the beginning of the string span, which does not match the control list.
 /// @note No bounds checking is performed, so the control list must be a valid null-terminated string.
 /// @note The chars in control are required to be in the lower set (not extended characters)
-template<class _Ty> size_t strcspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept;
-template<class _Ty> inline size_t strcspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strcspn_t(span.start, span.end, control); }
+template<class _Ty> size_t strcspn_t(const _Ty* begin_, const _Ty* end, const _Ty* control) noexcept;
+template<class _Ty> inline size_t strcspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strcspn_t(span.begin_, span.end_, control); }
 template<class _Ty> inline size_t strcspn_t(const std::basic_string<_Ty>& str, const _Ty* control) noexcept { return strspn_t(str.data(), str.data() + str.size(), control); }
 
 /// @brief Get number of chars from the beginning of a string span, until the last occurance of a character from a control list.
@@ -129,8 +193,8 @@ template<class _Ty> inline size_t strcspn_t(const std::basic_string<_Ty>& str, c
 /// @returns The number of characters to the last occurance of a character from the control list.
 /// @note No bounds checking is performed, so the control list must be a valid null-terminated string.
 /// @note The chars in control are required to be in the lower set (not extended characters)
-template<class _Ty> size_t strcrspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept;
-template<class _Ty> inline size_t strcrspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strcrspn_t(span.start, span.end, control); }///< @copydoc template<class _Ty> inline size_t strcrspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
+template<class _Ty> size_t strcrspn_t(const _Ty* begin_, const _Ty* end, const _Ty* control) noexcept;
+template<class _Ty> inline size_t strcrspn_t(const string_span<_Ty>& span, const _Ty* control) noexcept { return strcrspn_t(span.begin_, span.end_, control); }///< @copydoc template<class _Ty> inline size_t strcrspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
 template<class _Ty> inline size_t strcrspn_t(const std::basic_string<_Ty>& str, const _Ty* control) noexcept { return strcrspn_t(str.data(), str.data() + str.size(), control); }///< @copydoc template<class _Ty> inline size_t strcrspn_t(const _Ty* start, const _Ty* end, const _Ty* control) noexcept
 
 /// @brief Given a start and end pointer to a string, and a list of deliminators, return the first token.
@@ -140,8 +204,8 @@ template<class _Ty> inline size_t strcrspn_t(const std::basic_string<_Ty>& str, 
 /// @param end The end of the string span to search.
 /// @param delims The list of characters to use as deliminators.
 /// @note The chars in delims are required to be in the lower set (not extended characters)
-template<class _Ty> string_span<_Ty> strtok_t(const _Ty* start, const _Ty* end, const _Ty* delims) noexcept;
-template<class _Ty> inline string_span<_Ty> strtok_t(const string_span<_Ty>& span, const _Ty* delims) noexcept { return strtok_t(span.start, span.end, delims); }
+template<class _Ty> string_span<_Ty> strtok_t(const _Ty* begin_, const _Ty* end, const _Ty* delims) noexcept;
+template<class _Ty> inline string_span<_Ty> strtok_t(const string_span<_Ty>& span, const _Ty* delims) noexcept { return strtok_t(span.begin_, span.end_, delims); }
 template<class _Ty> inline std::basic_string<_Ty> strtok_t(const std::basic_string<_Ty>& str, const _Ty* delims) noexcept { return strtok_t(str.data(), str.data() + str.size(), delims); }
 
 /// @brief Locate first occurrence of character in string
@@ -151,8 +215,8 @@ template<class _Ty> inline std::basic_string<_Ty> strtok_t(const std::basic_stri
 /// @param end The end of the string span to search.
 /// @param character The character to search for.
 /// @returns The number of characters to the first occurance of the character.
-template<class _Ty> size_t strchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept;
-template<class _Ty> inline size_t strchr_t(const string_span<_Ty>& span, _Ty character) noexcept { return strchr_t(span.start, span.end, character); } ///< @copydoc template<class _Ty> size_t strchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
+template<class _Ty> size_t strchr_t(const _Ty* begin_, const _Ty* end, _Ty character) noexcept;
+template<class _Ty> inline size_t strchr_t(const string_span<_Ty>& span, _Ty character) noexcept { return strchr_t(span.begin_, span.end_, character); } ///< @copydoc template<class _Ty> size_t strchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
 template<class _Ty> inline size_t strchr_t(const std::basic_string<_Ty>& str, _Ty character) noexcept { return strchr_t(str.data(), str.data() + str.size(), character); } ///< @copydoc template<class _Ty> size_t strchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
 
 /// @brief Locate last occurrence of character in string
@@ -162,8 +226,8 @@ template<class _Ty> inline size_t strchr_t(const std::basic_string<_Ty>& str, _T
 /// @param end The end of the string span to search.
 /// @param character The character to search for.
 /// @returns The number of characters to the last occurance of the character.
-template<class _Ty> size_t strrchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept;
-template<class _Ty> inline size_t strrchr_t(const string_span<_Ty>& span, _Ty character) noexcept { return strrchr_t(span.start, span.end, character); } ///< @copydoc template<class _Ty> size_t strrchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
+template<class _Ty> size_t strrchr_t(const _Ty* begin_, const _Ty* end, _Ty character) noexcept;
+template<class _Ty> inline size_t strrchr_t(const string_span<_Ty>& span, _Ty character) noexcept { return strrchr_t(span.begin_, span.end_, character); } ///< @copydoc template<class _Ty> size_t strrchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
 template<class _Ty> inline size_t strrchr_t(const std::basic_string<_Ty>& str, _Ty character) noexcept { return strrchr_t(str.data(), str.data() + str.size(), character); } ///< @copydoc template<class _Ty> size_t strrchr_t(const _Ty* start, const _Ty* end, _Ty character) noexcept
 
 /// @brief given a start and end pointer to a string, parse an unsigned decimal number.
@@ -173,8 +237,8 @@ template<class _Ty> inline size_t strrchr_t(const std::basic_string<_Ty>& str, _
 /// @param start The beginning of the string span to search.
 /// @param end The end of the string span to search.
 /// @returns The number parsed from the string.
-template<class _Ty> uint64_t stou64_t(const _Ty* start, const _Ty* end) noexcept;
-template<class _Ty> inline uint64_t stou64_t(const string_span<_Ty>& span) noexcept { return stou64_t(span.start, span.end); }
+template<class _Ty> uint64_t stou64_t(const _Ty* begin_, const _Ty* end) noexcept;
+template<class _Ty> inline uint64_t stou64_t(const string_span<_Ty>& span) noexcept { return stou64_t(span.begin_, span.end_); }
 template<class _Ty> inline uint64_t stou64_t(const std::basic_string<_Ty>& str) noexcept { return stou64_t(str.data(), str.data() + str.size()); }
 
 /// @brief given a start and end pointer to a string, parse a signed decimal number.
@@ -184,8 +248,8 @@ template<class _Ty> inline uint64_t stou64_t(const std::basic_string<_Ty>& str) 
 /// @param start The beginning of the string span to search.
 /// @param end The end of the string span to search.
 /// @returns The number parsed from the string.
-template<class _Ty> int64_t stoi64_t(const _Ty* start, const _Ty* end) noexcept;
-template<class _Ty> inline int64_t stoi64_t(const string_span<_Ty>& span) noexcept { return stoi64_t(span.start, span.end); }
+template<class _Ty> int64_t stoi64_t(const _Ty* begin_, const _Ty* end) noexcept;
+template<class _Ty> inline int64_t stoi64_t(const string_span<_Ty>& span) noexcept { return stoi64_t(span.begin_, span.end_); }
 template<class _Ty> inline int64_t stoi64_t(const std::basic_string<_Ty>& str) noexcept { return stoi64_t(str.data(), str.data() + str.size()); }
 
 /// @brief Options for quoting strings. Used by quote_string_t.
@@ -203,9 +267,9 @@ enum class quote_string_options : uint32_t
 /// @param end The end of the string span to quote.
 /// @returns The quoted string, if the string needed quoting, otherwise the original string is returned.
 template<quote_string_options _opts = quote_string_options::always, class _Ty> 
-std::basic_string<_Ty> quote_string_t(const _Ty* start, const _Ty* end ) noexcept;
+std::basic_string<_Ty> quote_string_t(const _Ty* begin_, const _Ty* end ) noexcept;
 template<quote_string_options _opts = quote_string_options::always, class _Ty> 
-inline std::basic_string<_Ty> quote_string_t(const string_span<_Ty>& span ) noexcept { return quote_string_t<_opts,_Ty>(span.start, span.end); }
+inline std::basic_string<_Ty> quote_string_t(const string_span<_Ty>& span ) noexcept { return quote_string_t<_opts,_Ty>(span.begin_, span.end_); }
 template<quote_string_options _opts = quote_string_options::always, class _Ty> 
 inline std::basic_string<_Ty> quote_string_t(const std::basic_string<_Ty>& str ) noexcept { return quote_string_t<_opts,_Ty>(str.data(), str.data() + str.size()); }
 
@@ -220,8 +284,8 @@ inline std::basic_string<_Ty> quote_string_t(const std::basic_string<_Ty>& str )
 /// @param quotes The list of characters to use as quotes. Zero-terminated.
 /// @param whitespaces The list of characters to use as whitespaces. Zero-terminated.
 /// @returns True if the lexer succeeded, false if the lexer failed.
-template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* start, const _Ty* end, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept;
-template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const string_span<_Ty>& span, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, span.start, span.end, separators, quotes, whitespaces); }
+template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* begin_, const _Ty* end, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept;
+template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const string_span<_Ty>& span, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, span.begin_, span.end_, separators, quotes, whitespaces); }
 template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const std::basic_string<_Ty>& str, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, str.data(), str.data() + str.size(), separators, quotes, whitespaces); }
 
 void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, bool& success) noexcept;
@@ -288,13 +352,13 @@ void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, b
 template <class T> T from_hex_string(const string_span<char>& str, bool& success) noexcept
 {
 	uint8_t bytes[sizeof(T)];
-	_bytes_from_hex_string(bytes, sizeof(T), str.start, success);
+	_bytes_from_hex_string(bytes, sizeof(T), str.begin_, success);
 	return from_bigendian<T>(bytes);
 }
 template <> uint8_t from_hex_string<uint8_t>(const string_span<char>& str, bool& success) noexcept
 {
 	uint8_t value;
-	_bytes_from_hex_string(&value, sizeof(uint8_t), str.start, success);
+	_bytes_from_hex_string(&value, sizeof(uint8_t), str.begin_, success);
 	return value;
 }
 template uint16_t from_hex_string<uint16_t>(const string_span<char>& str, bool& success) noexcept;
@@ -681,14 +745,14 @@ template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* s
 
 			// scan until we find another of the same quotation mark, (skip the marks in the token span)
 			++ptr;
-			str_span.start = ptr;
+			str_span.begin_ = ptr;
 			for (;;)
 			{
 				if (ptr >= end)
 					return false; // error: reached end of string without an end quote
 				if (*ptr == c)
 				{
-					str_span.end = ptr;
+					str_span.end_ = ptr;
 					break;
 				}
 				++ptr;
@@ -701,7 +765,7 @@ template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* s
 
 		// not a string or separator, parse as token until we reach any other character
 		string_span<_Ty> token_span;
-		token_span.start = ptr;
+		token_span.begin_ = ptr;
 		++ptr;
 		for (;;)
 		{
@@ -710,7 +774,7 @@ template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* s
 				|| is_a(whitespaces)
 				|| is_a(quotes))
 			{
-				token_span.end = ptr;
+				token_span.end_ = ptr;
 				dest->emplace_back(token_span);
 				break;
 			}

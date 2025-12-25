@@ -37,6 +37,8 @@ general = error_type('general errors' , [
 	error_value( 'not_ready             ', -111, None, 'one or multiple objects are not ready, or out of sync' ),
 	error_value( 'cant_access           ', -112, None, 'access is not allowed' ),
 	error_value( 'already_exists        ', -113, None, 'a file or item already exists' ),
+	error_value( 'cant_acquire          ', -114, None, 'could not acquire a resource' ),
+	error_value( 'cant_release          ', -115, None, 'could not release a resource' ),
 	] )
 
 stl_errors = error_type('stl portable errors (from errc)' , [ 
@@ -206,7 +208,7 @@ namespace ctle
 		status() = default;
 		status( const status &other ) = default;
 
-		status( const status_code &_value ) noexcept : svalue( _value ) {}
+		explicit status( const status_code &_value ) noexcept : svalue( _value ) {}
 		const status &operator = ( const status_code &_value ) noexcept { this->svalue = _value; return *this; }
 
 		bool operator == ( const status &_other ) const noexcept { return this->svalue == _other.svalue; }
@@ -262,7 +264,7 @@ namespace ctle
 	for type in error_types:
 		out.comment_ln( type.type_name )
 		for value in type.values:
-			out.ln( f'const status status::{value.name} = status_code::{value.name};')
+			out.ln( f'const status status::{value.name}( status_code::{value.name} );')
 		out.ln()	
 
 	out.lines.append('''	struct status_code_string_description
