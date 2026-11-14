@@ -42,7 +42,6 @@
 #include "optional_value.h"
 #include "optional_vector.h"
 #include "readers_writer_lock.h"
-#include "prop.h"
 #include "status.h"
 #include "status_return.h"
 #include "string_funcs.h"
