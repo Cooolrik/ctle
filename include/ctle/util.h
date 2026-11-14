@@ -4,6 +4,7 @@
 #ifndef _CTLE_UTIL_H_
 #define _CTLE_UTIL_H_
 
+#include <cstdint>
 #include <type_traits>
 
 namespace ctle

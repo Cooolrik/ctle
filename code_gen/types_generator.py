@@ -153,6 +153,8 @@ def list_base_types( out:formatted_output ):
 
 	out.ln('#ifdef CTLE_IMPLEMENTATION', no_indent=True)		
 
+	out.ln('#include <limits>')
+	out.ln()
 	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
 

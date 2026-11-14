@@ -7,6 +7,8 @@
 #define _CTLE_BASE_TYPES_H_
 
 #ifdef CTLE_IMPLEMENTATION
+#include <limits>
+
 #include "fwd.h"
 #include "string_funcs.h"
 namespace ctle

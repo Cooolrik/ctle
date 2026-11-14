@@ -7,6 +7,9 @@
 /// @file read_stream.h
 /// @brief A read-only input stream for streaming data sequentially, using a memory buffer, while also calculating a hash on the input stream.
 
+#include <algorithm>
+#include <cstring>
+#include <type_traits>
 #include <vector>
 
 #include "fwd.h"

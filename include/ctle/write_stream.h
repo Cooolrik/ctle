@@ -4,6 +4,8 @@
 #ifndef _CTLE_WRITE_STREAM_H_
 #define _CTLE_WRITE_STREAM_H_
 
+#include <cstring>
+#include <type_traits>
 #include <vector>
 
 #include "fwd.h"
