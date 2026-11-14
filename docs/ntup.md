@@ -23,10 +23,39 @@ order which GLM is defined. Transpose GLM matrices before and after conversion i
 
 - Value types for 1D to 4D vectors and matrices
 - Support for all common numeric types
-- Optional GLM interoperability (when `glm.hpp` is included before `ntup.h`)
+- Optional GLM interoperability through `ntup_glm.h`, also included automatically when GLM is already present
 - Optional row/column major matrix options via CTLE_MN_TUP_COLUMNMAJOR or CTLE_MN_TUP_ROWMAJOR
 - Standard comparison operators
 - String conversion support
+
+### Optional GLM adapter
+
+`ntup.h` does not require GLM and its tuple class definitions do not change when
+GLM is included. Include GLM first for automatic adapter inclusion:
+
+```cpp
+#include <glm/glm.hpp>
+#include <ctle/ntup.h>
+```
+
+Alternatively, explicitly include the adapter, even after the tuple header:
+
+```cpp
+#include <ctle/ntup.h>
+#include <ctle/ntup_glm.h>
+```
+
+`ntup_glm.h` includes GLM itself. Include the adapter before using a conversion in
+each translation unit. Its template definitions remain in the header and do not
+require `CTLE_IMPLEMENTATION`, unlike the concrete status conversion adapters.
+
+Conversions to and from matching default-qualified GLM vectors and matrices remain
+implicit. Explicit tuple construction and assignment also retain GLM's existing
+conversions from other compatible GLM types. Matrix conversion treats each outer
+tuple as a column and does not transpose based on the row/column configuration.
+
+The `CTLE_N_TUP_ONLY_XYZW`, `CTLE_MN_TUP_COLUMNMAJOR`, and `CTLE_MN_TUP_ROWMAJOR`
+settings are unchanged and must remain consistent across translation units.
 
 ### Examples
 

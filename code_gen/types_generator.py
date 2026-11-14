@@ -212,6 +212,37 @@ def list_base_types( out:formatted_output ):
 	out.end_header_guard(guard_def)
 
 
+def define_tuple_conversions( out:formatted_output, tuple_type:str ):
+	out.ln('/// @brief Construct from a matching external type supported by an included adapter.')
+	out.ln('template<class _OtherTy, typename std::enable_if<')
+	out.ln(f'\tntup_conversion<{tuple_type}, _OtherTy>::is_implicit, int>::type = 0>')
+	out.ln(f'{tuple_type}( const _OtherTy &other ) noexcept')
+	with out.blk():
+		out.ln(f'ntup_conversion<{tuple_type}, _OtherTy>::assign( *this, other );')
+	out.ln()
+	out.ln('/// @brief Explicitly construct from another external type supported by the adapter.')
+	out.ln('template<class _OtherTy, typename std::enable_if<')
+	out.ln(f'\t!ntup_conversion<{tuple_type}, _OtherTy>::is_implicit, int>::type = 0>')
+	out.ln(f'explicit {tuple_type}( const _OtherTy &other ) noexcept')
+	with out.blk():
+		out.ln(f'ntup_conversion<{tuple_type}, _OtherTy>::assign( *this, other );')
+	out.ln()
+	out.ln('/// @brief Assign an external value supported by an included adapter.')
+	out.ln('template<class _OtherTy, class = decltype(')
+	out.ln(f'\tntup_conversion<{tuple_type}, _OtherTy>::assign(')
+	out.ln(f'\t\tstd::declval<{tuple_type} &>(), std::declval<const _OtherTy &>() ) )>')
+	out.ln(f'{tuple_type} &operator=( const _OtherTy &other ) noexcept')
+	with out.blk():
+		out.ln(f'ntup_conversion<{tuple_type}, _OtherTy>::assign( *this, other );')
+		out.ln('return *this;')
+	out.ln()
+	out.ln('/// @brief Convert to a matching external type supported by an included adapter.')
+	out.ln('template<class _OtherTy, typename std::enable_if<')
+	out.ln(f'\tntup_conversion<{tuple_type}, _OtherTy>::is_implicit, int>::type = 0>')
+	out.ln('operator _OtherTy() const noexcept')
+	with out.blk():
+		out.ln(f'return ntup_conversion<{tuple_type}, _OtherTy>::convert( *this );')
+
 def define_n_tuples( out:formatted_output ):
 	global types
 
@@ -310,34 +341,7 @@ def define_n_tuples( out:formatted_output ):
 			out.ln('_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }')
 			out.ln()
 
-			# glm interops
-			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
-
-			# copy ctor
-			s = f'n_tup( const glm::vec<{d},_Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += '}'
-			out.ln(s)
-
-			# copy operator
-			s = f'n_tup &operator=( const glm::vec<{d},_Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# convert to glm vector
-			s = f'operator glm::vec<{d},_Ty>() const noexcept {{ return glm::vec<{d},_Ty>( '
-			for td in range(d):
-				s += f'{vector_names[td]} '
-				if td < d-1:
-					s += ', ' 
-			s += '); }'
-			out.ln(s)
-
-			out.ln('#endif//GLM_VERSION', no_indent=True)			
+			define_tuple_conversions(out, 'n_tup')
 
 		out.ln()
 
@@ -435,34 +439,7 @@ def define_n_tuples( out:formatted_output ):
 			out.ln('n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }')
 			out.ln()
 
-			# glm interop
-			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
-
-			# copy ctor
-			s = f'mn_tup( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
-			s += '}'
-			out.ln(s)
-
-			# copy operator
-			s = f'mn_tup &operator=( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# convert to glm matrix
-			s = f'operator glm::mat<{d}, _InnerSize, _Ty>() const noexcept {{ return glm::mat<{d},_InnerSize,_Ty>( '
-			for td in range(d):
-				s += f'values[{td}]'
-				if td < d-1:
-					s += ', ' 
-			s += '); }'
-			out.ln(s)
-
-			out.ln('#endif//GLM_VERSION', no_indent=True)			
+			define_tuple_conversions(out, 'mn_tup')
 
 		out.ln()
 
@@ -687,6 +664,110 @@ bool _are_equal( const variant &a , const variant &b )
 	generate_variant_implementations( out )
 	out.write_lines_to_file( test_path + '/unit_tests_variants.cpp' )    
 
+def generate_ntup_glm( path:str ):
+	out = formatted_output()
+	out.generate_license_header()
+	guard_def = out.begin_header_guard('ntup_glm.h', 'ctle')
+	out.ln('''
+/// @file ntup_glm.h
+/// @brief Optional, header-defined conversions between ctle tuples and GLM types.
+
+#include <glm/glm.hpp>
+#include <type_traits>
+
+#include "ntup.h"
+
+namespace ctle
+{
+	/// @brief Converts GLM vectors to and from a tuple's matching default-qualified vector type.
+	template<class _Ty, size_t _Size, glm::length_t _OtherSize,
+		class _OtherTy, glm::qualifier _Qualifier>
+	struct ntup_conversion<
+		n_tup<_Ty, _Size>, glm::vec<_OtherSize, _OtherTy, _Qualifier>,
+		typename std::enable_if<std::is_convertible<
+			glm::vec<_OtherSize, _OtherTy, _Qualifier>,
+			glm::vec<static_cast<glm::length_t>(_Size), _Ty>>::value>::type>
+	{
+		using tuple_type = n_tup<_Ty, _Size>;
+		using external_type = glm::vec<_OtherSize, _OtherTy, _Qualifier>;
+		using native_type = glm::vec<static_cast<glm::length_t>(_Size), _Ty>;
+
+		static constexpr bool is_implicit = std::is_same<external_type, native_type>::value;
+
+		/// @brief Copy an external vector through GLM's existing conversion rules.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			const native_type value = src;
+			for( size_t index = 0; index < _Size; ++index )
+			{
+				dest[index] = value[static_cast<glm::length_t>(index)];
+			}
+		}
+
+		/// @brief Return the matching default-qualified GLM vector.
+		static native_type convert( const tuple_type &src ) noexcept
+		{
+			native_type result;
+			for( size_t index = 0; index < _Size; ++index )
+			{
+				result[static_cast<glm::length_t>(index)] = src[index];
+			}
+			return result;
+		}
+	};
+
+	/// @brief Converts GLM matrices using the tuple's outer elements as columns.
+	template<class _Ty, size_t _InnerSize, size_t _OuterSize,
+		glm::length_t _Columns, glm::length_t _Rows, class _OtherTy, glm::qualifier _Qualifier>
+	struct ntup_conversion<
+		mn_tup<_Ty, _InnerSize, _OuterSize>, glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>,
+		typename std::enable_if<std::is_convertible<
+			glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>,
+			glm::mat<static_cast<glm::length_t>(_OuterSize),
+				static_cast<glm::length_t>(_InnerSize), _Ty>>::value>::type>
+	{
+		using tuple_type = mn_tup<_Ty, _InnerSize, _OuterSize>;
+		using external_type = glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>;
+		using native_type = glm::mat<static_cast<glm::length_t>(_OuterSize),
+			static_cast<glm::length_t>(_InnerSize), _Ty>;
+
+		static constexpr bool is_implicit = std::is_same<external_type, native_type>::value;
+
+		/// @brief Copy an external matrix through GLM's existing conversion rules.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			const native_type value = src;
+			for( size_t column = 0; column < _OuterSize; ++column )
+			{
+				for( size_t row = 0; row < _InnerSize; ++row )
+				{
+					dest.values[column][row] = value[static_cast<glm::length_t>(column)]
+						[static_cast<glm::length_t>(row)];
+				}
+			}
+		}
+
+		/// @brief Return the matching default-qualified GLM matrix without transposing.
+		static native_type convert( const tuple_type &src ) noexcept
+		{
+			native_type result;
+			for( size_t column = 0; column < _OuterSize; ++column )
+			{
+				for( size_t row = 0; row < _InnerSize; ++row )
+				{
+					result[static_cast<glm::length_t>(column)]
+						[static_cast<glm::length_t>(row)] = src.values[column][row];
+				}
+			}
+			return result;
+		}
+	};
+}
+// namespace ctle
+''')
+	out.end_header_guard(guard_def)
+	out.write_lines_to_file(path)
+
 def generate_types( src_path:str, test_path:str ):
 
 	generate_types_dict()
@@ -709,8 +790,8 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln('/// @file ntup.h')
 	out.ln('/// @brief n-tuple (N - vectors) and mn-tuple (M x N - matrices) templates. 1-4 dimensions.')
 	out.ln('/// @details The ntup.h templates is a lightweight way to define vectors and matrices of 1-4 dimensions, with ')
-	out.ln('/// comparison operators and conversions to / from glm types. To enable glm conversions, include ')
-	out.ln('/// glm.hpp before including ntup.h in any file where the conversion is to be supported.')
+	out.ln('/// comparison operators and optional conversions to / from GLM types. Include glm.hpp first,')
+	out.ln('/// or explicitly include ntup_glm.h before using GLM conversions.')
 	out.ln()
 	out.comment_ln('Only one of CTLE_MN_TUP_COLUMNMAJOR and CTLE_MN_TUP_ROWMAJOR can be defined.')
 	out.ln('#if defined(CTLE_MN_TUP_COLUMNMAJOR) && defined(CTLE_MN_TUP_ROWMAJOR)')
@@ -719,6 +800,8 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln()
 	out.ln('#include <cinttypes>')
 	out.ln('#include <limits>')
+	out.ln('#include <type_traits>')
+	out.ln('#include <utility>')
 	out.ln()
 	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
@@ -727,11 +810,19 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln()
 	out.ln('namespace ctle')
 	with out.blk( no_indent = True ):
+		out.ln('/// @brief Specialized by adapters to define supported tuple and external-type conversions.')
+		out.ln('template<class _TupleTy, class _ExternalTy, class = void> struct ntup_conversion;')
+		out.ln()
 		define_n_tuples(out)
 	out.ln('//namespace ctle')
 	out.ln()
+	out.ln('#ifdef GLM_VERSION')
+	out.ln('#include "ntup_glm.h"')
+	out.ln('#endif//GLM_VERSION')
+	out.ln()
 	out.end_header_guard(guard_def)
 	out.write_lines_to_file( src_path + '/ntup.h' )
+	generate_ntup_glm( src_path + '/ntup_glm.h' )
  
  	# generate random values
 	# out = formatted_output()

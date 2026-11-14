@@ -9,8 +9,8 @@
 /// @file ntup.h
 /// @brief n-tuple (N - vectors) and mn-tuple (M x N - matrices) templates. 1-4 dimensions.
 /// @details The ntup.h templates is a lightweight way to define vectors and matrices of 1-4 dimensions, with 
-/// comparison operators and conversions to / from glm types. To enable glm conversions, include 
-/// glm.hpp before including ntup.h in any file where the conversion is to be supported.
+/// comparison operators and optional conversions to / from GLM types. Include glm.hpp first,
+/// or explicitly include ntup_glm.h before using GLM conversions.
 
 // Only one of CTLE_MN_TUP_COLUMNMAJOR and CTLE_MN_TUP_ROWMAJOR can be defined.
 #if defined(CTLE_MN_TUP_COLUMNMAJOR) && defined(CTLE_MN_TUP_ROWMAJOR)
@@ -19,6 +19,8 @@
 
 #include <cinttypes>
 #include <limits>
+#include <type_traits>
+#include <utility>
 
 #include "fwd.h"
 #include "string_funcs.h"
@@ -27,6 +29,9 @@
 
 namespace ctle
 {
+/// @brief Specialized by adapters to define supported tuple and external-type conversions.
+template<class _TupleTy, class _ExternalTy, class = void> struct ntup_conversion;
+
 // 1-dimensional n-tuple template
 template<class _Ty> class n_tup<_Ty,1>
 {
@@ -78,12 +83,39 @@ public:
 	const _Ty &operator[]( size_t index ) const noexcept { return (&this->x)[index]; }
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	n_tup( const glm::vec<1,_Ty> &other ) noexcept { x = other.x; }
-	n_tup &operator=( const glm::vec<1,_Ty> &other ) noexcept { x = other.x; return *this; }
-	operator glm::vec<1,_Ty>() const noexcept { return glm::vec<1,_Ty>( x ); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<n_tup, _OtherTy>::assign(
+			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
+	n_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 2-dimensional n-tuple template
@@ -144,12 +176,39 @@ public:
 	const _Ty &operator[]( size_t index ) const noexcept { return (&this->x)[index]; }
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	n_tup( const glm::vec<2,_Ty> &other ) noexcept { x = other.x; y = other.y; }
-	n_tup &operator=( const glm::vec<2,_Ty> &other ) noexcept { x = other.x; y = other.y; return *this; }
-	operator glm::vec<2,_Ty>() const noexcept { return glm::vec<2,_Ty>( x , y ); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<n_tup, _OtherTy>::assign(
+			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
+	n_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 3-dimensional n-tuple template
@@ -217,12 +276,39 @@ public:
 	const _Ty &operator[]( size_t index ) const noexcept { return (&this->x)[index]; }
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	n_tup( const glm::vec<3,_Ty> &other ) noexcept { x = other.x; y = other.y; z = other.z; }
-	n_tup &operator=( const glm::vec<3,_Ty> &other ) noexcept { x = other.x; y = other.y; z = other.z; return *this; }
-	operator glm::vec<3,_Ty>() const noexcept { return glm::vec<3,_Ty>( x , y , z ); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<n_tup, _OtherTy>::assign(
+			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
+	n_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 4-dimensional n-tuple template
@@ -297,12 +383,39 @@ public:
 	const _Ty &operator[]( size_t index ) const noexcept { return (&this->x)[index]; }
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	n_tup( const glm::vec<4,_Ty> &other ) noexcept { x = other.x; y = other.y; z = other.z; w = other.w; }
-	n_tup &operator=( const glm::vec<4,_Ty> &other ) noexcept { x = other.x; y = other.y; z = other.z; w = other.w; return *this; }
-	operator glm::vec<4,_Ty>() const noexcept { return glm::vec<4,_Ty>( x , y , z , w ); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit n_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<n_tup, _OtherTy>::assign(
+			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
+	n_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 1-dimensional tuple-of-tuples template
@@ -363,12 +476,39 @@ public:
 	const n_tup<_Ty,_InnerSize> &operator[]( size_t index ) const noexcept { return this->values[index]; }
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	mn_tup( const glm::mat<1, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); }
-	mn_tup &operator=( const glm::mat<1, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); return *this; }
-	operator glm::mat<1, _InnerSize, _Ty>() const noexcept { return glm::mat<1,_InnerSize,_Ty>( values[0]); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<mn_tup, _OtherTy>::assign(
+			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
+	mn_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 2-dimensional tuple-of-tuples template
@@ -434,12 +574,39 @@ public:
 	const n_tup<_Ty,_InnerSize> &operator[]( size_t index ) const noexcept { return this->values[index]; }
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	mn_tup( const glm::mat<2, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); }
-	mn_tup &operator=( const glm::mat<2, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); return *this; }
-	operator glm::mat<2, _InnerSize, _Ty>() const noexcept { return glm::mat<2,_InnerSize,_Ty>( values[0], values[1]); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<mn_tup, _OtherTy>::assign(
+			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
+	mn_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 3-dimensional tuple-of-tuples template
@@ -510,12 +677,39 @@ public:
 	const n_tup<_Ty,_InnerSize> &operator[]( size_t index ) const noexcept { return this->values[index]; }
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	mn_tup( const glm::mat<3, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); values[2] = n_tup<_Ty,_InnerSize>(other[2]); }
-	mn_tup &operator=( const glm::mat<3, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); values[2] = n_tup<_Ty,_InnerSize>(other[2]); return *this; }
-	operator glm::mat<3, _InnerSize, _Ty>() const noexcept { return glm::mat<3,_InnerSize,_Ty>( values[0], values[1], values[2]); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<mn_tup, _OtherTy>::assign(
+			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
+	mn_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+	}
 };
 
 // 4-dimensional tuple-of-tuples template
@@ -591,12 +785,39 @@ public:
 	const n_tup<_Ty,_InnerSize> &operator[]( size_t index ) const noexcept { return this->values[index]; }
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
-#ifdef GLM_VERSION
-	// conversions to/from glm (to enable, include glm.hpp before including ntup.h)
-	mn_tup( const glm::mat<4, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); values[2] = n_tup<_Ty,_InnerSize>(other[2]); values[3] = n_tup<_Ty,_InnerSize>(other[3]); }
-	mn_tup &operator=( const glm::mat<4, _InnerSize, _Ty> &other ) noexcept { values[0] = n_tup<_Ty,_InnerSize>(other[0]); values[1] = n_tup<_Ty,_InnerSize>(other[1]); values[2] = n_tup<_Ty,_InnerSize>(other[2]); values[3] = n_tup<_Ty,_InnerSize>(other[3]); return *this; }
-	operator glm::mat<4, _InnerSize, _Ty>() const noexcept { return glm::mat<4,_InnerSize,_Ty>( values[0], values[1], values[2], values[3]); }
-#endif//GLM_VERSION
+	/// @brief Construct from a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Explicitly construct from another external type supported by the adapter.
+	template<class _OtherTy, typename std::enable_if<
+		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	explicit mn_tup( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+	}
+
+	/// @brief Assign an external value supported by an included adapter.
+	template<class _OtherTy, class = decltype(
+		ntup_conversion<mn_tup, _OtherTy>::assign(
+			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
+	mn_tup &operator=( const _OtherTy &other ) noexcept
+	{
+		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		return *this;
+	}
+
+	/// @brief Convert to a matching external type supported by an included adapter.
+	template<class _OtherTy, typename std::enable_if<
+		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
+	operator _OtherTy() const noexcept
+	{
+		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+	}
 };
 
 #ifdef CTLE_IMPLEMENTATION
@@ -1282,5 +1503,9 @@ template<> mn_tup<f64,4,4> from_string( const string_span<char> &str ) { return 
 
 }
 //namespace ctle
+
+#ifdef GLM_VERSION
+#include "ntup_glm.h"
+#endif//GLM_VERSION
 
 #endif//_CTLE_NTUP_H_
