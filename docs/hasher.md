@@ -4,6 +4,26 @@ The `hasher.h` file provides various hasher classes for generating hash values. 
 
 The classes provide declarations of the different hashers, but the user needs to add an implementation of the hashing code. See [ctle.h](#ctle.h) for details.
 
+### Ownership
+
+The SHA-256, XXH64, XXH128, and salted XXH128 hashers own their backend state and
+cannot be copied. Use `std::move` to transfer a partially computed hash. Move
+assignment releases the destination's previous state before taking ownership.
+
+After a move, `update()` and `finish()` on the source return
+`status::not_initialized`. The source may be destroyed or assigned a new hasher:
+
+```cpp
+ctle::hasher_xxh64 source;
+source.update(data, size);
+ctle::hasher_xxh64 destination = std::move(source);
+source = ctle::hasher_xxh64();
+```
+
+Backend types remain hidden behind implementation-only state definitions, so
+ordinary consumers do not need backend headers. Backend allocation failure throws
+`std::bad_alloc`. The resource-free `hasher_noop` remains copyable.
+
 ### Example Usage
 
 ```cpp

@@ -10,6 +10,7 @@
 #include <utility>
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include <vector>
 
 #include "fwd.h"
@@ -80,15 +81,24 @@ template<class _Ty> inline status write_file(const std::string& filepath, const 
 
 /// @brief Class for file reading/writing, encapsulating a file object.
 /// @details This class is portable, but uses native interfaces when possible. Mainly for internal use, but can be used directly.
+/// @note Move-only. A moved-from object is closed and can be reopened.
 class _file_object
 {
 private:
-	void* file_handle = nullptr;
-	u64 file_size = 0;
+	struct os_data;
+	std::unique_ptr<os_data> data;
 	
 public:
 	_file_object();
 	~_file_object();
+	_file_object( const _file_object & ) = delete;
+	_file_object &operator=( const _file_object & ) = delete;
+
+	/// @brief Transfer the open file and its position, leaving the source closed.
+	_file_object( _file_object &&other ) noexcept;
+
+	/// @brief Close the current file and transfer ownership, leaving the source closed.
+	_file_object &operator=( _file_object &&other ) noexcept;
 
 	/// @brief Open a file for reading
 	/// @param filepath the file path
@@ -114,7 +124,7 @@ public:
 	bool is_open() const;
 
 	/// @brief Get the size of the file
-	u64 size() const { return this->file_size; };
+	u64 size() const;
 
 	/// @brief Read data from the file
 	/// @param dest the destination buffer
@@ -199,6 +209,18 @@ status write_file( const std::string &filepath, const void *src, size_t src_size
 
 namespace ctle
 {
+struct _file_object::os_data
+{
+	windows_handle_ref file_handle;
+	u64 file_size = 0;
+
+	os_data( const std::wstring &path, DWORD access, DWORD disposition, DWORD attributes )
+		: file_handle( ::CreateFileW( path.c_str(), access,
+			FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr,
+			disposition, attributes, nullptr ) )
+	{}
+};
+
 status file_access( const std::string &path, access_mode amode )
 {
 	auto res = _access_s( path.c_str(), (int)amode );
@@ -231,26 +253,15 @@ static std::wstring utf8string_to_wstringfullpath( std::string utf8str )
 	return wfullpath;
 }
 
-_file_object::_file_object()
-{
-	this->file_handle = INVALID_HANDLE_VALUE;
-}
-
-_file_object::~_file_object()
-{
-	this->close();
-}
-
 status _file_object::open_read(const std::string& filepath)
 {
-	if (this->is_open())
-		this->close();
+	this->close();
 
 	// convert the utf8 string to wstring fullpath for the API call
 	const auto wpath = utf8string_to_wstringfullpath(filepath);
 
-	this->file_handle = ::CreateFileW(wpath.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, nullptr);
-	if (this->file_handle == INVALID_HANDLE_VALUE)
+	auto opened = std::make_unique<os_data>( wpath, GENERIC_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY );
+	if (opened->file_handle.get_handle() == INVALID_HANDLE_VALUE)
 	{
 		// failed to open the file
 		return status::cant_open;
@@ -258,25 +269,26 @@ status _file_object::open_read(const std::string& filepath)
 
 	// get the size
 	LARGE_INTEGER dfilesize = {};
-	if (!::GetFileSizeEx(this->file_handle, &dfilesize))
+	if (!::GetFileSizeEx(opened->file_handle.get_handle(), &dfilesize))
 	{
 		// failed to get the size
 		return status::corrupted;
 	}
-	this->file_size = dfilesize.QuadPart;
+	opened->file_size = dfilesize.QuadPart;
+	this->data = std::move( opened );
 
 	return status::ok;
 }
 
 status _file_object::open_write(const std::string& filepath, bool overwrite_existing)
 {
-	if (this->is_open())
-		this->close();
+	this->close();
 
 	// convert the utf8 string to wstring fullpath for the API call
 	const auto wpath = utf8string_to_wstringfullpath(filepath);
-	this->file_handle = (void*)::CreateFileW( wpath.c_str(), GENERIC_WRITE,	FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, ( overwrite_existing ) ? ( CREATE_ALWAYS ) : ( CREATE_NEW ),	FILE_ATTRIBUTE_NORMAL, nullptr );
-	if( this->file_handle == INVALID_HANDLE_VALUE )
+	auto opened = std::make_unique<os_data>( wpath, GENERIC_WRITE,
+		overwrite_existing ? CREATE_ALWAYS : CREATE_NEW, FILE_ATTRIBUTE_NORMAL );
+	if( opened->file_handle.get_handle() == INVALID_HANDLE_VALUE )
 	{
 		// file open failed. return reason in error code
 		DWORD errorCode = GetLastError();
@@ -290,23 +302,8 @@ status _file_object::open_write(const std::string& filepath, bool overwrite_exis
 		}
 	}
 
+	this->data = std::move( opened );
 	return status::ok;
-}
-
-status _file_object::close()
-{
-	if (this->is_open())
-	{
-		::CloseHandle(file_handle);
-		this->file_handle = INVALID_HANDLE_VALUE;
-		this->file_size = 0;
-	}
-	return status::ok;
-}
-
-bool _file_object::is_open() const
-{
-	return this->file_handle != INVALID_HANDLE_VALUE;
 }
 
 status _file_object::read(u8* dest, const u64 size)
@@ -322,7 +319,7 @@ status _file_object::read(u8* dest, const u64 size)
 
 		// read in bytes into the memory allocation
 		DWORD bytes_that_were_read = 0;
-		if( !::ReadFile( this->file_handle, &dest[bytes_read], bytes_to_read_this_time, &bytes_that_were_read, nullptr ) )
+		if( !::ReadFile( this->data->file_handle.get_handle(), &dest[bytes_read], bytes_to_read_this_time, &bytes_that_were_read, nullptr ) )
 		{
 			// failed to read from the file
 			return status::cant_read;
@@ -353,7 +350,7 @@ status _file_object::write(const u8* src, const u64 size)
 
 		// write the bytes to file
 		DWORD bytes_that_were_written = 0;
-		if( !::WriteFile( this->file_handle, &src[bytes_written], (DWORD)bytes_to_write_this_time, &bytes_that_were_written, nullptr ) )
+		if( !::WriteFile( this->data->file_handle.get_handle(), &src[bytes_written], (DWORD)bytes_to_write_this_time, &bytes_that_were_written, nullptr ) )
 		{
 			// failed to write to file
 			return status::cant_write;
@@ -377,6 +374,12 @@ status _file_object::write(const u8* src, const u64 size)
 
 namespace ctle
 {
+struct _file_object::os_data
+{
+	std::fstream file;
+	u64 file_size = 0;
+};
+
 status file_access( const std::string &path, access_mode amode )
 {
 	auto res = access( path.c_str(), (int)amode );
@@ -392,77 +395,58 @@ status file_access( const std::string &path, access_mode amode )
 		return status::undefined_error;
 }
 
-_file_object::_file_object()
-{
-}
-
-_file_object::~_file_object()
-{
-	this->close();
-}
-
 status _file_object::open_read(const std::string& filepath)
 {
-	if (this->is_open())
-		this->close();
+	this->close();
 
 	// open the file at the end, so we can tell() the size of the file
-	this->file_handle = new std::ifstream(filepath.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
-	if( !this->file_handle || !((std::ifstream*)this->file_handle)->is_open() )
+	auto opened = std::make_unique<os_data>();
+	opened->file.open( filepath, std::ios::in | std::ios::binary | std::ios::ate );
+	if( !opened->file.is_open() )
 	{
-		this->close();
 		return status::cant_open;
 	}
 
 	// get the size of the file, and move back to the beginning
-	this->file_size = ((std::ifstream*)this->file_handle)->tellg();
-	((std::ifstream*)this->file_handle)->seekg( 0, std::ios::beg );
+	const auto file_size = opened->file.tellg();
+	if( file_size == std::streampos( -1 ) )
+		return status::corrupted;
+	opened->file.seekg( 0, std::ios::beg );
+	if( opened->file.fail() )
+		return status::corrupted;
 
+	opened->file_size = (u64)file_size;
+	this->data = std::move( opened );
 	return status::ok;
 }
 
 status _file_object::open_write(const std::string& filepath, bool overwrite_existing)
 {
-	if (this->is_open())
-		this->close();
+	this->close();
 
 	// if we can't overwrite an existing file, fail if the file exists
 	if( !overwrite_existing && file_exists( filepath ) )
 		return status::already_exists;
 
 	// create the file
-	this->file_handle = new std::ofstream( filepath.c_str(), std::ios::out | std::ios::binary );
-	if( !this->file_handle || !((std::ofstream*)this->file_handle)->is_open() )
+	auto opened = std::make_unique<os_data>();
+	opened->file.open( filepath, std::ios::out | std::ios::binary );
+	if( !opened->file.is_open() )
 	{
-		this->close();
 		return status::cant_write;
 	}
 
+	this->data = std::move( opened );
 	return status::ok;
-}
-
-status _file_object::close()
-{
-	if (this->file_handle)
-	{
-		delete ((std::ofstream*)this->file_handle);
-		this->file_handle = nullptr;
-	}
-	return status::ok;
-}
-
-bool _file_object::is_open() const
-{
-	return this->file_handle && ((std::ofstream*)this->file_handle)->is_open();
 }
 
 status _file_object::read(u8* dest, const u64 size)
 {
-	ctValidate(this->file_handle, status::not_ready) << "The file stream is not open" << ctValidateEnd;
+	ctValidate(this->is_open(), status::not_ready) << "The file stream is not open" << ctValidateEnd;
 
 	// read the data to the dest
-	((std::ifstream*)this->file_handle)->read((char*)dest, size);
-	if( ((std::ifstream*)this->file_handle)->fail() )
+	this->data->file.read((char*)dest, size);
+	if( this->data->file.fail() )
 		return status::cant_read;
 
 	return status::ok;
@@ -470,11 +454,11 @@ status _file_object::read(u8* dest, const u64 size)
 
 status _file_object::write(const u8* src, const u64 size)
 {
-	ctValidate(this->file_handle, status::not_ready) << "The file stream is not open" << ctValidateEnd;
+	ctValidate(this->is_open(), status::not_ready) << "The file stream is not open" << ctValidateEnd;
 
 	// read the data to the dest
-	((std::ofstream*)this->file_handle)->write((const char*)src, size);
-	if( ((std::ofstream*)this->file_handle)->fail() )
+	this->data->file.write((const char*)src, size);
+	if( this->data->file.fail() )
 		return status::cant_read;
 
 	return status::ok;
@@ -484,6 +468,31 @@ status _file_object::write(const u8* src, const u64 size)
 //namespace ctle
 
 #endif// defined(_MSC_VER) elif defined(__GNUC__)
+
+namespace ctle
+{
+_file_object::_file_object() = default;
+_file_object::~_file_object() = default;
+_file_object::_file_object( _file_object &&other ) noexcept = default;
+_file_object &_file_object::operator=( _file_object &&other ) noexcept = default;
+
+status _file_object::close()
+{
+	this->data.reset();
+	return status::ok;
+}
+
+bool _file_object::is_open() const
+{
+	return bool( this->data );
+}
+
+u64 _file_object::size() const
+{
+	return this->data ? this->data->file_size : 0;
+}
+}
+//namespace ctle
 
 #include "_undef_macros.inl"
 
