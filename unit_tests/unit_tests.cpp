@@ -5,6 +5,8 @@
 #include "unit_tests.h"
 
 #include <ctle/ctle.h>
+#include <ctle/status_stl.h>
+#include <ctle/status_vulkan.h>
 
 // just some value
 const i64 global_random_seed = 12876123876;

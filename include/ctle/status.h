@@ -7,6 +7,7 @@
 #define _CTLE_STATUS_H_
 
 #include <iosfwd>
+#include <utility>
 
 namespace ctle
 {
@@ -143,6 +144,9 @@ namespace ctle
 		vulkan_compression_exhausted_ext                    = -2027, // Vulkan error code VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT
 
 	};
+
+	/// @brief Specialized by adapters to enable conversion from external status types.
+	template<class _Ty> struct status_conversion;
 
 	// status maps a number of error values into one error enum
 	// and has ctors which converts these error values into a status_code value
@@ -293,19 +297,25 @@ namespace ctle
 		bool operator == ( const status &_other ) const noexcept { return this->svalue == _other.svalue; }
 		bool operator != ( const status &_other ) const noexcept { return this->svalue != _other.svalue; }
 
-#ifdef _SYSTEM_ERROR_
-		// convert from STL std::errc
-		static status_code to_status_code( std::errc _value ) noexcept;
-		status( const std::errc &_value ) noexcept : svalue( to_status_code(_value) ) {}
-		const status &operator = ( const std::errc &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
-#endif//_SYSTEM_ERROR_
+		/// @brief Convert an external status using its adapter.
+		template<class _Ty>
+		static auto to_status_code( _Ty _value ) noexcept
+			-> decltype( status_conversion<_Ty>::convert( _value ) )
+		{
+			return status_conversion<_Ty>::convert( _value );
+		}
 
-#ifdef VULKAN_CORE_H_
-		// convert from Vulkan error: VkResult
-		static status_code to_status_code( VkResult _value ) noexcept;
-		status( const VkResult &_value ) noexcept : svalue( to_status_code(_value) ) {}
-		const status &operator = ( const VkResult &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
-#endif//VULKAN_CORE_H_
+		/// @brief Construct from an external status supported by an included adapter.
+		template<class _Ty, class = decltype( to_status_code( std::declval<_Ty>() ) )>
+		status( const _Ty &_value ) noexcept : svalue( to_status_code( _value ) ) {}
+
+		/// @brief Assign an external status supported by an included adapter.
+		template<class _Ty, class = decltype( to_status_code( std::declval<_Ty>() ) )>
+		const status &operator = ( const _Ty &_value ) noexcept
+		{
+			this->svalue = to_status_code( _value );
+			return *this;
+		}
 
 		// use as a bool
 		operator bool() const { return svalue >= status_code::ok; }
@@ -628,144 +638,6 @@ namespace ctle
 		}
 		return it->second.description;
 	}
-		
-#ifdef _SYSTEM_ERROR_
-	static const std::unordered_map<std::errc, status_code> errc_to_status_code_mapping =
-	{
-		{ std::errc::address_family_not_supported , status_code::stl_address_family_not_supported } , 
-		{ std::errc::address_in_use , status_code::stl_address_in_use } , 
-		{ std::errc::address_not_available , status_code::stl_address_not_available } , 
-		{ std::errc::already_connected , status_code::stl_already_connected } , 
-		{ std::errc::argument_list_too_long , status_code::stl_argument_list_too_long } , 
-		{ std::errc::argument_out_of_domain , status_code::stl_argument_out_of_domain } , 
-		{ std::errc::bad_address , status_code::stl_bad_address } , 
-		{ std::errc::bad_file_descriptor , status_code::stl_bad_file_descriptor } , 
-		{ std::errc::bad_message , status_code::stl_bad_message } , 
-		{ std::errc::broken_pipe , status_code::stl_broken_pipe } , 
-		{ std::errc::connection_aborted , status_code::stl_connection_aborted } , 
-		{ std::errc::connection_already_in_progress , status_code::stl_connection_already_in_progress } , 
-		{ std::errc::connection_refused , status_code::stl_connection_refused } , 
-		{ std::errc::connection_reset , status_code::stl_connection_reset } , 
-		{ std::errc::cross_device_link , status_code::stl_cross_device_link } , 
-		{ std::errc::destination_address_required , status_code::stl_destination_address_required } , 
-		{ std::errc::device_or_resource_busy , status_code::stl_device_or_resource_busy } , 
-		{ std::errc::directory_not_empty , status_code::stl_directory_not_empty } , 
-		{ std::errc::executable_format_error , status_code::stl_executable_format_error } , 
-		{ std::errc::file_exists , status_code::stl_file_exists } , 
-		{ std::errc::file_too_large , status_code::stl_file_too_large } , 
-		{ std::errc::filename_too_long , status_code::stl_filename_too_long } , 
-		{ std::errc::function_not_supported , status_code::stl_function_not_supported } , 
-		{ std::errc::host_unreachable , status_code::stl_host_unreachable } , 
-		{ std::errc::identifier_removed , status_code::stl_identifier_removed } , 
-		{ std::errc::illegal_byte_sequence , status_code::stl_illegal_byte_sequence } , 
-		{ std::errc::inappropriate_io_control_operation , status_code::stl_inappropriate_io_control_operation } , 
-		{ std::errc::interrupted , status_code::stl_interrupted } , 
-		{ std::errc::invalid_argument , status_code::stl_invalid_argument } , 
-		{ std::errc::invalid_seek , status_code::stl_invalid_seek } , 
-		{ std::errc::io_error , status_code::stl_io_error } , 
-		{ std::errc::is_a_directory , status_code::stl_is_a_directory } , 
-		{ std::errc::message_size , status_code::stl_message_size } , 
-		{ std::errc::network_down , status_code::stl_network_down } , 
-		{ std::errc::network_reset , status_code::stl_network_reset } , 
-		{ std::errc::network_unreachable , status_code::stl_network_unreachable } , 
-		{ std::errc::no_buffer_space , status_code::stl_no_buffer_space } , 
-		{ std::errc::no_child_process , status_code::stl_no_child_process } , 
-		{ std::errc::no_link , status_code::stl_no_link } , 
-		{ std::errc::no_lock_available , status_code::stl_no_lock_available } , 
-		{ std::errc::no_message_available , status_code::stl_no_message_available } , 
-		{ std::errc::no_message , status_code::stl_no_message } , 
-		{ std::errc::no_protocol_option , status_code::stl_no_protocol_option } , 
-		{ std::errc::no_space_on_device , status_code::stl_no_space_on_device } , 
-		{ std::errc::no_stream_resources , status_code::stl_no_stream_resources } , 
-		{ std::errc::no_such_device_or_address , status_code::stl_no_such_device_or_address } , 
-		{ std::errc::no_such_device , status_code::stl_no_such_device } , 
-		{ std::errc::no_such_file_or_directory , status_code::stl_no_such_file_or_directory } , 
-		{ std::errc::no_such_process , status_code::stl_no_such_process } , 
-		{ std::errc::not_a_directory , status_code::stl_not_a_directory } , 
-		{ std::errc::not_a_socket , status_code::stl_not_a_socket } , 
-		{ std::errc::not_a_stream , status_code::stl_not_a_stream } , 
-		{ std::errc::not_connected , status_code::stl_not_connected } , 
-		{ std::errc::not_enough_memory , status_code::stl_not_enough_memory } , 
-		{ std::errc::not_supported , status_code::stl_not_supported } , 
-		{ std::errc::operation_canceled , status_code::stl_operation_canceled } , 
-		{ std::errc::operation_in_progress , status_code::stl_operation_in_progress } , 
-		{ std::errc::operation_not_permitted , status_code::stl_operation_not_permitted } , 
-		{ std::errc::operation_not_supported , status_code::stl_operation_not_supported } , 
-		{ std::errc::operation_would_block , status_code::stl_operation_would_block } , 
-		{ std::errc::owner_dead , status_code::stl_owner_dead } , 
-		{ std::errc::permission_denied , status_code::stl_permission_denied } , 
-		{ std::errc::protocol_error , status_code::stl_protocol_error } , 
-		{ std::errc::protocol_not_supported , status_code::stl_protocol_not_supported } , 
-		{ std::errc::read_only_file_system , status_code::stl_read_only_file_system } , 
-		{ std::errc::resource_deadlock_would_occur , status_code::stl_resource_deadlock_would_occur } , 
-		{ std::errc::resource_unavailable_try_again , status_code::stl_resource_unavailable_try_again } , 
-		{ std::errc::result_out_of_range , status_code::stl_result_out_of_range } , 
-		{ std::errc::state_not_recoverable , status_code::stl_state_not_recoverable } , 
-		{ std::errc::stream_timeout , status_code::stl_stream_timeout } , 
-		{ std::errc::text_file_busy , status_code::stl_text_file_busy } , 
-		{ std::errc::timed_out , status_code::stl_timed_out } , 
-		{ std::errc::too_many_files_open_in_system , status_code::stl_too_many_files_open_in_system } , 
-		{ std::errc::too_many_files_open , status_code::stl_too_many_files_open } , 
-		{ std::errc::too_many_links , status_code::stl_too_many_links } , 
-		{ std::errc::too_many_symbolic_link_levels , status_code::stl_too_many_symbolic_link_levels } , 
-		{ std::errc::value_too_large , status_code::stl_value_too_large } , 
-		{ std::errc::wrong_protocol_type , status_code::stl_wrong_protocol_type } , 
-	};
-
-	status_code status::to_status_code( std::errc value ) noexcept
-	{
-		auto it = errc_to_status_code_mapping.find( value );
-		if( it == errc_to_status_code_mapping.end() )
-			return status_code::stl_unrecognized_error_code;
-		return it->second;
-	}
-
-#endif//_SYSTEM_ERROR_
-
-#ifdef VULKAN_CORE_H_
-	static const std::unordered_map<VkResult, status_code> vkresult_to_status_code_mapping =
-	{
-		{ VkResult::VK_ERROR_OUT_OF_HOST_MEMORY , status_code::vulkan_out_of_host_memory } , 
-		{ VkResult::VK_ERROR_OUT_OF_DEVICE_MEMORY , status_code::vulkan_out_of_device_memory } , 
-		{ VkResult::VK_ERROR_INITIALIZATION_FAILED , status_code::vulkan_initialization_failed } , 
-		{ VkResult::VK_ERROR_DEVICE_LOST , status_code::vulkan_device_lost } , 
-		{ VkResult::VK_ERROR_MEMORY_MAP_FAILED , status_code::vulkan_memory_map_failed } , 
-		{ VkResult::VK_ERROR_LAYER_NOT_PRESENT , status_code::vulkan_layer_not_present } , 
-		{ VkResult::VK_ERROR_EXTENSION_NOT_PRESENT , status_code::vulkan_extension_not_present } , 
-		{ VkResult::VK_ERROR_FEATURE_NOT_PRESENT , status_code::vulkan_feature_not_present } , 
-		{ VkResult::VK_ERROR_INCOMPATIBLE_DRIVER , status_code::vulkan_incompatible_driver } , 
-		{ VkResult::VK_ERROR_TOO_MANY_OBJECTS , status_code::vulkan_too_many_objects } , 
-		{ VkResult::VK_ERROR_FORMAT_NOT_SUPPORTED , status_code::vulkan_format_not_supported } , 
-		{ VkResult::VK_ERROR_FRAGMENTED_POOL , status_code::vulkan_fragmented_pool } , 
-		{ VkResult::VK_ERROR_UNKNOWN , status_code::vulkan_unknown } , 
-		{ VkResult::VK_ERROR_OUT_OF_POOL_MEMORY , status_code::vulkan_out_of_pool_memory } , 
-		{ VkResult::VK_ERROR_INVALID_EXTERNAL_HANDLE , status_code::vulkan_invalid_external_handle } , 
-		{ VkResult::VK_ERROR_FRAGMENTATION , status_code::vulkan_fragmentation } , 
-		{ VkResult::VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS , status_code::vulkan_invalid_opaque_capture_address } , 
-		{ VkResult::VK_ERROR_SURFACE_LOST_KHR , status_code::vulkan_surface_lost_khr } , 
-		{ VkResult::VK_ERROR_NATIVE_WINDOW_IN_USE_KHR , status_code::vulkan_native_window_in_use_khr } , 
-		{ VkResult::VK_ERROR_OUT_OF_DATE_KHR , status_code::vulkan_out_of_date_khr } , 
-		{ VkResult::VK_ERROR_INCOMPATIBLE_DISPLAY_KHR , status_code::vulkan_incompatible_display_khr } , 
-		{ VkResult::VK_ERROR_VALIDATION_FAILED_EXT , status_code::vulkan_validation_failed_ext } , 
-		{ VkResult::VK_ERROR_INVALID_SHADER_NV , status_code::vulkan_invalid_shader_nv } , 
-		{ VkResult::VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT , status_code::vulkan_invalid_drm_format_modifier_plane_layout_ext } , 
-		{ VkResult::VK_ERROR_NOT_PERMITTED_KHR , status_code::vulkan_not_permitted_khr } , 
-		{ VkResult::VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT , status_code::vulkan_full_screen_exclusive_mode_lost_ext } , 
-		{ VkResult::VK_ERROR_COMPRESSION_EXHAUSTED_EXT , status_code::vulkan_compression_exhausted_ext } , 
-	};
-	
-	status_code status::to_status_code( VkResult value ) noexcept
-	{
-		if( value >= VK_SUCCESS )	
-			return status_code::ok;
-		auto it = vkresult_to_status_code_mapping.find( value );
-		if( it == vkresult_to_status_code_mapping.end() )
-			return status_code::vulkan_unrecognized_error_code;
-		return it->second;
-	}
-
-#endif//VULKAN_CORE_H_
-
 }
 // namespace ctle
 
@@ -777,6 +649,14 @@ std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 }
 				  
 #endif//CTLE_IMPLEMENTATION  
+
+#if defined(_SYSTEM_ERROR_) || defined(_GLIBCXX_SYSTEM_ERROR) || defined(_LIBCPP_SYSTEM_ERROR)
+#include "status_stl.h"
+#endif
+
+#ifdef VULKAN_CORE_H_
+#include "status_vulkan.h"
+#endif
 
 
 #endif//_CTLE_STATUS_H_

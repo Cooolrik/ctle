@@ -12,7 +12,7 @@ print('ctle code generation running...')
 # generate property.h 
 property_generator.generate_property('../include/ctle/prop.h')
 
-# generate status.h 
+# generate status.h and its conversion adapters
 status_generator.generate_status('../include/ctle/status.h')
 
 # generate types
