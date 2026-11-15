@@ -1,6 +1,9 @@
 // ctle Copyright (c) 2026 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
+#include <cstdlib>
+#include <limits.h>
+
 namespace ctle
 {
 namespace detail
@@ -53,6 +56,109 @@ namespace detail
 			return status::cant_access;
 		return status::ok;
 	}
+
+	/// @brief Run the resolved file through /bin/sh, preserving the original argument boundaries.
+	int spawn_process_script( pid_t &process_id, const char *path,
+		const std::vector<char *> &argv, const posix_spawn_file_actions_t &actions )
+	{
+		// Give the shell a filename, not a "-c" command string: argument contents must not
+		// become shell syntax. "--" also protects filenames that begin with a dash.
+		std::vector<char *> shell_argv = {
+			const_cast<char *>( "/bin/sh" ), const_cast<char *>( "--" ), const_cast<char *>( path )
+		};
+
+		// The resolved filename replaces the original argv[0]. Keep all remaining arguments,
+		// including empty strings, and copy the existing null terminator.
+		shell_argv.insert( shell_argv.end(), argv.begin() + 1, argv.end() );
+
+		// Reuse the original working-directory and stream redirections. Argument storage is
+		// prepared here in the parent; posix_spawn handles setup and execution in the child.
+		return posix_spawn( &process_id, "/bin/sh", &actions, nullptr, shell_argv.data(), environ );
+	}
+
+	/// @brief Spawn with execvp-style shell fallback for unrecognized executable formats.
+	/// @return Zero after a successful launch, or the POSIX error number on failure.
+	int spawn_process( pid_t &process_id, const std::vector<char *> &argv,
+		const posix_spawn_file_actions_t &actions )
+	{
+		// Leave ordinary launches and their errors unchanged. ENOEXEC means the kernel did
+		// not recognize the file's executable format, for example a script without "#!".
+		// execvp would then try /bin/sh, but posix_spawnp does not provide that fallback.
+		int result = posix_spawnp( &process_id, argv[0], &actions, nullptr, argv.data(), environ );
+		if( result != ENOEXEC )
+			return result;
+
+		// A name containing a slash bypasses PATH lookup, so the failing filename is known.
+		const std::string executable = argv[0];
+		if( executable.find( '/' ) != std::string::npos )
+			return spawn_process_script( process_id, argv[0], argv, actions );
+
+		// For a bare name, posix_spawnp does not reveal which PATH candidate failed.
+		// Passing that bare name to the shell could open a different file in the working
+		// directory. Repeat the search to obtain the filename to pass to /bin/sh.
+		// An unset PATH uses the system default; an explicitly empty PATH must stay empty.
+		std::string search_path;
+		if( const char *path = std::getenv( "PATH" ) )
+			search_path = path;
+		else
+		{
+			// confstr includes the trailing null in its size. Reserve room for it, then
+			// exclude it from the C++ string before splitting the search path.
+			const size_t size = confstr( _CS_PATH, nullptr, 0 );
+			if( size == 0 )
+				return ENOENT;
+			search_path.resize( size );
+			if( confstr( _CS_PATH, &search_path[0], size ) == 0 )
+				return ENOENT;
+			search_path.pop_back();
+		}
+
+		bool access_denied = false;
+		size_t begin = 0;
+		// Include empty entries, even after a trailing colon or when PATH itself is empty.
+		// Each empty entry means the child's working directory.
+		while( begin <= search_path.size() )
+		{
+			size_t end = search_path.find( ':', begin );
+			if( end == std::string::npos )
+				end = search_path.size();
+			const std::string directory = search_path.substr( begin, end - begin );
+			begin = end + 1;
+
+			// Match glibc's search-buffer limit: an oversized entry must not prevent
+			// trying a later valid directory.
+			if( directory.size() >= PATH_MAX )
+				continue;
+			const std::string path = directory.empty() ? executable : directory + '/' + executable;
+
+			// Resolve and check the candidate through spawn, using the original file actions.
+			// Parent-side file checks would resolve relative paths in the wrong directory.
+			result = posix_spawn( &process_id, path.c_str(), &actions, nullptr, argv.data(), environ );
+			if( result == ENOEXEC )
+				return spawn_process_script( process_id, path.c_str(), argv, actions );
+
+			// Like execvp, continue past lookup/access errors but stop on other failures.
+			// A retry can also succeed if files changed since the first search; return zero
+			// immediately in that case rather than launching another process.
+			switch( result )
+			{
+			case EACCES:
+				access_denied = true;
+				break;
+			case ENOENT:
+			case ENOTDIR:
+			case ESTALE:
+			case ENODEV:
+			case ETIMEDOUT:
+				break;
+			default:
+				return result;
+			}
+		}
+		// If no candidate launched, a permission denial takes precedence over later
+		// "not found" errors, matching execvp's result for an exhausted PATH search.
+		return access_denied ? EACCES : result;
+	}
 }
 
 std::string get_current_executable_path()
@@ -102,14 +208,14 @@ status process::os_data::start( const std::vector<std::string> &arguments,
 	ctStatusCall( detail::redirect_process_stream( actions.value, STDERR_FILENO,
 		this->stderr_read, stderr_write, error, false ) );
 
-	const int result = posix_spawnp( &this->process_id, argv[0], &actions.value,
-		nullptr, argv.data(), environ );
+	pid_t process_id = -1;
+	const int result = detail::spawn_process( process_id, argv, actions.value );
 	if( result != 0 )
 	{
-		this->process_id = -1;
-		ctLogError << "process::start: posix_spawnp failed: " << strerror( result ) << ctLogEnd;
+		ctLogError << "process::start: spawn failed: " << strerror( result ) << ctLogEnd;
 		return status::cant_access;
 	}
+	this->process_id = process_id;
 	return status::ok;
 }
 

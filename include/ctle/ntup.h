@@ -19,8 +19,6 @@
 
 #include <cinttypes>
 #include <limits>
-#include <type_traits>
-#include <utility>
 
 #include "fwd.h"
 #include "string_funcs.h"
@@ -30,7 +28,8 @@
 namespace ctle
 {
 /// @brief Specialized by adapters to define supported tuple and external-type conversions.
-template<class _TupleTy, class _ExternalTy, class = void> struct ntup_conversion;
+/// @details Member templates defer adapter lookup until a conversion is used.
+template<class _TupleTy> struct ntup_conversion;
 
 // 1-dimensional n-tuple template
 template<class _Ty> class n_tup<_Ty,1>
@@ -84,37 +83,25 @@ public:
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	n_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit n_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<n_tup, _OtherTy>::assign(
-			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
-	n_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -177,37 +164,25 @@ public:
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	n_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit n_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<n_tup, _OtherTy>::assign(
-			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
-	n_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -277,37 +252,25 @@ public:
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	n_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit n_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<n_tup, _OtherTy>::assign(
-			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
-	n_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -384,37 +347,25 @@ public:
 	_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	n_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit n_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<n_tup, _OtherTy>::assign(
-			std::declval<n_tup &>(), std::declval<const _OtherTy &>() ) )>
-	n_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	n_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<n_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<n_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<n_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<n_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -477,37 +428,25 @@ public:
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	mn_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit mn_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<mn_tup, _OtherTy>::assign(
-			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
-	mn_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -575,37 +514,25 @@ public:
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	mn_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit mn_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<mn_tup, _OtherTy>::assign(
-			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
-	mn_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -678,37 +605,25 @@ public:
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	mn_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit mn_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<mn_tup, _OtherTy>::assign(
-			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
-	mn_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 
@@ -786,37 +701,25 @@ public:
 	n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }
 
 	/// @brief Construct from a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	mn_tup( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
-	}
-
-	/// @brief Explicitly construct from another external type supported by the adapter.
-	template<class _OtherTy, typename std::enable_if<
-		!ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	explicit mn_tup( const _OtherTy &other ) noexcept
-	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 	}
 
 	/// @brief Assign an external value supported by an included adapter.
-	template<class _OtherTy, class = decltype(
-		ntup_conversion<mn_tup, _OtherTy>::assign(
-			std::declval<mn_tup &>(), std::declval<const _OtherTy &>() ) )>
-	mn_tup &operator=( const _OtherTy &other ) noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	mn_tup &operator=( const typename _Conversion::external_type &other ) noexcept
 	{
-		ntup_conversion<mn_tup, _OtherTy>::assign( *this, other );
+		_Conversion::assign( *this, other );
 		return *this;
 	}
 
 	/// @brief Convert to a matching external type supported by an included adapter.
-	template<class _OtherTy, typename std::enable_if<
-		ntup_conversion<mn_tup, _OtherTy>::is_implicit, int>::type = 0>
-	operator _OtherTy() const noexcept
+	template<class _Conversion = ntup_conversion<mn_tup>>
+	operator typename _Conversion::external_type() const noexcept
 	{
-		return ntup_conversion<mn_tup, _OtherTy>::convert( *this );
+		return _Conversion::convert( *this );
 	}
 };
 

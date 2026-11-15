@@ -51,8 +51,10 @@ require `CTLE_IMPLEMENTATION`, unlike the concrete status conversion adapters.
 
 Conversions to and from matching default-qualified GLM vectors and matrices remain
 implicit. Explicit tuple construction and assignment also retain GLM's existing
-conversions from other compatible GLM types. Matrix conversion treats each outer
-tuple as a column and does not transpose based on the row/column configuration.
+conversions from other compatible GLM types and user-defined wrappers convertible
+to the matching GLM type. Such intermediate conversions do not become implicit
+tuple conversions. Matrix conversion treats each outer tuple as a column and does
+not transpose based on the row/column configuration.
 
 The `CTLE_N_TUP_ONLY_XYZW`, `CTLE_MN_TUP_COLUMNMAJOR`, and `CTLE_MN_TUP_ROWMAJOR`
 settings are unchanged and must remain consistent across translation units.

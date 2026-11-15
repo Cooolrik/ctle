@@ -19,7 +19,8 @@ inline void setup_random_seed()
 
 // add headers that you want to pre-compile here
 inline u8 u8_rand() { return (u8)(rand() & 0xff); } 
-inline u16 u16_rand() { return u16(rand() << 4) ^ u16(rand()); } 
+// Shift unsigned before narrowing to avoid signed overflow.
+inline u16 u16_rand() { return u16(u32(rand()) << 4) ^ u16(rand()); }
 inline u32 u32_rand() { return u32(u16_rand()) << 16 | u32(u16_rand()); } 
 inline u64 u64_rand() { return u64(u32_rand()) << 32 | u64(u32_rand()); } 
 

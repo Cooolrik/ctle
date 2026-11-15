@@ -10,91 +10,122 @@
 /// @brief Optional, header-defined conversions between ctle tuples and GLM types.
 
 #include <glm/glm.hpp>
-#include <type_traits>
 
 #include "ntup.h"
 
 namespace ctle
 {
-	/// @brief Converts GLM vectors to and from a tuple's matching default-qualified vector type.
-	template<class _Ty, size_t _Size, glm::length_t _OtherSize,
-		class _OtherTy, glm::qualifier _Qualifier>
-	struct ntup_conversion<
-		n_tup<_Ty, _Size>, glm::vec<_OtherSize, _OtherTy, _Qualifier>,
-		typename std::enable_if<std::is_convertible<
-			glm::vec<_OtherSize, _OtherTy, _Qualifier>,
-			glm::vec<static_cast<glm::length_t>(_Size), _Ty>>::value>::type>
+	/// @brief Copy named vector members without treating them as an array.
+	template<class _Ty>
+	struct ntup_conversion<n_tup<_Ty,1>>
 	{
-		using tuple_type = n_tup<_Ty, _Size>;
-		using external_type = glm::vec<_OtherSize, _OtherTy, _Qualifier>;
-		using native_type = glm::vec<static_cast<glm::length_t>(_Size), _Ty>;
+		using tuple_type = n_tup<_Ty,1>;
+		using external_type = glm::vec<1,_Ty>;
 
-		static constexpr bool is_implicit = std::is_same<external_type, native_type>::value;
-
-		/// @brief Copy an external vector through GLM's existing conversion rules.
+		/// @brief Copy the matching GLM vector into the tuple.
 		static void assign( tuple_type &dest, const external_type &src ) noexcept
 		{
-			const native_type value = src;
-			for( size_t index = 0; index < _Size; ++index )
-			{
-				dest[index] = value[static_cast<glm::length_t>(index)];
-			}
+			dest.x = src.x;
 		}
 
-		/// @brief Return the matching default-qualified GLM vector.
-		static native_type convert( const tuple_type &src ) noexcept
+		/// @brief Return the matching GLM vector.
+		static external_type convert( const tuple_type &src ) noexcept
 		{
-			native_type result;
-			for( size_t index = 0; index < _Size; ++index )
-			{
-				result[static_cast<glm::length_t>(index)] = src[index];
-			}
-			return result;
+			return external_type( src.x );
+		}
+	};
+
+	/// @brief Copy named vector members without treating them as an array.
+	template<class _Ty>
+	struct ntup_conversion<n_tup<_Ty,2>>
+	{
+		using tuple_type = n_tup<_Ty,2>;
+		using external_type = glm::vec<2,_Ty>;
+
+		/// @brief Copy the matching GLM vector into the tuple.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			dest.x = src.x;
+			dest.y = src.y;
+		}
+
+		/// @brief Return the matching GLM vector.
+		static external_type convert( const tuple_type &src ) noexcept
+		{
+			return external_type( src.x, src.y );
+		}
+	};
+
+	/// @brief Copy named vector members without treating them as an array.
+	template<class _Ty>
+	struct ntup_conversion<n_tup<_Ty,3>>
+	{
+		using tuple_type = n_tup<_Ty,3>;
+		using external_type = glm::vec<3,_Ty>;
+
+		/// @brief Copy the matching GLM vector into the tuple.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			dest.x = src.x;
+			dest.y = src.y;
+			dest.z = src.z;
+		}
+
+		/// @brief Return the matching GLM vector.
+		static external_type convert( const tuple_type &src ) noexcept
+		{
+			return external_type( src.x, src.y, src.z );
+		}
+	};
+
+	/// @brief Copy named vector members without treating them as an array.
+	template<class _Ty>
+	struct ntup_conversion<n_tup<_Ty,4>>
+	{
+		using tuple_type = n_tup<_Ty,4>;
+		using external_type = glm::vec<4,_Ty>;
+
+		/// @brief Copy the matching GLM vector into the tuple.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			dest.x = src.x;
+			dest.y = src.y;
+			dest.z = src.z;
+			dest.w = src.w;
+		}
+
+		/// @brief Return the matching GLM vector.
+		static external_type convert( const tuple_type &src ) noexcept
+		{
+			return external_type( src.x, src.y, src.z, src.w );
 		}
 	};
 
 	/// @brief Converts GLM matrices using the tuple's outer elements as columns.
-	template<class _Ty, size_t _InnerSize, size_t _OuterSize,
-		glm::length_t _Columns, glm::length_t _Rows, class _OtherTy, glm::qualifier _Qualifier>
-	struct ntup_conversion<
-		mn_tup<_Ty, _InnerSize, _OuterSize>, glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>,
-		typename std::enable_if<std::is_convertible<
-			glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>,
-			glm::mat<static_cast<glm::length_t>(_OuterSize),
-				static_cast<glm::length_t>(_InnerSize), _Ty>>::value>::type>
+	template<class _Ty, size_t _InnerSize, size_t _OuterSize>
+	struct ntup_conversion<mn_tup<_Ty, _InnerSize, _OuterSize>>
 	{
 		using tuple_type = mn_tup<_Ty, _InnerSize, _OuterSize>;
-		using external_type = glm::mat<_Columns, _Rows, _OtherTy, _Qualifier>;
-		using native_type = glm::mat<static_cast<glm::length_t>(_OuterSize),
+		using column_conversion = ntup_conversion<n_tup<_Ty, _InnerSize>>;
+		using external_type = glm::mat<static_cast<glm::length_t>(_OuterSize),
 			static_cast<glm::length_t>(_InnerSize), _Ty>;
 
-		static constexpr bool is_implicit = std::is_same<external_type, native_type>::value;
-
-		/// @brief Copy an external matrix through GLM's existing conversion rules.
+		/// @brief Copy each actual array element through its vector adapter.
 		static void assign( tuple_type &dest, const external_type &src ) noexcept
 		{
-			const native_type value = src;
 			for( size_t column = 0; column < _OuterSize; ++column )
 			{
-				for( size_t row = 0; row < _InnerSize; ++row )
-				{
-					dest.values[column][row] = value[static_cast<glm::length_t>(column)]
-						[static_cast<glm::length_t>(row)];
-				}
+				column_conversion::assign( dest.values[column], src[static_cast<glm::length_t>(column)] );
 			}
 		}
 
 		/// @brief Return the matching default-qualified GLM matrix without transposing.
-		static native_type convert( const tuple_type &src ) noexcept
+		static external_type convert( const tuple_type &src ) noexcept
 		{
-			native_type result;
+			external_type result;
 			for( size_t column = 0; column < _OuterSize; ++column )
 			{
-				for( size_t row = 0; row < _InnerSize; ++row )
-				{
-					result[static_cast<glm::length_t>(column)]
-						[static_cast<glm::length_t>(row)] = src.values[column][row];
-				}
+				result[static_cast<glm::length_t>(column)] = column_conversion::convert( src.values[column] );
 			}
 			return result;
 		}

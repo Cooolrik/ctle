@@ -81,23 +81,30 @@ public:
 	/// Late return_item() calls are rejected once loans are detached. Keep this pool alive until those calls finish,
 	/// and do not reinitialize it while old workers may still access it.
 	/// @param objectList Receives all owned objects, replacing its previous contents; do not modify it concurrently.
+	/// Previous contents are destroyed after releasing the lock, so their destructors may query the pool.
 	/// @return false if loans were outstanding when ownership was detached; otherwise true.
 	/// A false result does not cancel the ownership transfer.
 	bool deinitialize(std::vector<std::unique_ptr<_Ty>>& objectList)
 	{
-		// Hold the lock across bookkeeping cleanup and ownership transfer so no partial state is visible.
-		readers_writer_lock::write_guard guard( this->accessLock );
+		std::vector<std::unique_ptr<_Ty>> detached_pool;
+		bool all_returned = false;
+		{
+			// Hold the lock across bookkeeping cleanup and detachment so no partial state is visible.
+			readers_writer_lock::write_guard guard( this->accessLock );
 
-		// Remember outstanding loans before clearing them; they determine the return value.
-		const bool all_returned = this->borrowed.empty();
+			// Remember outstanding loans before clearing them; they determine the return value.
+			all_returned = this->borrowed.empty();
 
-		// Stop lending detached objects and prevent late returns from making them available again.
-		this->available.clear();
-		this->borrowed.clear();
+			// Stop lending detached objects and prevent late returns from making them available again.
+			this->available.clear();
+			this->borrowed.clear();
 
-		// Transfer every object, even if loans remain. The caller must keep those objects alive.
-		objectList = std::move(this->pool);
+			// Detach every object, even if loans remain. The caller must keep those objects alive.
+			this->pool.swap( detached_pool );
+		}
 
+		// Replacing the caller's old objects may run destructors that call back into the pool.
+		objectList = std::move( detached_pool );
 		return all_returned;
 	}
 

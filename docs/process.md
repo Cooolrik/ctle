@@ -17,6 +17,9 @@ object. All resources acquired during a failed launch are released.
 Linux prepares arguments in the parent and uses `posix_spawnp()` with checked
 file actions. It requires `posix_spawn_file_actions_addchdir_np()` (available in
 glibc 2.29 and later) for the working directory. Pipe descriptors are close-on-exec.
+Executable text files without a shebang use `/bin/sh`, as with `execvp()`.
+The fallback preserves PATH lookup, the child working directory, and literal
+arguments; it does not build a shell command string.
 Windows restricts inherited handles to the three child standard streams.
 
 ### Windows argument encoding

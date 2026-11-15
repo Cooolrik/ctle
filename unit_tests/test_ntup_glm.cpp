@@ -8,12 +8,62 @@
 
 using namespace ctle;
 
+namespace
+{
+	struct vector_source
+	{
+		operator glm::vec3() const { return glm::vec3( 1, 2, 3 ); }
+	};
+
+	struct matrix_source
+	{
+		operator glm::mat3x2() const
+		{
+			return glm::mat3x2( glm::vec2( 1, 2 ), glm::vec2( 3, 4 ), glm::vec2( 5, 6 ) );
+		}
+	};
+
+	struct rvalue_vector_source
+	{
+		operator glm::vec3() && { return glm::vec3( 4, 5, 6 ); }
+	};
+}
+
 static_assert( !std::is_constructible<n_tup<float, 3>, int>::value, "scalar conversion must remain disabled" );
 static_assert( !std::is_assignable<n_tup<float, 3> &, std::string>::value, "unregistered types must not assign" );
 static_assert( !std::is_convertible<glm::dvec3, n_tup<float, 3>>::value, "scalar changes must remain explicit" );
 static_assert( !std::is_convertible<n_tup<float, 3>, glm::dvec3>::value, "outward scalar changes must stay disabled" );
 static_assert( !std::is_convertible<glm::vec4, n_tup<float, 3>>::value, "dimension changes must remain explicit" );
 static_assert( std::is_trivially_copyable<mn_tup<float, 2, 3>>::value, "matrix tuples must remain trivially copyable" );
+static_assert( !std::is_convertible<vector_source, n_tup<float, 3>>::value,
+	"two user-defined conversions must not become implicit" );
+
+TEST( ntup_glm, compatible_wrappers_preserve_native_conversion_rules )
+{
+	const vector_source source;
+	n_tup<float, 3> vector( source );
+	EXPECT_EQ( vector.x, 1 );
+	EXPECT_EQ( vector.y, 2 );
+	EXPECT_EQ( vector.z, 3 );
+	vector = rvalue_vector_source{};
+	EXPECT_EQ( vector.x, 4 );
+	EXPECT_EQ( vector.y, 5 );
+	EXPECT_EQ( vector.z, 6 );
+	vector = source;
+	EXPECT_EQ( vector.z, 3 );
+
+	n_tup<float, 3> from_rvalue( rvalue_vector_source{} );
+	EXPECT_EQ( from_rvalue.z, 6 );
+	const matrix_source matrix_input;
+	mn_tup<float, 2, 3> matrix( matrix_input );
+	EXPECT_EQ( matrix.values[0].x, 1 );
+	EXPECT_EQ( matrix.values[1].y, 4 );
+	EXPECT_EQ( matrix.values[2].y, 6 );
+	matrix = glm::mat3x2( 0 );
+	matrix = matrix_input;
+	const glm::mat3x2 restored = matrix;
+	EXPECT_EQ( restored, static_cast<glm::mat3x2>( matrix_input ) );
+}
 
 TEST( ntup_glm, late_vector_adapter )
 {

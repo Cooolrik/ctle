@@ -7,8 +7,57 @@
 #include <ctle/status_return.h>
 
 #include <future>
+#include <cstdlib>
 
 using namespace ctle;
+
+TEST( multithread_pool, deinitialize_destroys_previous_output_after_unlocking )
+{
+	// Isolate a possible deadlock in a child with a deadline, rather than hanging the suite.
+	GTEST_FLAG_SET( death_test_style, "threadsafe" );
+	ASSERT_EXIT( ( []()
+	{
+		std::thread( []()
+		{
+			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+			std::_Exit( 2 );
+		} ).detach();
+
+		struct observed_item
+		{
+			std::function<void()> on_destroy;
+			~observed_item()
+			{
+				if( on_destroy )
+					on_destroy();
+			}
+		};
+
+		{
+			multithread_pool<observed_item> pool;
+			bool destroyed = false;
+			std::vector<std::unique_ptr<observed_item>> objects;
+			objects.emplace_back( new observed_item() );
+			observed_item *loan = objects.front().get();
+			pool.initialize( objects );
+			ASSERT_EQ( pool.borrow_item(), loan );
+			objects.emplace_back( new observed_item{ [&]()
+			{
+				destroyed = true;
+				EXPECT_EQ( pool.available_count(), 0 );
+				EXPECT_FALSE( pool.item_borrowed() );
+				EXPECT_EQ( pool.borrow_item(), nullptr );
+				EXPECT_FALSE( pool.return_item( loan ) );
+			} } );
+
+			EXPECT_FALSE( pool.deinitialize( objects ) );
+			EXPECT_TRUE( destroyed );
+			ASSERT_EQ( objects.size(), 1 );
+			EXPECT_EQ( objects.front().get(), loan );
+		}
+		std::_Exit( ::testing::Test::HasFailure() ? 1 : 0 );
+	} )(), ::testing::ExitedWithCode( 0 ), "" );
+}
 
 TEST( multithread_pool, deinitialize_detaches_all_lending_state )
 {

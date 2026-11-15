@@ -14,6 +14,8 @@ Replaced objects are destroyed after releasing that lock.
 both the available and borrowed indexes under one write lock. It returns `false`
 if loans were outstanding at that point, but still transfers all objects and
 empties the pool. Otherwise, it returns `true`.
+The output vector's previous contents are destroyed only after releasing the lock,
+so their destructors may query the now-empty pool.
 
 After deinitialization, availability and borrowed-state queries are empty and
 `borrow_item()` returns `nullptr`. `return_item()` accepts only a currently tracked
