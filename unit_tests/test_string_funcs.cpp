@@ -384,3 +384,20 @@ TEST( string_funcs, wstring_conversion_tests )
 	EXPECT_TRUE( wstring_to_string( wide_str, converted_utf8 ) );
 	EXPECT_TRUE( converted_utf8==utf8_str );
 }
+
+TEST( string_funcs, empty_string_conversion_preserves_platform_behavior )
+{
+	std::wstring wide = L"unchanged";
+	std::string narrow = "unchanged";
+#if defined(_WIN32)
+	EXPECT_FALSE( string_to_wstring( "", wide ) );
+	EXPECT_FALSE( wstring_to_string( L"", narrow ) );
+	EXPECT_EQ( wide, L"unchanged" );
+	EXPECT_EQ( narrow, "unchanged" );
+#elif defined(__linux__)
+	EXPECT_TRUE( string_to_wstring( "", wide ) );
+	EXPECT_TRUE( wstring_to_string( L"", narrow ) );
+	EXPECT_TRUE( wide.empty() );
+	EXPECT_TRUE( narrow.empty() );
+#endif
+}

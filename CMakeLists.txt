@@ -173,6 +173,7 @@ if(CTLE_BUILD_TESTS)
 	endif()
 
 	include("${CMAKE_CURRENT_LIST_DIR}/cmake/header_checks.cmake")
+	include("${CMAKE_CURRENT_LIST_DIR}/cmake/cxx14_compile_check.cmake")
 
 # testing
 endif(CTLE_BUILD_TESTS)

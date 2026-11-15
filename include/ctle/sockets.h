@@ -157,7 +157,7 @@ private:
 #if defined(_WIN32)
 #define _ADD_CTLE_HEADERS_WIN_STD
 #define _ADD_CTLE_HEADERS_WIN_SOCKETS
-#elif defined(linux)
+#elif defined(__linux__)
 #define _ADD_CTLE_HEADERS_LINUX_STD
 #define _ADD_CTLE_HEADERS_LINUX_SOCKETS
 #endif
@@ -238,7 +238,7 @@ status deinitialize_sockets()
 #if defined(_WIN32)
 using socket_type = SOCKET;
 constexpr const socket_type invalid_socket = socket_type(SOCKET_ERROR);
-#elif defined(linux)
+#elif defined(__linux__)
 using socket_type = int;
 constexpr const socket_type invalid_socket = -1;
 #endif
@@ -265,7 +265,7 @@ inline int get_last_socket_error()
 {
 #if defined(_WIN32)
 	return WSAGetLastError();
-#elif defined(linux)
+#elif defined(__linux__)
 	return errno;
 #endif
 }
@@ -314,7 +314,7 @@ inline status socket::file::close()
 	{
 #if defined(_WIN32)
 		int result = ::closesocket(this->fd);
-#elif defined(linux)
+#elif defined(__linux__)
 		int result = ::close(this->fd);
 #endif
 		this->fd = invalid_socket;
@@ -378,7 +378,7 @@ inline status socket::file::connect( const addrinfo &addr ) const
 
 #if defined(_WIN32)
 	result = ::connect(this->fd, addr.ai_addr, (int)addr.ai_addrlen);
-#elif defined(linux)
+#elif defined(__linux__)
 	result = ::connect(this->fd, addr.ai_addr, addr.ai_addrlen);
 #endif
 	ctValidate( result == 0 , status::cant_allocate ) 
@@ -401,7 +401,7 @@ inline status socket::file::bind( const addrinfo &addr, bool reuse_address ) con
 		const int option_value = 1;
 #if defined(_WIN32)
 		result = setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&option_value, sizeof(option_value));
-#elif defined(linux)
+#elif defined(__linux__)
 		result = setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &option_value, sizeof(option_value));
 #endif
 		ctValidate( result == 0 , status::cant_allocate ) 
@@ -412,7 +412,7 @@ inline status socket::file::bind( const addrinfo &addr, bool reuse_address ) con
 	// bind the socket
 #if defined(_WIN32)
 	result = ::bind(this->fd, addr.ai_addr, (int)addr.ai_addrlen);
-#elif defined(linux)
+#elif defined(__linux__)
 	result = ::bind(this->fd, addr.ai_addr, addr.ai_addrlen);
 #endif
 	ctValidate( result == 0 , status::cant_allocate ) 
@@ -456,7 +456,7 @@ inline status stream_socket::file::send(const void* buf, size_t buflen, size_t& 
 
 #if defined(_WIN32)
 	int result = ::send(this->fd, (const char*)buf, (int)buflen, 0);
-#elif defined(linux)
+#elif defined(__linux__)
 	ssize_t result = ::send(this->fd, buf, buflen, 0);
 #endif
 	if( result < 0 )
@@ -475,7 +475,7 @@ inline status stream_socket::file::recv(void* buf, size_t buflen, size_t& receiv
 
 #if defined(_WIN32)
 	int result = ::recv(this->fd, (char*)buf, (int)buflen, 0);
-#elif defined(linux)
+#elif defined(__linux__)
 	ssize_t result = ::recv(this->fd, buf, buflen, 0);
 #endif
 	if( result < 0 )

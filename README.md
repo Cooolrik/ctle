@@ -1,6 +1,31 @@
 # ctle
 C++ Template Library Extension classes - Extension classes for Windows and Linux STL
 
+## C++ standard checks
+
+`./testall.sh` runs the GoogleTest suites in C++20 and C++17. Its C++14 stage only
+compiles and links `ctle_cxx14_compile_check`; it does not run a C++14 test suite.
+
+The compile-only application includes every public ctle header, defines
+`CTLE_IMPLEMENTATION`, and enables the optional GLM, Vulkan and hashing support.
+It does not link GoogleTest, whose C++17 requirement would otherwise upgrade its
+language mode. The target explicitly selects C++14 without compiler extensions,
+and a compile-time assertion checks `_MSVC_LANG` or `__cplusplus` to reject any
+silent upgrade.
+
+To build this check independently:
+
+```bash
+cmake -S . -B build/native -DCTLE_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=17
+cmake --build build/native --target ctle_cxx14_compile_check --parallel 2
+```
+
+The target still compiles as C++14 even in this C++17 build directory. It is also
+available in the Windows cross-build as
+`cmake --build build/windows --target ctle_cxx14_compile_check --parallel 2`.
+The application is not executed; this checks compilation and linking, not runtime
+behavior or every possible template instantiation.
+
 ## Windows cross-build and Wine tests
 
 On Ubuntu/Debian, install the 64-bit POSIX-threaded MinGW toolchain and Wine:

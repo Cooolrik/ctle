@@ -36,7 +36,7 @@ foreach(source IN LISTS CTLE_CORE_HEADER_CHECK_SOURCES CTLE_ADAPTER_HEADER_CHECK
 	set(target "ctle_header_check_${source_stem}")
 	add_library(${target} OBJECT "${source}")
 	target_link_libraries(${target} PRIVATE ${PROJECT_NAME})
-	# Match the existing test framework's minimum; these checks do not establish C++14 support.
+	# Per-header checks use C++17 or newer; the C++14 all-header application is separate.
 	target_compile_features(${target} PRIVATE cxx_std_17)
 	set_target_properties(${target} PROPERTIES UNITY_BUILD OFF DISABLE_PRECOMPILE_HEADERS ON)
 

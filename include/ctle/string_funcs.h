@@ -254,7 +254,7 @@ _CTLE_DEFINE_BITWISE_OPERATORS( ctle::quote_string_options )
 
 #if defined(_WIN32)
 #define _ADD_CTLE_HEADERS_WIN_STD
-#elif defined(linux)
+#elif defined(__linux__)
 #define _ADD_CTLE_HEADERS_LINUX_STD
 #endif
 #include "os.inl"
@@ -756,7 +756,7 @@ bool string_to_wstring( const std::string &srcStr, std::wstring &destStr )
 	}
 
 	destStr.resize( size );
-	if( MultiByteToWideChar( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), destStr.data(), size )==0 )
+	if( MultiByteToWideChar( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), &destStr[0], size )==0 )
 	{
 		return false;
 	}
@@ -773,7 +773,7 @@ bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
 	}
 
 	destStr.resize( size );
-	if( WideCharToMultiByte( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), destStr.data(), size, nullptr, nullptr )==0 )
+	if( WideCharToMultiByte( CP_UTF8, 0, srcStr.data(), (int)srcStr.size(), &destStr[0], size, nullptr, nullptr )==0 )
 	{
 		return false;
 	}
@@ -835,7 +835,10 @@ bool string_to_wstring( const std::string &srcStr, std::wstring &destStr )
 	}
 
 	destStr.resize( size );
-	std::mbstowcs( destStr.data(), srcStr.c_str(), size );
+	if( size != 0 )
+	{
+		std::mbstowcs( &destStr[0], srcStr.c_str(), size );
+	}
 
 	if( old_locale )
 		uselocale( old_locale );
@@ -856,14 +859,17 @@ bool wstring_to_string( const std::wstring &srcStr, std::string &destStr )
 	}
 
 	destStr.resize( size );
-	std::wcstombs( destStr.data(), srcStr.c_str(), size );
+	if( size != 0 )
+	{
+		std::wcstombs( &destStr[0], srcStr.c_str(), size );
+	}
 
 	if( old_locale )
 		uselocale( old_locale );
 	return true;
 }
 
-#endif// defined(_WIN32) elif defined(linux)
+#endif// defined(_WIN32) elif defined(__linux__)
 
 }
 // namespace ctle

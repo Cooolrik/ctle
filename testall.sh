@@ -29,15 +29,9 @@ fi
 cd ..
 tail results_c++17
 
-echo -e "\e[32;49;1m[testall.sh] Building & testing C++14\e[0m"
+echo -e "\e[32;49;1m[testall.sh] Compiling the C++14 all-header application (no tests)\e[0m"
 mkdir -p build_c++14
 cd build_c++14
 cmake .. -DCMAKE_CXX_STANDARD=14 -DCTLE_BUILD_TESTS=ON
-cmake --build .
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	./unit_tests > ../results_c++14
-else
-	./Debug/unit_tests > ../results_c++14
-fi 
+cmake --build . --target ctle_cxx14_compile_check
 cd ..
-tail results_c++14
