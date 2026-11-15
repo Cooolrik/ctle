@@ -14,8 +14,10 @@
 #include <ctle/data_destination.h>
 #include <ctle/ntup.h>
 #include <ctle/string_funcs.h>
+#include <ctle/uuid.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <limits>
 
 using namespace ctle;
@@ -115,6 +117,12 @@ namespace
 	const std::vector<u8> stream_test_data = { 'a', 'b', 'c' };
 	const char *stream_test_sha256 = "ba7816bf8f01cfea414140de5dae2223"
 		"b00361a396177a9cb410ff61f20015ad";
+
+	struct variant_file
+	{
+		const std::string path = to_string( uuid::generate() ) + ".dat";
+		~variant_file() { std::remove( this->path.c_str() ); }
+	};
 }
 
 TEST( data_stream, short_writes_commit_and_hash_each_byte_once )
@@ -320,6 +328,129 @@ TEST( data_stream, empty_stream_finalizes_once )
 	EXPECT_EQ( stream.get_digest().value(), expected );
 	EXPECT_TRUE( destination.bytes.empty() );
 	EXPECT_EQ( stream.get_position(), 0 );
+}
+
+TEST( data_stream, registered_variants_preserve_ids_and_binary_round_trips )
+{
+	variant_file file;
+	const char *base_names[] = { "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "f32", "f64" };
+	const size_t base_sizes[] = { 1, 1, 2, 2, 4, 4, 8, 8, 4, 8 };
+	const size_t variants_per_base = 21;
+	const size_t variant_count = 210;
+	std::vector<std::unique_ptr<variant>> originals;
+	std::vector<u8> expected_bytes;
+
+	{
+		file_data_destination destination( file.path );
+		write_stream<file_data_destination, hasher_xxh128> stream( destination );
+		for( size_t index = 0; index < variant_count; ++index )
+		{
+			auto value = new_variant( index );
+			ASSERT_NE( value, nullptr );
+			const size_t base = index / variants_per_base;
+			const size_t shape = index % variants_per_base;
+			std::string expected_name = base_names[base];
+			size_t components = 1;
+			if( shape > 0 && shape <= 4 )
+			{
+				components = shape;
+				expected_name = "n_tup<" + expected_name + "," + std::to_string( shape ) + ">";
+			}
+			else if( shape > 4 )
+			{
+				const size_t inner = (shape - 5) / 4 + 1;
+				const size_t outer = (shape - 5) % 4 + 1;
+				components = inner * outer;
+				expected_name = "mn_tup<" + expected_name + "," + std::to_string( inner )
+					+ "," + std::to_string( outer ) + ">";
+			}
+			EXPECT_EQ( value->type(), index );
+			EXPECT_EQ( value->type_name(), expected_name );
+			EXPECT_EQ( value->type_size(), base_sizes[base] * components );
+			EXPECT_EQ( value->type_count(), 0 );
+			value->random();
+			ASSERT_GT( value->type_count(), 0 );
+
+			const u32 count = (u32)value->type_count();
+			const u8 *prefix = reinterpret_cast<const u8 *>( &count );
+			const u8 *payload = static_cast<const u8 *>( value->cdata() );
+			expected_bytes.insert( expected_bytes.end(), prefix, prefix + sizeof(count) );
+			expected_bytes.insert( expected_bytes.end(), payload, payload + value->type_size() * count );
+			ASSERT_EQ( value->write_to_stream( stream ), status::ok );
+			originals.push_back( std::move( value ) );
+			auto empty = new_variant( index );
+			ASSERT_EQ( empty->write_to_stream( stream ), status::ok );
+			expected_bytes.insert( expected_bytes.end(), sizeof(u32), 0 );
+		}
+		ASSERT_EQ( stream.end(), status::ok );
+	}
+
+	std::vector<u8> actual_bytes;
+	ASSERT_EQ( read_file( file.path, actual_bytes ), status::ok );
+	EXPECT_EQ( actual_bytes, expected_bytes );
+	{
+		file_data_source source( file.path );
+		read_stream<file_data_source, hasher_xxh128> stream( source );
+		for( size_t index = 0; index < variant_count; ++index )
+		{
+			auto restored = new_variant( index );
+			ASSERT_EQ( restored->read_from_stream( stream ), status::ok );
+			EXPECT_TRUE( restored->is_equal( *originals[index] ) );
+			EXPECT_FALSE( restored->is_equal( *originals[(index + 1) % variant_count] ) );
+			restored->clear();
+			EXPECT_EQ( restored->type_count(), 0 );
+			EXPECT_FALSE( restored->is_equal( *originals[index] ) );
+			auto empty = new_variant( index );
+			ASSERT_EQ( empty->read_from_stream( stream ), status::ok );
+			EXPECT_TRUE( empty->is_equal( *restored ) );
+		}
+		EXPECT_TRUE( stream.has_ended() );
+	}
+	EXPECT_EQ( new_variant( variant_count ), nullptr );
+	EXPECT_EQ( new_variant( std::numeric_limits<size_t>::max() ), nullptr );
+}
+
+TEST( data_stream, variant_stream_errors_are_propagated )
+{
+	variant_file file;
+	auto value = new_variant( 0 );
+	value->random();
+	const size_t original_count = value->type_count();
+	ASSERT_EQ( write_file( file.path, std::vector<u8>( { 1, 0 } ) ), status::ok );
+	{
+		file_data_source source( file.path );
+		read_stream<file_data_source, hasher_xxh128> stream( source );
+		EXPECT_EQ( value->read_from_stream( stream ), status::cant_read );
+		EXPECT_EQ( value->type_count(), original_count );
+	}
+
+	ASSERT_EQ( write_file( file.path, std::vector<u32>( { 1 } ), true ), status::ok );
+	{
+		file_data_source source( file.path );
+		read_stream<file_data_source, hasher_xxh128> stream( source );
+		EXPECT_EQ( value->read_from_stream( stream ), status::cant_read );
+	}
+	{
+		file_data_destination destination( file.path );
+		write_stream<file_data_destination, hasher_xxh128> stream( destination );
+		ASSERT_EQ( stream.end(), status::ok );
+		value->clear();
+		EXPECT_EQ( value->write_to_stream( stream ), status::not_ready );
+	}
+}
+
+TEST( data_stream, variant_equality_preserves_float_bit_patterns )
+{
+	variant_file file;
+	// Two single-float records containing +0 and -0: numerically equal, but bytewise different.
+	ASSERT_EQ( write_file( file.path, std::vector<u32>( { 1, 0, 1, 0x80000000 } ) ), status::ok );
+	file_data_source source( file.path );
+	read_stream<file_data_source, hasher_xxh128> stream( source );
+	auto positive = new_variant( 168 );
+	auto negative = new_variant( 168 );
+	ASSERT_EQ( positive->read_from_stream( stream ), status::ok );
+	ASSERT_EQ( negative->read_from_stream( stream ), status::ok );
+	EXPECT_FALSE( positive->is_equal( *negative ) );
 }
 
 TEST( data_stream, basic_test )

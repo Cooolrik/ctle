@@ -563,45 +563,18 @@ def generate_random_value_functions( out:formatted_output ):
 			out.ln(str)
 	out.ln()
 
-def generate_variant_tuple_implementation( out:formatted_output, otype, variant_index ) -> str:
-	obj_type = otype['otype']
-	variant_type = 'variant_' + str(variant_index)
-	out.ln( f'class {variant_type} : public variant')
-	with out.blk(add_semicolon=True,no_indent=True):
-		out.ln('public:')
-		with out.tab():
-			out.ln(f'std::vector<ctle::{obj_type}> data;')
-			out.ln()
-			out.ln(f'virtual ~{variant_type}() override {{}}')
-			out.ln(f'virtual size_t type() const override {{ return {variant_index}; }}')
-			out.ln(f'virtual const char *type_name() const override {{ return "{obj_type}"; }}')
-			out.ln(f'virtual size_t type_size() const override {{ return sizeof(ctle::{obj_type}); }}')
-			out.ln('virtual size_t type_count() const override { return this->data.size(); }')
-			out.ln(f'virtual bool is_equal( const variant &other ) const override {{ return _are_equal( *this, other ); }}');
-			out.ln('virtual void clear() override { this->data.clear(); }')
-			out.ln('virtual const void *cdata() const override { return this->data.data(); }')
-			out.ln(f'virtual void random() {{ this->data = random_vector<ctle::{obj_type}>(); }}')
-			out.ln(f'virtual ctle::status read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm ) override {{ return _read_from_stream<ctle::{obj_type}>( strm, this->data ); }}')
-			out.ln(f'virtual ctle::status write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm ) const override {{ return _write_to_stream<ctle::{obj_type}>( strm, this->data ); }}')
-	out.ln()
-	return variant_type
-  
-def generate_variant_implementations( out:formatted_output ):
-	variant_list = []
-	for otype in types:
-		variant_list.append( generate_variant_tuple_implementation( out, otype, len(variant_list) ) )
-	out.ln()
-
+def generate_variant_factory( out:formatted_output ):
 	out.ln('std::unique_ptr<variant> random_variant()')
 	with out.blk():
-		out.ln(f'return new_variant( rand() % {len(variant_list)} );')
+		out.ln(f'return new_variant( rand() % {len(types)} );')
 		
 	out.ln('std::unique_ptr<variant> new_variant( size_t inx )')
 	with out.blk():
 		out.ln('switch( inx )')
 		with out.blk():
-			for inx,varnt in enumerate(variant_list):
-				out.ln(f'case {inx}: return std::make_unique<{varnt}>();')
+			for inx,otype in enumerate(types):
+				obj_type = otype['otype']
+				out.ln(f'case {inx}: return std::make_unique<variant_of<ctle::{obj_type}>>( {inx}, "{obj_type}" );')
 			out.ln('default: return std::unique_ptr<variant>(); // invalid')
 
 def generate_unit_tests_variants( test_path:str ):
@@ -616,37 +589,68 @@ def generate_unit_tests_variants( test_path:str ):
 #include <ctle/data_source.h>
 #include <ctle/write_stream.h>
 #include <ctle/data_destination.h>
-		
-template<class _Ty> ctle::status _read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm, std::vector<_Ty> &data )
+#include <cstring>
+
+namespace
 {
-	u32 cnt = 0;
-	ctle::status res = strm.read<u32>( &cnt, 1 );
-	if( !res ) 
-  		return res; 
-	data.resize(cnt);
-	return strm.read<_Ty>( data.data(), data.size() );
+	// The factory supplies stable metadata; all value types share the same behavior.
+	template<class _Ty>
+	class variant_of : public variant
+	{
+	public:
+		variant_of( size_t index, const char *name ) : type_index(index), type_name_text(name) {}
+
+		size_t type() const override { return this->type_index; }
+		const char *type_name() const override { return this->type_name_text; }
+		size_t type_size() const override { return sizeof(_Ty); }
+		size_t type_count() const override { return this->data.size(); }
+		void clear() override { this->data.clear(); }
+		const void *cdata() const override { return this->data.data(); }
+		void random() override { this->data = random_vector<_Ty>(); }
+
+		bool is_equal( const variant &other ) const override
+		{
+			if( this->type() != other.type() || this->data.size() != other.type_count() )
+				return false;
+			return this->data.empty()
+				|| memcmp( this->data.data(), other.cdata(), sizeof(_Ty) * this->data.size() ) == 0;
+		}
+
+		ctle::status read_from_stream(
+			ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm ) override
+		{
+			u32 count = 0;
+			const ctle::status result = strm.read<u32>( &count, 1 );
+			if( !result )
+				return result;
+			this->data.resize( count );
+			if( this->data.empty() )
+				return ctle::status::ok;
+			return strm.read<_Ty>( this->data.data(), this->data.size() );
+		}
+
+		ctle::status write_to_stream(
+			ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm ) const override
+		{
+			const ctle::status result = strm.write<u32>( (u32)this->data.size() );
+			if( !result )
+				return result;
+			if( this->data.empty() )
+				return ctle::status::ok;
+			return strm.write<_Ty>( this->data.data(), this->data.size() );
+		}
+
+	private:
+		const size_t type_index;
+		const char *const type_name_text;
+		std::vector<_Ty> data;
+	};
 }
-		
-template<class _Ty> ctle::status _write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm, const std::vector<_Ty> &data )
-{
-	ctle::status res = strm.write<u32>( (u32)data.size() );
-	if( !res ) 
-  		return res; 
-	return strm.write<_Ty>( data.data(), data.size() );
-}
-		
-bool _are_equal( const variant &a , const variant &b )
-{
-	if( a.type() != b.type() )
-		return false;
-	if( a.type_count() != b.type_count() )
-		return false;
-	return memcmp( a.cdata(), b.cdata(), a.type_size() * a.type_count() ) == 0;
-}
+// namespace
 
 ''')
   
-	generate_variant_implementations( out )
+	generate_variant_factory( out )
 	out.write_lines_to_file( test_path + '/unit_tests_variants.cpp' )    
 
 def generate_ntup_glm( path:str ):
