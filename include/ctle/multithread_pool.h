@@ -8,6 +8,7 @@
 /// @brief A pool of objects which can be shared by tasks in multiple threads.
 
 #include <vector>
+#include <memory>
 #include <unordered_set>
 #include "readers_writer_lock.h"
 
@@ -41,29 +42,70 @@ public:
 	using value_type = _Ty;
 
 	/// @brief Initialize the pool, and hand over a list of preallocated objects.
-	/// @note Not thread safe, this method is assumed to only be called on setup, so is not guarded from multiple threads.
+	/// @details Call during initial setup before workers start, or to reinitialize while worker access is paused.
+	/// Before reinitializing, wait for all use and return of previous loans to finish.
+	/// Prevent new borrow/return calls until this method returns, and serialize initialize/deinitialize calls.
+	/// @note Do not call while workers are still using borrowed objects; replacing the pool destroys those objects.
+	/// The internal lock protects bookkeeping, not the lifetime of pointers already handed to workers.
+	/// @param objectList Preallocated objects whose ownership is transferred; do not modify this vector concurrently.
+	/// @note Allocation failure leaves the caller's objects and the existing pool unchanged.
 	void initialize( std::vector<std::unique_ptr<_Ty>> &objectList )
 	{
-		this->pool = std::move( objectList );
-		this->available.resize( this->pool.size() );
-		for( size_t inx = 0; inx < this->pool.size(); ++inx )
+		// Build the index first so allocation failure leaves the caller and current pool unchanged.
+		std::vector<_Ty *> new_available( objectList.size() );
+		for( size_t inx = 0; inx < objectList.size(); ++inx )
 		{
-			this->available[inx] = this->pool[inx].get();
+			new_available[inx] = objectList[inx].get();
+		}
+
+		// Keep old objects outside the lock scope: their destructors may call back into the pool.
+		std::vector<std::unique_ptr<_Ty>> previous_pool;
+		{
+			readers_writer_lock::write_guard guard( this->accessLock );
+
+			// Transfer ownership without allocating or destroying pooled objects.
+			this->pool.swap( previous_pool ); // Move old objects aside; pool is now empty.
+			this->pool.swap( objectList ); // Take the caller's objects; objectList is now empty.
+
+			// Publish the matching index and clear old loan tracking under the same lock.
+			this->available.swap( new_available );
+			this->borrowed.clear();
 		}
 	}
 
 	/// @brief Clears the pool, and returns all objects back to the caller.
-	/// @note All items are moved back to the caller, even borrowed items which have not yet been returned. 
-	/// @return false if the pool has outstanding borrowed items, true if all items are returned since before.
+	/// @details Call during shutdown, normally after stopping new borrows and waiting for existing loans to return.
+	/// Serialize initialize/deinitialize calls. This method does not wait for borrowers or revoke their pointers.
+	/// @note All objects are transferred and both indexes cleared, including when loans are outstanding.
+	/// Outstanding loans are allowed only if the caller keeps the transferred objects alive until their users finish.
+	/// Late return_item() calls are rejected once loans are detached. Keep this pool alive until those calls finish,
+	/// and do not reinitialize it while old workers may still access it.
+	/// @param objectList Receives all owned objects, replacing its previous contents; do not modify it concurrently.
+	/// Previous contents are destroyed after releasing the lock, so their destructors may query the pool.
+	/// @return false if loans were outstanding when ownership was detached; otherwise true.
+	/// A false result does not cancel the ownership transfer.
 	bool deinitialize(std::vector<std::unique_ptr<_Ty>>& objectList)
 	{
-		readers_writer_lock::write_guard guard( this->accessLock );
+		std::vector<std::unique_ptr<_Ty>> detached_pool;
+		bool all_returned = false;
+		{
+			// Hold the lock across bookkeeping cleanup and detachment so no partial state is visible.
+			readers_writer_lock::write_guard guard( this->accessLock );
 
-		// move all pool objects to the return object list
-		objectList = std::move(this->pool);
+			// Remember outstanding loans before clearing them; they determine the return value.
+			all_returned = this->borrowed.empty();
 
-		// check if there are any borrowed items left
-		return this->borrowed.empty();
+			// Stop lending detached objects and prevent late returns from making them available again.
+			this->available.clear();
+			this->borrowed.clear();
+
+			// Detach every object, even if loans remain. The caller must keep those objects alive.
+			this->pool.swap( detached_pool );
+		}
+
+		// Replacing the caller's old objects may run destructors that call back into the pool.
+		objectList = std::move( detached_pool );
+		return all_returned;
 	}
 
 	/// @brief returns true if there is an item available in the pool

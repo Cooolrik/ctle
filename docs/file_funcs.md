@@ -2,6 +2,19 @@
 
 The `file_funcs.h` file provides various file handling functions and classes. It includes functions to check file existence, access files, read files into a vector, and write files from a pointer or container. Additionally, it defines the `_file_object` class for encapsulating file operations.
 
+### Ownership
+
+`_file_object` owns its open file exclusively and cannot be copied. Move construction
+and move assignment transfer the file, its current position, and its recorded size.
+Move assignment also closes the destination's previous file. The source becomes
+closed, reports a size of zero, and may be closed again or reopened.
+
+Closing or destroying the owner releases the file. Opening a new file first closes
+the previous one; a failed open leaves the object closed. Wrappers containing a
+`_file_object`, such as `file_data_source` and `file_data_destination`, cannot be
+copied either. Callers that previously copied these objects must use references or
+explicit ownership transfer where supported.
+
 ### Example Usage
 
 #### Checking File Existence

@@ -21,8 +21,9 @@
 #define NOMINMAX
 #endif//NOMINMAX
 
-#include <Windows.h>
+#include <windows.h>
 #include <io.h>
+#include <utility>
 
 namespace ctle
 {
@@ -31,11 +32,25 @@ namespace ctle
 class windows_handle_ref
 {
 public:
-	windows_handle_ref( HANDLE _handle ) : handle( _handle ) {}
-	~windows_handle_ref() { if( handle!=INVALID_HANDLE_VALUE ) { ::CloseHandle( handle ); } }
+	windows_handle_ref( HANDLE _handle = INVALID_HANDLE_VALUE ) : handle( _handle ) {}
+	~windows_handle_ref() { this->reset(); }
 	windows_handle_ref( const windows_handle_ref & ) = delete;
 	const windows_handle_ref &operator = ( const windows_handle_ref & ) = delete;
+	windows_handle_ref( windows_handle_ref &&other ) noexcept : handle( other.release() ) {}
+	windows_handle_ref &operator=( windows_handle_ref &&other ) noexcept
+	{
+		if( this != &other )
+			this->reset( other.release() );
+		return *this;
+	}
 	HANDLE get_handle() const noexcept { return this->handle; }
+	HANDLE release() noexcept { return std::exchange( this->handle, INVALID_HANDLE_VALUE ); }
+	void reset( HANDLE value = INVALID_HANDLE_VALUE ) noexcept
+	{
+		if( this->handle != INVALID_HANDLE_VALUE && this->handle != nullptr )
+			::CloseHandle( this->handle );
+		this->handle = value;
+	}
 private:
 	HANDLE handle;
 };
@@ -60,16 +75,31 @@ private:
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <cstring>
+#include <utility>
 
 // RAII wrapper for Linux file handles
 class linux_file_ref
 {
 public:
-	linux_file_ref( int _handle ) : handle( _handle ) {}
-	~linux_file_ref() { if( handle!=-1 ) { ::close( handle ); } }
+	linux_file_ref( int _handle = -1 ) : handle( _handle ) {}
+	~linux_file_ref() { this->reset(); }
 	linux_file_ref( const linux_file_ref & ) = delete;
 	const linux_file_ref &operator = ( const linux_file_ref & ) = delete;
+	linux_file_ref( linux_file_ref &&other ) noexcept : handle( other.release() ) {}
+	linux_file_ref &operator=( linux_file_ref &&other ) noexcept
+	{
+		if( this != &other )
+			this->reset( other.release() );
+		return *this;
+	}
 	int get_handle() const noexcept { return this->handle; }
+	int release() noexcept { return std::exchange( this->handle, -1 ); }
+	void reset( int value = -1 ) noexcept
+	{
+		if( this->handle != -1 )
+			::close( this->handle );
+		this->handle = value;
+	}
 private:
 	int handle;
 };
@@ -86,8 +116,8 @@ private:
 #ifndef _CTLE_HEADERS_WIN_SOCKETS_ADDED
 #define _CTLE_HEADERS_WIN_SOCKETS_ADDED
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 #endif//_CTLE_HEADERS_WIN_SOCKETS_ADDED
 #undef _ADD_CTLE_HEADERS_WIN_SOCKETS

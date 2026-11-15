@@ -153,8 +153,11 @@ def list_base_types( out:formatted_output ):
 
 	out.ln('#ifdef CTLE_IMPLEMENTATION', no_indent=True)		
 
+	out.ln('#include <limits>')
+	out.ln()
 	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
+	out.ln('#include "numeric_parse.inl"')
 
 	out.ln('namespace ctle')
 	with out.blk(no_indent=True):
@@ -171,39 +174,21 @@ def list_base_types( out:formatted_output ):
 		for bs in int_bit_sizes:
 			for sign in ['i','u']:
 				otype = f'{sign}{bs}'
-				ttype = f'{sign}64'
-				result_param = 'result' if bs != 64 else ''
-				out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &{result_param} ) noexcept')
+				out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &result ) noexcept')
 				with out.blk():
-					str = ttype
-					str += ' val = std::sto'
-					str += 'u' if sign == 'u' else '' 
-					str += f'll( std::string( str.start, str.end ) );'
-					out.ln(str)
-					if bs != 64:
-						str = 'if( '
-						if sign == 'i':
-							str += f'val < ({ttype})std::numeric_limits<{otype}>::min() || '
-						str += f'val > ({ttype})std::numeric_limits<{otype}>::max() ) {{ result = false; return {{}}; }}'
-						out.ln(str)
-					out.ln(f'return ({otype})val;')
+					out.ln(f'return detail::number_or_flag( detail::parse_integer<{otype}>(str), result );')
 				out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 				with out.blk():
-					out.ln('bool result = true;')
-					out.ln(f'auto val = from_string<{otype}>( str, result);')
-					if bs != 64:
-						out.ln(f'if( !result ) {{ throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type ({otype})."); }}')
-					out.ln('return val;')
+					out.ln(f'return detail::number_or_throw( detail::parse_integer<{otype}>(str) );')
 
 		for bs in real_bit_sizes:
-			alias = 'd' if bs == 64 else 'f'
 			otype = f'f{bs}'
-			out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool & ) noexcept')
+			out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &result ) noexcept')
 			with out.blk():
-				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
+				out.ln(f'return detail::number_or_flag( detail::parse_real<{otype}>(str), result );')
 			out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 			with out.blk():
-				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
+				out.ln(f'return detail::number_or_throw( detail::parse_real<{otype}>(str) );')
 
 		out.ln()
 	out.ln('//namespace ctle')
@@ -211,6 +196,26 @@ def list_base_types( out:formatted_output ):
 	out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)
 	out.end_header_guard(guard_def)
 
+
+def define_tuple_conversions( out:formatted_output, tuple_type:str ):
+	out.ln('/// @brief Construct from a matching external type supported by an included adapter.')
+	out.ln(f'template<class _Conversion = ntup_conversion<{tuple_type}>>')
+	out.ln(f'{tuple_type}( const typename _Conversion::external_type &other ) noexcept')
+	with out.blk():
+		out.ln('_Conversion::assign( *this, other );')
+	out.ln()
+	out.ln('/// @brief Assign an external value supported by an included adapter.')
+	out.ln(f'template<class _Conversion = ntup_conversion<{tuple_type}>>')
+	out.ln(f'{tuple_type} &operator=( const typename _Conversion::external_type &other ) noexcept')
+	with out.blk():
+		out.ln('_Conversion::assign( *this, other );')
+		out.ln('return *this;')
+	out.ln()
+	out.ln('/// @brief Convert to a matching external type supported by an included adapter.')
+	out.ln(f'template<class _Conversion = ntup_conversion<{tuple_type}>>')
+	out.ln('operator typename _Conversion::external_type() const noexcept')
+	with out.blk():
+		out.ln('return _Conversion::convert( *this );')
 
 def define_n_tuples( out:formatted_output ):
 	global types
@@ -310,34 +315,7 @@ def define_n_tuples( out:formatted_output ):
 			out.ln('_Ty &operator[]( size_t index ) noexcept { return (&this->x)[index]; }')
 			out.ln()
 
-			# glm interops
-			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
-
-			# copy ctor
-			s = f'n_tup( const glm::vec<{d},_Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += '}'
-			out.ln(s)
-
-			# copy operator
-			s = f'n_tup &operator=( const glm::vec<{d},_Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'{vector_names[td]} = other.{vector_names[td]}; '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# convert to glm vector
-			s = f'operator glm::vec<{d},_Ty>() const noexcept {{ return glm::vec<{d},_Ty>( '
-			for td in range(d):
-				s += f'{vector_names[td]} '
-				if td < d-1:
-					s += ', ' 
-			s += '); }'
-			out.ln(s)
-
-			out.ln('#endif//GLM_VERSION', no_indent=True)			
+			define_tuple_conversions(out, 'n_tup')
 
 		out.ln()
 
@@ -435,34 +413,7 @@ def define_n_tuples( out:formatted_output ):
 			out.ln('n_tup<_Ty,_InnerSize> &operator[]( size_t index ) noexcept { return this->values[index]; }')
 			out.ln()
 
-			# glm interop
-			out.ln('#ifdef GLM_VERSION', no_indent=True)			
-			out.comment_ln('conversions to/from glm (to enable, include glm.hpp before including ntup.h)')
-
-			# copy ctor
-			s = f'mn_tup( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
-			s += '}'
-			out.ln(s)
-
-			# copy operator
-			s = f'mn_tup &operator=( const glm::mat<{d}, _InnerSize, _Ty> &other ) noexcept {{ '
-			for td in range(d):
-				s += f'values[{td}] = n_tup<_Ty,_InnerSize>(other[{td}]); '
-			s += 'return *this; }'
-			out.ln(s)
-
-			# convert to glm matrix
-			s = f'operator glm::mat<{d}, _InnerSize, _Ty>() const noexcept {{ return glm::mat<{d},_InnerSize,_Ty>( '
-			for td in range(d):
-				s += f'values[{td}]'
-				if td < d-1:
-					s += ', ' 
-			s += '); }'
-			out.ln(s)
-
-			out.ln('#endif//GLM_VERSION', no_indent=True)			
+			define_tuple_conversions(out, 'mn_tup')
 
 		out.ln()
 
@@ -601,45 +552,18 @@ def generate_random_value_functions( out:formatted_output ):
 			out.ln(str)
 	out.ln()
 
-def generate_variant_tuple_implementation( out:formatted_output, otype, variant_index ) -> str:
-	obj_type = otype['otype']
-	variant_type = 'variant_' + str(variant_index)
-	out.ln( f'class {variant_type} : public variant')
-	with out.blk(add_semicolon=True,no_indent=True):
-		out.ln('public:')
-		with out.tab():
-			out.ln(f'std::vector<ctle::{obj_type}> data;')
-			out.ln()
-			out.ln(f'virtual ~{variant_type}() override {{}}')
-			out.ln(f'virtual size_t type() const override {{ return {variant_index}; }}')
-			out.ln(f'virtual const char *type_name() const override {{ return "{obj_type}"; }}')
-			out.ln(f'virtual size_t type_size() const override {{ return sizeof(ctle::{obj_type}); }}')
-			out.ln('virtual size_t type_count() const override { return this->data.size(); }')
-			out.ln(f'virtual bool is_equal( const variant &other ) const override {{ return _are_equal( *this, other ); }}');
-			out.ln('virtual void clear() override { this->data.clear(); }')
-			out.ln('virtual const void *cdata() const override { return this->data.data(); }')
-			out.ln(f'virtual void random() {{ this->data = random_vector<ctle::{obj_type}>(); }}')
-			out.ln(f'virtual ctle::status read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm ) override {{ return _read_from_stream<ctle::{obj_type}>( strm, this->data ); }}')
-			out.ln(f'virtual ctle::status write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm ) const override {{ return _write_to_stream<ctle::{obj_type}>( strm, this->data ); }}')
-	out.ln()
-	return variant_type
-  
-def generate_variant_implementations( out:formatted_output ):
-	variant_list = []
-	for otype in types:
-		variant_list.append( generate_variant_tuple_implementation( out, otype, len(variant_list) ) )
-	out.ln()
-
+def generate_variant_factory( out:formatted_output ):
 	out.ln('std::unique_ptr<variant> random_variant()')
 	with out.blk():
-		out.ln(f'return new_variant( rand() % {len(variant_list)} );')
+		out.ln(f'return new_variant( rand() % {len(types)} );')
 		
 	out.ln('std::unique_ptr<variant> new_variant( size_t inx )')
 	with out.blk():
 		out.ln('switch( inx )')
 		with out.blk():
-			for inx,varnt in enumerate(variant_list):
-				out.ln(f'case {inx}: return std::make_unique<{varnt}>();')
+			for inx,otype in enumerate(types):
+				obj_type = otype['otype']
+				out.ln(f'case {inx}: return std::make_unique<variant_of<ctle::{obj_type}>>( {inx}, "{obj_type}" );')
 			out.ln('default: return std::unique_ptr<variant>(); // invalid')
 
 def generate_unit_tests_variants( test_path:str ):
@@ -654,38 +578,140 @@ def generate_unit_tests_variants( test_path:str ):
 #include <ctle/data_source.h>
 #include <ctle/write_stream.h>
 #include <ctle/data_destination.h>
-		
-template<class _Ty> ctle::status _read_from_stream( ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm, std::vector<_Ty> &data )
+#include <cstring>
+
+namespace
 {
-	u32 cnt = 0;
-	ctle::status res = strm.read<u32>( &cnt, 1 );
-	if( !res ) 
-  		return res; 
-	data.resize(cnt);
-	return strm.read<_Ty>( data.data(), data.size() );
+	// The factory supplies stable metadata; all value types share the same behavior.
+	template<class _Ty>
+	class variant_of : public variant
+	{
+	public:
+		variant_of( size_t index, const char *name ) : type_index(index), type_name_text(name) {}
+
+		size_t type() const override { return this->type_index; }
+		const char *type_name() const override { return this->type_name_text; }
+		size_t type_size() const override { return sizeof(_Ty); }
+		size_t type_count() const override { return this->data.size(); }
+		void clear() override { this->data.clear(); }
+		const void *cdata() const override { return this->data.data(); }
+		void random() override { this->data = random_vector<_Ty>(); }
+
+		bool is_equal( const variant &other ) const override
+		{
+			if( this->type() != other.type() || this->data.size() != other.type_count() )
+				return false;
+			return this->data.empty()
+				|| memcmp( this->data.data(), other.cdata(), sizeof(_Ty) * this->data.size() ) == 0;
+		}
+
+		ctle::status read_from_stream(
+			ctle::read_stream<ctle::file_data_source,ctle::hasher_xxh128> &strm ) override
+		{
+			u32 count = 0;
+			const ctle::status result = strm.read<u32>( &count, 1 );
+			if( !result )
+				return result;
+			this->data.resize( count );
+			if( this->data.empty() )
+				return ctle::status::ok;
+			return strm.read<_Ty>( this->data.data(), this->data.size() );
+		}
+
+		ctle::status write_to_stream(
+			ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm ) const override
+		{
+			const ctle::status result = strm.write<u32>( (u32)this->data.size() );
+			if( !result )
+				return result;
+			if( this->data.empty() )
+				return ctle::status::ok;
+			return strm.write<_Ty>( this->data.data(), this->data.size() );
+		}
+
+	private:
+		const size_t type_index;
+		const char *const type_name_text;
+		std::vector<_Ty> data;
+	};
 }
-		
-template<class _Ty> ctle::status _write_to_stream( ctle::write_stream<ctle::file_data_destination,ctle::hasher_xxh128> &strm, const std::vector<_Ty> &data )
-{
-	ctle::status res = strm.write<u32>( (u32)data.size() );
-	if( !res ) 
-  		return res; 
-	return strm.write<_Ty>( data.data(), data.size() );
-}
-		
-bool _are_equal( const variant &a , const variant &b )
-{
-	if( a.type() != b.type() )
-		return false;
-	if( a.type_count() != b.type_count() )
-		return false;
-	return memcmp( a.cdata(), b.cdata(), a.type_size() * a.type_count() ) == 0;
-}
+// namespace
 
 ''')
   
-	generate_variant_implementations( out )
+	generate_variant_factory( out )
 	out.write_lines_to_file( test_path + '/unit_tests_variants.cpp' )    
+
+def generate_ntup_glm( path:str ):
+	out = formatted_output()
+	out.generate_license_header()
+	guard_def = out.begin_header_guard('ntup_glm.h', 'ctle')
+	out.ln('''
+/// @file ntup_glm.h
+/// @brief Optional, header-defined conversions between ctle tuples and GLM types.
+
+#include <glm/glm.hpp>
+
+#include "ntup.h"
+
+namespace ctle
+{''')
+	out.indentation = 1
+	for dimensions in range(1, 5):
+		out.ln('/// @brief Copy named vector members without treating them as an array.')
+		out.ln('template<class _Ty>')
+		out.ln(f'struct ntup_conversion<n_tup<_Ty,{dimensions}>>')
+		with out.blk(add_semicolon=True):
+			out.ln(f'using tuple_type = n_tup<_Ty,{dimensions}>;')
+			out.ln(f'using external_type = glm::vec<{dimensions},_Ty>;')
+			out.ln()
+			out.ln('/// @brief Copy the matching GLM vector into the tuple.')
+			out.ln('static void assign( tuple_type &dest, const external_type &src ) noexcept')
+			with out.blk():
+				for member in vector_names[:dimensions]:
+					out.ln(f'dest.{member} = src.{member};')
+			out.ln()
+			out.ln('/// @brief Return the matching GLM vector.')
+			out.ln('static external_type convert( const tuple_type &src ) noexcept')
+			with out.blk():
+				values = ', '.join(f'src.{member}' for member in vector_names[:dimensions])
+				out.ln(f'return external_type( {values} );')
+		out.ln()
+	out.indentation = 0
+	out.ln('''	/// @brief Converts GLM matrices using the tuple's outer elements as columns.
+	template<class _Ty, size_t _InnerSize, size_t _OuterSize>
+	struct ntup_conversion<mn_tup<_Ty, _InnerSize, _OuterSize>>
+	{
+		using tuple_type = mn_tup<_Ty, _InnerSize, _OuterSize>;
+		using column_conversion = ntup_conversion<n_tup<_Ty, _InnerSize>>;
+		using external_type = glm::mat<static_cast<glm::length_t>(_OuterSize),
+			static_cast<glm::length_t>(_InnerSize), _Ty>;
+
+		/// @brief Copy each actual array element through its vector adapter.
+		static void assign( tuple_type &dest, const external_type &src ) noexcept
+		{
+			for( size_t column = 0; column < _OuterSize; ++column )
+			{
+				column_conversion::assign( dest.values[column], src[static_cast<glm::length_t>(column)] );
+			}
+		}
+
+		/// @brief Return the matching default-qualified GLM matrix without transposing.
+		static external_type convert( const tuple_type &src ) noexcept
+		{
+			external_type result;
+			for( size_t column = 0; column < _OuterSize; ++column )
+			{
+				result[static_cast<glm::length_t>(column)] = column_conversion::convert( src.values[column] );
+			}
+			return result;
+		}
+	};
+}
+// namespace ctle
+''')
+	out.end_header_guard(guard_def)
+	out.write_lines_to_file(path)
 
 def generate_types( src_path:str, test_path:str ):
 
@@ -709,8 +735,8 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln('/// @file ntup.h')
 	out.ln('/// @brief n-tuple (N - vectors) and mn-tuple (M x N - matrices) templates. 1-4 dimensions.')
 	out.ln('/// @details The ntup.h templates is a lightweight way to define vectors and matrices of 1-4 dimensions, with ')
-	out.ln('/// comparison operators and conversions to / from glm types. To enable glm conversions, include ')
-	out.ln('/// glm.hpp before including ntup.h in any file where the conversion is to be supported.')
+	out.ln('/// comparison operators and optional conversions to / from GLM types. Include glm.hpp first,')
+	out.ln('/// or explicitly include ntup_glm.h before using GLM conversions.')
 	out.ln()
 	out.comment_ln('Only one of CTLE_MN_TUP_COLUMNMAJOR and CTLE_MN_TUP_ROWMAJOR can be defined.')
 	out.ln('#if defined(CTLE_MN_TUP_COLUMNMAJOR) && defined(CTLE_MN_TUP_ROWMAJOR)')
@@ -727,11 +753,20 @@ def generate_types( src_path:str, test_path:str ):
 	out.ln()
 	out.ln('namespace ctle')
 	with out.blk( no_indent = True ):
+		out.ln('/// @brief Specialized by adapters to define supported tuple and external-type conversions.')
+		out.ln('/// @details Member templates defer adapter lookup until a conversion is used.')
+		out.ln('template<class _TupleTy> struct ntup_conversion;')
+		out.ln()
 		define_n_tuples(out)
 	out.ln('//namespace ctle')
 	out.ln()
+	out.ln('#ifdef GLM_VERSION')
+	out.ln('#include "ntup_glm.h"')
+	out.ln('#endif//GLM_VERSION')
+	out.ln()
 	out.end_header_guard(guard_def)
 	out.write_lines_to_file( src_path + '/ntup.h' )
+	generate_ntup_glm( src_path + '/ntup_glm.h' )
  
  	# generate random values
 	# out = formatted_output()

@@ -2,10 +2,21 @@
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 #include <ctle/status.h>
+#include <type_traits>
 
 #include "unit_tests.h"
 
 using namespace ctle;
+
+namespace
+{
+	enum class unrelated_status { error };
+}
+
+static_assert( std::is_trivially_copyable<status>::value, "status must remain trivially copyable" );
+static_assert( !std::is_constructible<status, int>::value, "integers must not convert to status" );
+static_assert( !std::is_assignable<status &, int>::value, "integers must not assign to status" );
+static_assert( !std::is_convertible<unrelated_status, status>::value, "unregistered enums must not convert" );
 
 TEST( status, basic_test )
 {

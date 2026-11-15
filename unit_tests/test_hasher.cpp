@@ -8,6 +8,7 @@
 
 #include <map>
 #include <unordered_map>
+#include <type_traits>
 
 using namespace ctle;
 
@@ -51,6 +52,48 @@ TEST( hasher, test_expected_hash_values )
 	test_expected_hash<hasher_noop<128>>(hashing_testdata,sizeof(hashing_testdata),"00000000000000000000000000000000");
 	test_expected_hash<hasher_noop<256>>(hashing_testdata,sizeof(hashing_testdata),"0000000000000000000000000000000000000000000000000000000000000000");
 	test_expected_hash<hasher_noop<512>>(hashing_testdata,sizeof(hashing_testdata),"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+}
+
+template<class _Ty>
+void test_moved_hash( const char *expected_hash_string )
+{
+	ASSERT_FALSE( std::is_copy_constructible<_Ty>::value );
+	ASSERT_FALSE( std::is_copy_assignable<_Ty>::value );
+	ASSERT_TRUE( std::is_nothrow_move_constructible<_Ty>::value );
+	ASSERT_TRUE( std::is_nothrow_move_assignable<_Ty>::value );
+
+	const size_t chunk_size = 8;
+	_Ty source;
+	ASSERT_EQ( source.update( hashing_testdata, chunk_size ), status::ok );
+
+	_Ty moved( std::move( source ) );
+	EXPECT_EQ( source.update( hashing_testdata, chunk_size ), status::not_initialized );
+	EXPECT_EQ( source.finish().status(), status::not_initialized );
+	ASSERT_EQ( moved.update( hashing_testdata + chunk_size, chunk_size ), status::ok );
+
+	_Ty destination;
+	ASSERT_EQ( destination.update( hashing_testdata, sizeof(hashing_testdata) ), status::ok );
+	destination = std::move( moved );
+	EXPECT_EQ( moved.update( hashing_testdata, chunk_size ), status::not_initialized );
+	EXPECT_EQ( moved.finish().status(), status::not_initialized );
+	ASSERT_EQ( destination.update( hashing_testdata + 2 * chunk_size,
+		sizeof(hashing_testdata) - 2 * chunk_size ), status::ok );
+
+	const auto result = destination.finish();
+	ASSERT_EQ( result.status(), status::ok );
+	EXPECT_EQ( result.value(), from_string<typename _Ty::hash_type>( expected_hash_string ) );
+
+	source = _Ty();
+	ASSERT_EQ( source.update( hashing_testdata, sizeof(hashing_testdata) ), status::ok );
+	EXPECT_EQ( source.finish().value(), result.value() );
+}
+
+TEST( hasher, moving_transfers_partial_hash_without_sharing_ownership )
+{
+	test_moved_hash<hasher_sha256>("0A2591AAF3340AD92FAECBC5908E74D04B51EE5D2DEEE78F089F1607570E2E91");
+	test_moved_hash<hasher_xxh64>("625A8B25C833FD36");
+	test_moved_hash<hasher_xxh128>("828D13C68D1BAC3AA5AA63C0925F9C1E");
+	test_moved_hash<hasher_2x_xxh128_dcb7be9cd0fcf505>("828D13C68D1BAC3AA5AA63C0925F9C1EEA0301A0F7F3CE81062211DDAAD62522");
 }
 
 template<class _Ty>

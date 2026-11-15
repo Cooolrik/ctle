@@ -162,6 +162,9 @@ static void test_hash_of_size()
 	hash q4 = ctle::from_string<hash>("invalid",success);
 	EXPECT_FALSE( success );
 
+	ctle::from_string<hash>( q1string, success );
+	EXPECT_FALSE( success );
+
 	success = true;
 	hash q5 = ctle::from_hex_string<hash>(q1string.c_str(),success);
 	EXPECT_TRUE( success );

@@ -5,6 +5,8 @@
 #include "unit_tests.h"
 
 #include <ctle/ctle.h>
+#include <ctle/status_stl.h>
+#include <ctle/status_vulkan.h>
 
 // just some value
 const i64 global_random_seed = 12876123876;
@@ -17,7 +19,8 @@ inline void setup_random_seed()
 
 // add headers that you want to pre-compile here
 inline u8 u8_rand() { return (u8)(rand() & 0xff); } 
-inline u16 u16_rand() { return u16(rand() << 4) ^ u16(rand()); } 
+// Shift unsigned before narrowing to avoid signed overflow.
+inline u16 u16_rand() { return u16(u32(rand()) << 4) ^ u16(rand()); }
 inline u32 u32_rand() { return u32(u16_rand()) << 16 | u32(u16_rand()); } 
 inline u64 u64_rand() { return u64(u32_rand()) << 32 | u64(u32_rand()); } 
 
@@ -242,6 +245,12 @@ template<> mn_tup<f64,4,4> random_value<mn_tup<f64,4,4>>() { return mn_tup<f64,4
 
 int main(int argc, char** argv) 
 {
+	if( argc >= 2 && strcmp( argv[1], "--process-arguments" ) == 0 )
+		return run_process_argument_child( argc, argv );
+
+	if( argc == 3 && strcmp( argv[1], "--process-test" ) == 0 )
+		return run_process_test_child( argv[2] );
+
 	// Pingback mechanism for test harnesses
 	if( argc >= 2 )
 	{

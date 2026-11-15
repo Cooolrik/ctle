@@ -2,6 +2,7 @@
 # Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 from ctlepy import formatted_output
+from pathlib import Path
 
 class error_value:
 	def __init__(self,name,value,mapped_value,description):
@@ -168,6 +169,7 @@ def generate_status( path:str ):
 
 	out.lines.append( '''
 #include <iosfwd>
+#include <utility>
 
 namespace ctle
 {
@@ -183,6 +185,9 @@ namespace ctle
 		out.ln()
 
 	out.lines.append( '''	};
+
+	/// @brief Specialized by adapters to enable conversion from external status types.
+	template<class _Ty> struct status_conversion;
 
 	// status maps a number of error values into one error enum
 	// and has ctors which converts these error values into a status_code value
@@ -212,19 +217,25 @@ namespace ctle
 		bool operator == ( const status &_other ) const noexcept { return this->svalue == _other.svalue; }
 		bool operator != ( const status &_other ) const noexcept { return this->svalue != _other.svalue; }
 
-#ifdef _SYSTEM_ERROR_
-		// convert from STL std::errc
-		static status_code to_status_code( std::errc _value ) noexcept;
-		status( const std::errc &_value ) noexcept : svalue( to_status_code(_value) ) {}
-		const status &operator = ( const std::errc &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
-#endif//_SYSTEM_ERROR_
+		/// @brief Convert an external status using its adapter.
+		template<class _Ty>
+		static auto to_status_code( _Ty _value ) noexcept
+			-> decltype( status_conversion<_Ty>::convert( _value ) )
+		{
+			return status_conversion<_Ty>::convert( _value );
+		}
 
-#ifdef VULKAN_CORE_H_
-		// convert from Vulkan error: VkResult
-		static status_code to_status_code( VkResult _value ) noexcept;
-		status( const VkResult &_value ) noexcept : svalue( to_status_code(_value) ) {}
-		const status &operator = ( const VkResult &_value ) noexcept { this->svalue = to_status_code(_value); return *this; }
-#endif//VULKAN_CORE_H_
+		/// @brief Construct from an external status supported by an included adapter.
+		template<class _Ty, class = decltype( to_status_code( std::declval<_Ty>() ) )>
+		status( const _Ty &_value ) noexcept : svalue( to_status_code( _value ) ) {}
+
+		/// @brief Assign an external status supported by an included adapter.
+		template<class _Ty, class = decltype( to_status_code( std::declval<_Ty>() ) )>
+		const status &operator = ( const _Ty &_value ) noexcept
+		{
+			this->svalue = to_status_code( _value );
+			return *this;
+		}
 
 		// use as a bool
 		operator bool() const { return svalue >= status_code::ok; }
@@ -250,6 +261,7 @@ std::ostream &operator<<( std::ostream &os, const ctle::status &_status );
 
 #ifdef CTLE_IMPLEMENTATION
 
+#include <ostream>
 #include <string>
 #include <unordered_map>
 
@@ -305,49 +317,6 @@ namespace ctle
 		}
 		return it->second.description;
 	}
-		
-#ifdef _SYSTEM_ERROR_
-	static const std::unordered_map<std::errc, status_code> errc_to_status_code_mapping =
-	{''' )
-			
-	for value in stl_errors.values:
-		if( value.mapped_value != None ):
-			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
-			
-	out.lines.append( '''	};
-
-	status_code status::to_status_code( std::errc value ) noexcept
-	{
-		auto it = errc_to_status_code_mapping.find( value );
-		if( it == errc_to_status_code_mapping.end() )
-			return status_code::stl_unrecognized_error_code;
-		return it->second;
-	}
-
-#endif//_SYSTEM_ERROR_
-
-#ifdef VULKAN_CORE_H_
-	static const std::unordered_map<VkResult, status_code> vkresult_to_status_code_mapping =
-	{''' )
-			
-	for value in vulkan_errors.values:
-		if( value.mapped_value != None ):
-			out.ln( f'{{ {value.mapped_value} , status_code::{value.name} }} , ')
-					
-	out.lines.append('''	};
-	
-	status_code status::to_status_code( VkResult value ) noexcept
-	{
-		if( value >= VK_SUCCESS )	
-			return status_code::ok;
-		auto it = vkresult_to_status_code_mapping.find( value );
-		if( it == vkresult_to_status_code_mapping.end() )
-			return status_code::vulkan_unrecognized_error_code;
-		return it->second;
-	}
-
-#endif//VULKAN_CORE_H_
-
 }
 // namespace ctle
 
@@ -360,9 +329,76 @@ std::ostream &operator<<( std::ostream &os, const ctle::status &_status )
 				  
 #endif//CTLE_IMPLEMENTATION  
 
+#if defined(_SYSTEM_ERROR_) || defined(_GLIBCXX_SYSTEM_ERROR) || defined(_LIBCPP_SYSTEM_ERROR)
+#include "status_stl.h"
+#endif
+
+#ifdef VULKAN_CORE_H_
+#include "status_vulkan.h"
+#endif
+
 ''')	
 	out.indentation = 0
 	
 	out.end_header_guard( guard_def )
 
 	out.write_lines_to_file( path )
+
+	directory = Path(path).parent
+	generate_status_adapter(
+		directory / 'status_stl.h', 'system_error', 'std::errc',
+		stl_errors, 'value == std::errc{}'
+	)
+	generate_status_adapter(
+		directory / 'status_vulkan.h', 'vulkan/vulkan_core.h', 'VkResult',
+		vulkan_errors, 'value >= VK_SUCCESS'
+	)
+
+def generate_status_adapter( path:Path, source_header:str, source_type:str, errors:error_type, success_condition:str ):
+	out = formatted_output()
+	out.generate_license_header()
+	guard_def = out.begin_header_guard(path.name, 'ctle')
+	out.ln()
+	out.ln(f'#include <{source_header}>')
+	out.ln('#include <utility>')
+	out.ln()
+	out.ln('#include "status.h"')
+	out.ln()
+	out.ln('namespace ctle')
+	with out.blk():
+		out.ln(f'/// @brief Converts {source_type} values to ctle status codes.')
+		out.ln('template<>')
+		out.ln(f'struct status_conversion<{source_type}>')
+		with out.blk(add_semicolon=True):
+			out.ln('/// @brief Maps success and recognized errors, or returns the unrecognized error code.')
+			out.ln(f'static status_code convert( {source_type} value ) noexcept;')
+		out.ln()
+		out.ln('#ifdef CTLE_IMPLEMENTATION', no_indent=True)
+		out.ln()
+		out.ln(f'status_code status_conversion<{source_type}>::convert( {source_type} value ) noexcept')
+		with out.blk():
+			out.ln(f'if( {success_condition} )')
+			with out.blk():
+				out.ln('return status_code::ok;')
+			out.ln()
+			fallback, *mappings = errors.values
+			out.comment_ln('Keep mapping order for native error values that share the same code.')
+			out.ln(f'static constexpr std::pair<{source_type}, status_code> mappings[] =')
+			with out.blk(add_semicolon=True):
+				for value in mappings:
+					out.ln(f'{{ {value.mapped_value}, status_code::{value.name} }},')
+			out.ln()
+			out.ln('for( const auto &mapping : mappings )')
+			with out.blk():
+				out.ln('if( mapping.first == value )')
+				with out.blk():
+					out.ln('return mapping.second;')
+			out.ln()
+			out.ln(f'return status_code::{fallback.name};')
+		out.ln()
+		out.ln('#endif//CTLE_IMPLEMENTATION', no_indent=True)
+		out.ln()
+	out.ln('// namespace ctle')
+	out.ln()
+	out.end_header_guard(guard_def)
+	out.write_lines_to_file(str(path))

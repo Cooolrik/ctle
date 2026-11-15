@@ -116,11 +116,19 @@ if(CTLE_BUILD_TESTS)
 		GIT_TAG		   bbb27a5efb85b92a0486cf361a8635715a53f6ba # (2023 Jul 21)
 	)
 
+	# Vulkan headers are only used to test the optional status conversion adapter.
+	FetchContent_Declare(
+		vulkan_headers
+		GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers.git
+		GIT_TAG        b379292b2ab6df5771ba9870d53cf8b2c9295daf # 1.3.290
+	)
+
 	FetchContent_MakeAvailable( 
 		googletest 
 		glm
 		picosha2
 		xxhash
+		vulkan_headers
 		)
 		
 	# level 4 warnings
@@ -156,22 +164,16 @@ if(CTLE_BUILD_TESTS)
 		PUBLIC ${glm_SOURCE_DIR}
 		PUBLIC ${picosha2_SOURCE_DIR}
 		PUBLIC ${xxhash_SOURCE_DIR}
+		PUBLIC ${vulkan_headers_SOURCE_DIR}/include
 		)
 
-	if(MSVC)
-		target_link_libraries( 	
-			unit_tests 
-			
-			gtest_main 
-			ws2_32
-			)
-	else()
-		target_link_libraries( 	
-			unit_tests 
-			
-			gtest_main 
-			)
+	target_link_libraries(unit_tests PRIVATE gtest_main)
+	if(WIN32)
+		target_link_libraries(unit_tests PRIVATE ws2_32)
 	endif()
+
+	include("${CMAKE_CURRENT_LIST_DIR}/cmake/header_checks.cmake")
+	include("${CMAKE_CURRENT_LIST_DIR}/cmake/cxx14_compile_check.cmake")
 
 # testing
 endif(CTLE_BUILD_TESTS)

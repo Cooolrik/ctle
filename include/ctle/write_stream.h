@@ -4,6 +4,8 @@
 #ifndef _CTLE_WRITE_STREAM_H_
 #define _CTLE_WRITE_STREAM_H_
 
+#include <cstring>
+#include <type_traits>
 #include <vector>
 
 #include "fwd.h"
@@ -14,8 +16,7 @@
 
 namespace ctle
 {
-// base class for a write_stream, a read-only input stream which is designed for 
-// streaming data sequentially, using a memory buffer, while also calculating a hash on the input stream.
+/// @brief Buffered sequential output with optional hashing of bytes accepted by the destination.
 template<class _DataDestTy, class _HashTy /* = hasher_noop<64> */>
 class write_stream
 {
@@ -23,13 +24,14 @@ class write_stream
 
 public:
 	write_stream( _DataDestTy &_data_dest );
+	/// @brief Best-effort end without throwing. Call end() explicitly to observe failures.
 	~write_stream();
 
 	using data_destination_type = _DataDestTy;
 	using hasher_type = _HashTy;
 	using hash_type = typename _HashTy::hash_type;
 
-	// Get the current position/number of bytes written to the stream (not the actual bytes written to the destination, which may be less because of cacheing)
+	/// @brief Number of accepted bytes, including buffered bytes and confirmed partial direct writes.
 	u64 get_position() const { return this->current_position; };
 	
 	// Writes a single value to the stream. (Note that for writing multiple values, the write method which takes a pointer and a count is much more efficient.)
@@ -42,18 +44,30 @@ public:
 	// Caveat! Make sure the type is correctly packed, since any alignment byte will also be written to the stream
 	template<class _DataTy> status write(const _DataTy* src, size_t count = 1);
 
-	// Write raw bytes to the stream 
+	/// @brief Write bytes, buffering small inputs and sending large inputs directly.
+	/// @note After a retryable partial write, use the position change to locate the unaccepted input suffix.
 	status write_bytes( const u8* src, size_t count);
 
-	// Ends the stream, flushes the destination, and calculates the final hash. 
+	/// @brief Drain the buffer and finalize the hash once. Repeated successful calls are no-ops.
+	/// @note Zero-progress writes can be retried; destination errors and hash failures are terminal.
 	status end();
 
-	// Get the hash digest from the stream. Note that the hash value will be 
-	// calculated when the stream has ended. any call before then will return an empty hash digest
-	status_return<status,hash_type> get_digest() const { return hash_digest; };
+	/// @brief Get the cached final digest, not_ready while open, or the terminal failure status.
+	status_return<status,hash_type> get_digest() const
+	{
+		if( this->stream_state == state::failed )
+			return this->failure_status;
+		if( this->stream_state != state::ended )
+			return status::not_ready;
+		return this->hash_digest;
+	}
 
 private:
+	enum class state { open, ended, failed };
+	state stream_state = state::open;
+	status failure_status = status_code::ok;
 	u64 current_position = 0;
+	size_t buffer_offset = 0;
 	size_t buffer_position = 0;
 	std::vector<u8> buffer;
 
@@ -62,8 +76,14 @@ private:
 	hash_type hash_digest;
 
 	void write_to_buffer( const u8 *src, size_t count );
-	status write_to_destination( const u8 *src, size_t count );
+	status write_to_destination( const u8 *src, size_t count, size_t &written_count );
 	status flush_buffer();
+	status fail( status error )
+	{
+		this->stream_state = state::failed;
+		this->failure_status = error;
+		return error;
+	}
 };
 
 }
@@ -84,7 +104,14 @@ inline write_stream<_DataDestTy,_HashTy>::write_stream( _DataDestTy &_data_dest 
 template<class _DataDestTy, class _HashTy>
 inline write_stream<_DataDestTy,_HashTy>::~write_stream()
 {
-	this->end();
+	try
+	{
+		this->end();
+	}
+	catch( ... )
+	{
+		// Destruction cannot report errors; callers must explicitly check end().
+	}
 }
 
 template<class _DataDestTy, class _HashTy>
@@ -107,37 +134,55 @@ inline status write_stream<_DataDestTy,_HashTy>::write( const _DataTy* src, size
 template<class _DataDestTy, class _HashTy>
 inline status write_stream<_DataDestTy,_HashTy>::write_bytes(const u8* src, size_t count)
 {
-	// if the write fits in the buffer, use the buffer
-	if( (buffer_size - this->buffer_position) > count )
+	if( this->stream_state == state::failed )
+		return this->failure_status;
+	if( this->stream_state != state::open )
+		return status::not_ready;
+
+	if( count >= buffer_size - this->buffer_position )
+		ctStatusCall( this->flush_buffer() );
+
+	if( count < buffer_size )
 	{
 		this->write_to_buffer( src, count );
+		this->current_position += count;
+		return status::ok;
 	}
-	else
+
+	size_t written_count = 0;
+	status result;
+	try
 	{
-		// the data does not fit in the buffer. flush the current buffer to the destination
-		ctStatusCall(this->flush_buffer());
-
-		// write to buffer if it now fits, else skip the buffer and write to the destination directly
-		if( (buffer_size - this->buffer_position) > count )
-		{
-			this->write_to_buffer( src, count );
-		}
-		else
-		{
-			ctStatusCall(this->write_to_destination(src,count));
-		}
+		result = this->write_to_destination( src, count, written_count );
 	}
-
-	this->current_position += count;
-	return status::ok;
+	catch( ... )
+	{
+		this->current_position += written_count;
+		throw;
+	}
+	this->current_position += written_count;
+	return result;
 }
 
 template<class _DataDestTy, class _HashTy>
-inline status write_stream<_DataDestTy,_HashTy>::end()
+inline status write_stream<_DataDestTy,_HashTy>::end() try
 {
+	if( this->stream_state == state::failed )
+		return this->failure_status;
+	if( this->stream_state == state::ended )
+		return status::ok;
 	ctStatusCall(this->flush_buffer());
-	ctStatusReturnCall( this->hash_digest , this->hasher.finish() );
+	const auto result = this->hasher.finish();
+	if( !result )
+		return this->fail( result.status() );
+	this->hash_digest = result.value();
+	this->stream_state = state::ended;
 	return status::ok;
+}
+catch( ... )
+{
+	this->fail( status::undefined_error );
+	throw;
 }
 
 template<class _DataDestTy, class _HashTy>
@@ -149,20 +194,39 @@ inline void write_stream<_DataDestTy,_HashTy>::write_to_buffer( const u8 *src, s
 }
 
 template<class _DataDestTy, class _HashTy>
-inline status write_stream<_DataDestTy,_HashTy>::write_to_destination( const u8 *src, size_t count )
+inline status write_stream<_DataDestTy,_HashTy>::write_to_destination(
+	const u8 *src, size_t count, size_t &written_count ) try
 {
-	ctStatusCall(this->hasher.update(src, count));
-	size_t written_count = 0;
-	ctStatusReturnCall(written_count, this->data_dest.write(src, count));
-	ctValidate( written_count == count, status::cant_write ) << "The write operation failed. " << written_count << " of " << count << " bytes were written." << ctValidateEnd;
+	while( written_count < count )
+	{
+		const auto result = this->data_dest.write( src + written_count, count - written_count );
+		if( !result )
+			return this->fail( result.status() );
+		if( result.value() > count - written_count )
+			return this->fail( status::corrupted );
+		const size_t accepted = (size_t)result.value();
+		if( accepted == 0 )
+			return status::cant_write;
+		const u8 *accepted_data = src + written_count;
+		written_count += accepted;
+		const status hash_result = this->hasher.update( accepted_data, accepted );
+		if( !hash_result )
+			return this->fail( hash_result );
+	}
 	return status::ok;
+}
+catch( ... )
+{
+	this->fail( status::undefined_error );
+	throw;
 }
 
 template<class _DataDestTy, class _HashTy>
 inline status write_stream<_DataDestTy,_HashTy>::flush_buffer()
 {
 	if( this->buffer_position > 0 )
-		ctStatusCall( this->write_to_destination( this->buffer.data(), this->buffer_position ) );
+		ctStatusCall( this->write_to_destination( this->buffer.data(), this->buffer_position, this->buffer_offset ) );
+	this->buffer_offset = 0;
 	this->buffer_position = 0;
 
 	return status::ok;

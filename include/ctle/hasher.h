@@ -16,6 +16,10 @@
 /// @note The hashers are implemented using external libraries. All declarations exist, but to implement a specific library, include 
 /// the library header before including hasher.h in the implementation source file. (see the example implementation in the 
 /// documentation for ctle.h for more information).
+/// @note Resource-owning hashers are move-only. After a move, update() and finish() on the source return
+/// status::not_initialized until a new hasher is move-assigned to it. hasher_noop remains copyable.
+
+#include <memory>
 
 #include "digest.h"
 #include "status.h"
@@ -23,6 +27,11 @@
 
 namespace ctle
 {
+namespace detail
+{
+	struct sha256_state;
+	struct xxh3_state;
+}
 
 /// @brief Implementation of a no-operation hasher class template, for use when hashing is not needed. Always returns a zero hash on finish.
 /// @tparam _Size the size of the hash in bits, must be 64, 128, 256 or 512.
@@ -55,6 +64,12 @@ class hasher_sha256
 public:
 	hasher_sha256();
 	~hasher_sha256();
+	hasher_sha256( const hasher_sha256 & ) = delete;
+	hasher_sha256 &operator=( const hasher_sha256 & ) = delete;
+	/// @brief Transfer hash state, leaving the source uninitialized.
+	hasher_sha256( hasher_sha256 &&other ) noexcept;
+	/// @brief Replace hash state by transferring ownership from the source.
+	hasher_sha256 &operator=( hasher_sha256 &&other ) noexcept;
 	using hash_type = digest<256>;
 
 	/// @copydoc hasher_noop::update
@@ -64,7 +79,7 @@ public:
 	status_return<status, digest<256>> finish();
 
 private:
-	void *context = nullptr;
+	std::unique_ptr<detail::sha256_state> context;
 };
 
 /// @brief Implementation of XXH3 XXH64 hasher, using xxHash.
@@ -74,6 +89,12 @@ class hasher_xxh64
 public:
 	hasher_xxh64();
 	~hasher_xxh64();
+	hasher_xxh64( const hasher_xxh64 & ) = delete;
+	hasher_xxh64 &operator=( const hasher_xxh64 & ) = delete;
+	/// @brief Transfer hash state, leaving the source uninitialized.
+	hasher_xxh64( hasher_xxh64 &&other ) noexcept;
+	/// @brief Replace hash state by transferring ownership from the source.
+	hasher_xxh64 &operator=( hasher_xxh64 &&other ) noexcept;
 	using hash_type = digest<64>;
 
 	/// @copydoc hasher_noop::update
@@ -83,7 +104,7 @@ public:
 	status_return<status, digest<64>> finish();
 
 private:
-	void *context = nullptr;
+	std::unique_ptr<detail::xxh3_state> context;
 };
 
 /// @brief Implementation of XXH3 XXH128 hasher, using xxHash.
@@ -93,6 +114,12 @@ class hasher_xxh128
 public:
 	hasher_xxh128();
 	~hasher_xxh128();
+	hasher_xxh128( const hasher_xxh128 & ) = delete;
+	hasher_xxh128 &operator=( const hasher_xxh128 & ) = delete;
+	/// @brief Transfer hash state, leaving the source uninitialized.
+	hasher_xxh128( hasher_xxh128 &&other ) noexcept;
+	/// @brief Replace hash state by transferring ownership from the source.
+	hasher_xxh128 &operator=( hasher_xxh128 &&other ) noexcept;
 	using hash_type = digest<128>;
 
 	/// @copydoc hasher_noop::update
@@ -102,7 +129,7 @@ public:
 	status_return<status, digest<128>> finish();
 
 private:
-	void *context = nullptr;
+	std::unique_ptr<detail::xxh3_state> context;
 };
 
 /// @brief Implementation of XXH3 XXH128 hasher, using xxHash, concatenated into one 256 bit hash. Note that the second part of the hash is generated from an added salt of dcb7be9cd0fcf505, (big endian).
@@ -112,6 +139,12 @@ class hasher_2x_xxh128_dcb7be9cd0fcf505
 public:
 	hasher_2x_xxh128_dcb7be9cd0fcf505();
 	~hasher_2x_xxh128_dcb7be9cd0fcf505();
+	hasher_2x_xxh128_dcb7be9cd0fcf505( const hasher_2x_xxh128_dcb7be9cd0fcf505 & ) = delete;
+	hasher_2x_xxh128_dcb7be9cd0fcf505 &operator=( const hasher_2x_xxh128_dcb7be9cd0fcf505 & ) = delete;
+	/// @brief Transfer hash state, leaving the source uninitialized.
+	hasher_2x_xxh128_dcb7be9cd0fcf505( hasher_2x_xxh128_dcb7be9cd0fcf505 &&other ) noexcept;
+	/// @brief Replace hash state by transferring ownership from the source.
+	hasher_2x_xxh128_dcb7be9cd0fcf505 &operator=( hasher_2x_xxh128_dcb7be9cd0fcf505 &&other ) noexcept;
 	using hash_type = digest<256>;
 
 	/// @copydoc hasher_noop::update
@@ -121,7 +154,7 @@ public:
 	status_return<status, digest<256>> finish();
 
 private:
-	void *context = nullptr;
+	std::unique_ptr<detail::xxh3_state> context;
 };
 
 }
@@ -130,6 +163,9 @@ private:
 
 #ifdef CTLE_IMPLEMENTATION
 
+#include <cstring>
+#include <new>
+
 namespace ctle
 {
 
@@ -137,27 +173,35 @@ namespace ctle
 
 #ifdef PICOSHA2_H
 
-hasher_sha256::hasher_sha256()
+struct detail::sha256_state
 {
-	this->context = (void*) new picosha2::hash256_one_by_one();
+	picosha2::hash256_one_by_one value;
+};
+
+hasher_sha256::hasher_sha256()
+	: context( std::make_unique<detail::sha256_state>() )
+{
 }
 
-hasher_sha256::~hasher_sha256()
-{
-	delete ((picosha2::hash256_one_by_one*)this->context);
-}
+hasher_sha256::~hasher_sha256() = default;
+hasher_sha256::hasher_sha256( hasher_sha256 &&other ) noexcept = default;
+hasher_sha256 &hasher_sha256::operator=( hasher_sha256 &&other ) noexcept = default;
 
 status hasher_sha256::update(const uint8_t* data, size_t size)
 {
-	((picosha2::hash256_one_by_one*)this->context)->process( data, data + size );
+	if( !this->context )
+		return status::not_initialized;
+	this->context->value.process( data, data + size );
 	return status::ok;
 }
 
 status_return<status,digest<256>> hasher_sha256::finish()
 {
+	if( !this->context )
+		return status::not_initialized;
 	digest<256> ret;
-	((picosha2::hash256_one_by_one*)this->context)->finish();
-	((picosha2::hash256_one_by_one*)this->context)->get_hash_bytes( ret.data, ret.data+32 );
+	this->context->value.finish();
+	this->context->value.get_hash_bytes( ret.data, ret.data+32 );
 	return ret;
 }
 
@@ -167,26 +211,48 @@ status_return<status,digest<256>> hasher_sha256::finish()
 
 #ifdef XXHASH_H_5627135585666179
 
-hasher_xxh64::hasher_xxh64()
+struct detail::xxh3_state
 {
-	this->context = (void*)XXH3_createState();
-	XXH3_64bits_reset((XXH3_state_t*)this->context);
+	struct deleter
+	{
+		void operator()( XXH3_state_t *value ) const noexcept
+		{
+			XXH3_freeState( value );
+		}
+	};
+
+	std::unique_ptr<XXH3_state_t, deleter> value{ XXH3_createState() };
+
+	xxh3_state()
+	{
+		if( !this->value )
+			throw std::bad_alloc();
+	}
+};
+
+hasher_xxh64::hasher_xxh64()
+	: context( std::make_unique<detail::xxh3_state>() )
+{
+	XXH3_64bits_reset( this->context->value.get() );
 }
 
-hasher_xxh64::~hasher_xxh64()
-{
-	XXH3_freeState((XXH3_state_t*)this->context);
-}
+hasher_xxh64::~hasher_xxh64() = default;
+hasher_xxh64::hasher_xxh64( hasher_xxh64 &&other ) noexcept = default;
+hasher_xxh64 &hasher_xxh64::operator=( hasher_xxh64 &&other ) noexcept = default;
 
 status hasher_xxh64::update(const uint8_t* data, size_t size)
 {
-	XXH3_64bits_update((XXH3_state_t*)this->context, data, size);
+	if( !this->context )
+		return status::not_initialized;
+	XXH3_64bits_update( this->context->value.get(), data, size );
 	return status::ok;
 }
 
 status_return<status,digest<64>> hasher_xxh64::finish()
 {
-	XXH64_hash_t result = XXH3_64bits_digest((XXH3_state_t*)this->context);
+	if( !this->context )
+		return status::not_initialized;
+	XXH64_hash_t result = XXH3_64bits_digest( this->context->value.get() );
 
 	XXH64_canonical_t canonical;
 	XXH64_canonicalFromHash( &canonical, result );
@@ -199,25 +265,28 @@ status_return<status,digest<64>> hasher_xxh64::finish()
 ///////////////////
 
 hasher_xxh128::hasher_xxh128()
+	: context( std::make_unique<detail::xxh3_state>() )
 {
-	this->context = (void*)XXH3_createState();
-	XXH3_128bits_reset((XXH3_state_t*)this->context);
+	XXH3_128bits_reset( this->context->value.get() );
 }
 
-hasher_xxh128::~hasher_xxh128()
-{
-	XXH3_freeState((XXH3_state_t*)this->context);
-}
+hasher_xxh128::~hasher_xxh128() = default;
+hasher_xxh128::hasher_xxh128( hasher_xxh128 &&other ) noexcept = default;
+hasher_xxh128 &hasher_xxh128::operator=( hasher_xxh128 &&other ) noexcept = default;
 
 status hasher_xxh128::update(const uint8_t* data, size_t size)
 {
-	XXH3_128bits_update((XXH3_state_t*)this->context, data, size);
+	if( !this->context )
+		return status::not_initialized;
+	XXH3_128bits_update( this->context->value.get(), data, size );
 	return status::ok;
 }
 
 status_return<status,digest<128>> hasher_xxh128::finish()
 {
-	XXH128_hash_t result = XXH3_128bits_digest((XXH3_state_t*)this->context);
+	if( !this->context )
+		return status::not_initialized;
+	XXH128_hash_t result = XXH3_128bits_digest( this->context->value.get() );
 
 	XXH128_canonical_t canonical;
 	XXH128_canonicalFromHash( &canonical, result );
@@ -231,38 +300,43 @@ status_return<status,digest<128>> hasher_xxh128::finish()
 ///////////////////
 
 hasher_2x_xxh128_dcb7be9cd0fcf505::hasher_2x_xxh128_dcb7be9cd0fcf505()
+	: context( std::make_unique<detail::xxh3_state>() )
 {
-	this->context = (void*)XXH3_createState();
-	XXH3_128bits_reset((XXH3_state_t*)this->context);
+	XXH3_128bits_reset( this->context->value.get() );
 }
 
-hasher_2x_xxh128_dcb7be9cd0fcf505::~hasher_2x_xxh128_dcb7be9cd0fcf505()
-{
-	XXH3_freeState((XXH3_state_t*)this->context);
-}
+hasher_2x_xxh128_dcb7be9cd0fcf505::~hasher_2x_xxh128_dcb7be9cd0fcf505() = default;
+hasher_2x_xxh128_dcb7be9cd0fcf505::hasher_2x_xxh128_dcb7be9cd0fcf505(
+	hasher_2x_xxh128_dcb7be9cd0fcf505 &&other ) noexcept = default;
+hasher_2x_xxh128_dcb7be9cd0fcf505 &hasher_2x_xxh128_dcb7be9cd0fcf505::operator=(
+	hasher_2x_xxh128_dcb7be9cd0fcf505 &&other ) noexcept = default;
 
 status hasher_2x_xxh128_dcb7be9cd0fcf505::update(const uint8_t* data, size_t size)
 {
-	XXH3_128bits_update((XXH3_state_t*)this->context, data, size);
+	if( !this->context )
+		return status::not_initialized;
+	XXH3_128bits_update( this->context->value.get(), data, size );
 	return status::ok;
 }
 
 status_return<status,digest<256>> hasher_2x_xxh128_dcb7be9cd0fcf505::finish()
 {
+	if( !this->context )
+		return status::not_initialized;
 	digest<256> ret;
 
 	// get the first hash result, and copy to return
-	XXH128_hash_t result = XXH3_128bits_digest((XXH3_state_t*)this->context);
+	XXH128_hash_t result = XXH3_128bits_digest( this->context->value.get() );
 	XXH128_canonical_t canonical;
 	XXH128_canonicalFromHash( &canonical, result );
 	memcpy( &ret.data[0], canonical.digest, sizeof(canonical.digest) );
 
 	// append the randomly generated salt 'dcb7be9cd0fcf505' to the state
 	const static u8 salt[8] = {0xdc,0xb7,0xbe,0x9c,0xd0,0xfc,0xf5,0x05};
-	XXH3_128bits_update((XXH3_state_t*)this->context, salt, sizeof(salt) );
+	XXH3_128bits_update( this->context->value.get(), salt, sizeof(salt) );
 
 	// get the second hash result, and copy to second part of return
-	result = XXH3_128bits_digest((XXH3_state_t*)this->context);
+	result = XXH3_128bits_digest( this->context->value.get() );
 	XXH128_canonicalFromHash( &canonical, result );
 	memcpy( &ret.data[16], canonical.digest, sizeof(canonical.digest) );
 

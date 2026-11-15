@@ -92,6 +92,26 @@ TEST( types, basic_test )
 	EXPECT_EQ(gvec, gvec2);
 }
 
+TEST( types, malformed_components_report_failure )
+{
+	using vector_type = n_tup<int32_t, 3>;
+	using matrix_type = mn_tup<double, 2, 2>;
+	for( const std::string text : { "1 invalid 3", "1 18446744073709551616 3" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<vector_type>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<vector_type>( text ), std::out_of_range );
+	}
+	for( const std::string text : { "1 2 invalid 4", "1 2 1e1000 4" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<matrix_type>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<matrix_type>( text ), std::out_of_range );
+	}
+}
+
 template<class _Ty, size_t _InnerSize, size_t _OuterSize, bool _Exact> void TestTupleOfTuples()
 {
 	mn_tup<_Ty, _InnerSize, _OuterSize> tupletuple = {};
@@ -159,6 +179,29 @@ TEST( types, tuple_of_tuple_test )
 	TestMNTuple<double, false>();
 }
 
+template<class _Ty, size_t _Size> void TestNTupleConvert()
+{
+	using glm_vec = glm::vec<_Size, _Ty>;
+	using ctle_tup = n_tup<_Ty, _Size>;
+	static_assert( std::is_trivially_copyable<ctle_tup>::value, "tuple must remain trivially copyable" );
+
+	glm_vec original;
+	for( size_t index = 0; index < _Size; ++index )
+	{
+		original[(glm::length_t)index] = (_Ty)(index + 1);
+	}
+
+	ctle_tup tuple = original;
+	glm_vec converted = tuple;
+	EXPECT_EQ( converted, original );
+
+	ctle_tup assigned;
+	assigned = original;
+	converted = assigned;
+	EXPECT_EQ( assigned, tuple );
+	EXPECT_EQ( converted, original );
+}
+
 // test converting to M x N glm matrix and back
 // (_M is the number of rows, _N is the number of columns)
 template<class _Ty, size_t _M, size_t _N> void TestMNTupleConvert()
@@ -216,19 +259,30 @@ template<class _Ty, size_t _M, size_t _N> void TestMNTupleConvert()
 	// make sure the values match
 	EXPECT_TRUE( tuptup == tuptup2 );
 	EXPECT_TRUE( memcmp( tuptup.data(), tuptup2.data(), sizeof(_Ty) * _M * _N ) == 0 );
+
+	ctle_tup assigned;
+	assigned = glmmtx;
+	glm_mtx glm_assigned;
+	glm_assigned = assigned;
+	EXPECT_EQ( assigned, tuptup );
+	EXPECT_EQ( glm_assigned, glmmtx );
 }
 
 template<class _Ty> void TestTupleConvert()
 {
-	TestMNTupleConvert<i8, 2, 2>();
-	TestMNTupleConvert<i8, 2, 3>();
-	TestMNTupleConvert<i8, 2, 4>();
-	TestMNTupleConvert<i8, 3, 2>();
-	TestMNTupleConvert<i8, 3, 3>();
-	TestMNTupleConvert<i8, 3, 4>();
-	TestMNTupleConvert<i8, 4, 2>();
-	TestMNTupleConvert<i8, 4, 3>();
-	TestMNTupleConvert<i8, 4, 4>();		
+	TestNTupleConvert<_Ty, 1>();
+	TestNTupleConvert<_Ty, 2>();
+	TestNTupleConvert<_Ty, 3>();
+	TestNTupleConvert<_Ty, 4>();
+	TestMNTupleConvert<_Ty, 2, 2>();
+	TestMNTupleConvert<_Ty, 2, 3>();
+	TestMNTupleConvert<_Ty, 2, 4>();
+	TestMNTupleConvert<_Ty, 3, 2>();
+	TestMNTupleConvert<_Ty, 3, 3>();
+	TestMNTupleConvert<_Ty, 3, 4>();
+	TestMNTupleConvert<_Ty, 4, 2>();
+	TestMNTupleConvert<_Ty, 4, 3>();
+	TestMNTupleConvert<_Ty, 4, 4>();
 }
 
 TEST(types, tuple_glm_convert_test)
