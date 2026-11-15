@@ -70,7 +70,9 @@ TEST( multithread_pool, deinitialize_detaches_all_lending_state )
 		int *second = objects.back().get();
 		pool.initialize( objects );
 		if( borrow )
+		{
 			ASSERT_EQ( pool.borrow_item(), second );
+		}
 
 		EXPECT_EQ( pool.deinitialize( objects ), !borrow );
 		ASSERT_EQ( objects.size(), 2 );

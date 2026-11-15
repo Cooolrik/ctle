@@ -341,6 +341,7 @@ std::ostream &operator<<( std::ostream &os, const ctle::status &_status );
 
 #ifdef CTLE_IMPLEMENTATION
 
+#include <ostream>
 #include <string>
 #include <unordered_map>
 
