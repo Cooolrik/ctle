@@ -26,21 +26,31 @@ foreach(header IN LISTS CTLE_FILE_SET)
 	endif()
 endforeach()
 
-add_library(ctle_header_checks OBJECT ${CTLE_CORE_HEADER_CHECK_SOURCES})
-add_library(ctle_adapter_header_checks OBJECT ${CTLE_ADAPTER_HEADER_CHECK_SOURCES})
+add_custom_target(ctle_header_checks)
+add_custom_target(ctle_adapter_header_checks)
 
-foreach(target IN ITEMS ctle_header_checks ctle_adapter_header_checks)
+# Visual Studio archives OBJECT targets. Keep each translation unit in its own target:
+# combining implementation checks would put duplicate CTLE_IMPLEMENTATION symbols in one archive.
+foreach(source IN LISTS CTLE_CORE_HEADER_CHECK_SOURCES CTLE_ADAPTER_HEADER_CHECK_SOURCES)
+	get_filename_component(source_stem "${source}" NAME_WE)
+	set(target "ctle_header_check_${source_stem}")
+	add_library(${target} OBJECT "${source}")
 	target_link_libraries(${target} PRIVATE ${PROJECT_NAME})
 	# Match the existing test framework's minimum; these checks do not establish C++14 support.
 	target_compile_features(${target} PRIVATE cxx_std_17)
 	set_target_properties(${target} PROPERTIES UNITY_BUILD OFF DISABLE_PRECOMPILE_HEADERS ON)
-endforeach()
 
-# Only the explicit adapters receive SDK include paths; core headers must not require them.
-target_include_directories(ctle_adapter_header_checks PRIVATE
-	"${glm_SOURCE_DIR}"
-	"${vulkan_headers_SOURCE_DIR}/include"
-	)
+	if(source IN_LIST CTLE_ADAPTER_HEADER_CHECK_SOURCES)
+		# Only the explicit adapters receive SDK include paths; core headers must not require them.
+		target_include_directories(${target} PRIVATE
+			"${glm_SOURCE_DIR}"
+			"${vulkan_headers_SOURCE_DIR}/include"
+			)
+		add_dependencies(ctle_adapter_header_checks ${target})
+	else()
+		add_dependencies(ctle_header_checks ${target})
+	endif()
+endforeach()
 
 add_dependencies(ctle_header_checks ctle_adapter_header_checks)
 add_dependencies(unit_tests ctle_header_checks)
