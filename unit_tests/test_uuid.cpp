@@ -12,6 +12,24 @@ constexpr const ctle::uuid uuid_zero = ctle::uuid::zero();
 constexpr const ctle::uuid uuid_inf = ctle::uuid::inf();
 constexpr const ctle::uuid uuid_sup = ctle::uuid::sup();
 
+TEST( uuid, invalid_hex_in_any_group_preserves_failure )
+{
+	const std::string valid = "00112233-4455-6677-8899-aabbccddeeff";
+	for( const size_t position : { 0, 9, 14, 19, 24 } )
+	{
+		std::string invalid = valid;
+		invalid[position] = 'z';
+		bool success = true;
+		from_string<uuid>( invalid, success );
+		EXPECT_FALSE( success ) << "Invalid group at " << position;
+		EXPECT_THROW( from_string<uuid>( invalid ), std::runtime_error );
+	}
+
+	bool success = false;
+	from_string<uuid>( valid, success );
+	EXPECT_FALSE( success );
+}
+
 TEST( uuid, basic_test )
 {
 	const uuid ido0 = from_hex_string<uuid>( "00000000-0000-0000-0000-000000000000" ); // lowest

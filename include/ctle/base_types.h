@@ -11,6 +11,7 @@
 
 #include "fwd.h"
 #include "string_funcs.h"
+#include "numeric_parse.inl"
 namespace ctle
 {
 // Print base types to strings.
@@ -28,119 +29,83 @@ template<> std::string to_string( const f64 &val ) { return std::to_string(val);
 // Parse base types from strings.
 template<> i8 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
-	if( val < (i64)std::numeric_limits<i8>::min() || val > (i64)std::numeric_limits<i8>::max() ) { result = false; return {}; }
-	return (i8)val;
+	return detail::number_or_flag( detail::parse_integer<i8>(str), result );
 }
 template<> i8 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<i8>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (i8)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<i8>(str) );
 }
 template<> u8 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
-	if( val > (u64)std::numeric_limits<u8>::max() ) { result = false; return {}; }
-	return (u8)val;
+	return detail::number_or_flag( detail::parse_integer<u8>(str), result );
 }
 template<> u8 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<u8>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (u8)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<u8>(str) );
 }
 template<> i16 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
-	if( val < (i64)std::numeric_limits<i16>::min() || val > (i64)std::numeric_limits<i16>::max() ) { result = false; return {}; }
-	return (i16)val;
+	return detail::number_or_flag( detail::parse_integer<i16>(str), result );
 }
 template<> i16 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<i16>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (i16)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<i16>(str) );
 }
 template<> u16 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
-	if( val > (u64)std::numeric_limits<u16>::max() ) { result = false; return {}; }
-	return (u16)val;
+	return detail::number_or_flag( detail::parse_integer<u16>(str), result );
 }
 template<> u16 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<u16>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (u16)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<u16>(str) );
 }
 template<> i32 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
-	if( val < (i64)std::numeric_limits<i32>::min() || val > (i64)std::numeric_limits<i32>::max() ) { result = false; return {}; }
-	return (i32)val;
+	return detail::number_or_flag( detail::parse_integer<i32>(str), result );
 }
 template<> i32 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<i32>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (i32)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<i32>(str) );
 }
 template<> u32 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
-	if( val > (u64)std::numeric_limits<u32>::max() ) { result = false; return {}; }
-	return (u32)val;
+	return detail::number_or_flag( detail::parse_integer<u32>(str), result );
 }
 template<> u32 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<u32>( str, result);
-	if( !result ) { throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type (u32)."); }
-	return val;
+	return detail::number_or_throw( detail::parse_integer<u32>(str) );
 }
-template<> i64 from_string( const string_span<char> &str, bool & ) noexcept
+template<> i64 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	i64 val = std::stoll( std::string( str.start, str.end ) );
-	return (i64)val;
+	return detail::number_or_flag( detail::parse_integer<i64>(str), result );
 }
 template<> i64 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<i64>( str, result);
-	return val;
+	return detail::number_or_throw( detail::parse_integer<i64>(str) );
 }
-template<> u64 from_string( const string_span<char> &str, bool & ) noexcept
+template<> u64 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	u64 val = std::stoull( std::string( str.start, str.end ) );
-	return (u64)val;
+	return detail::number_or_flag( detail::parse_integer<u64>(str), result );
 }
 template<> u64 from_string( const string_span<char> &str )
 {
-	bool result = true;
-	auto val = from_string<u64>( str, result);
-	return val;
+	return detail::number_or_throw( detail::parse_integer<u64>(str) );
 }
-template<> f32 from_string( const string_span<char> &str, bool & ) noexcept
+template<> f32 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	return std::stof( std::string( str.start, str.end ) );
+	return detail::number_or_flag( detail::parse_real<f32>(str), result );
 }
 template<> f32 from_string( const string_span<char> &str )
 {
-	return std::stof( std::string( str.start, str.end ) );
+	return detail::number_or_throw( detail::parse_real<f32>(str) );
 }
-template<> f64 from_string( const string_span<char> &str, bool & ) noexcept
+template<> f64 from_string( const string_span<char> &str, bool &result ) noexcept
 {
-	return std::stod( std::string( str.start, str.end ) );
+	return detail::number_or_flag( detail::parse_real<f64>(str), result );
 }
 template<> f64 from_string( const string_span<char> &str )
 {
-	return std::stod( std::string( str.start, str.end ) );
+	return detail::number_or_throw( detail::parse_real<f64>(str) );
 }
 
 }

@@ -157,6 +157,7 @@ def list_base_types( out:formatted_output ):
 	out.ln()
 	out.ln('#include "fwd.h"')
 	out.ln('#include "string_funcs.h"')
+	out.ln('#include "numeric_parse.inl"')
 
 	out.ln('namespace ctle')
 	with out.blk(no_indent=True):
@@ -173,39 +174,21 @@ def list_base_types( out:formatted_output ):
 		for bs in int_bit_sizes:
 			for sign in ['i','u']:
 				otype = f'{sign}{bs}'
-				ttype = f'{sign}64'
-				result_param = 'result' if bs != 64 else ''
-				out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &{result_param} ) noexcept')
+				out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &result ) noexcept')
 				with out.blk():
-					str = ttype
-					str += ' val = std::sto'
-					str += 'u' if sign == 'u' else '' 
-					str += f'll( std::string( str.start, str.end ) );'
-					out.ln(str)
-					if bs != 64:
-						str = 'if( '
-						if sign == 'i':
-							str += f'val < ({ttype})std::numeric_limits<{otype}>::min() || '
-						str += f'val > ({ttype})std::numeric_limits<{otype}>::max() ) {{ result = false; return {{}}; }}'
-						out.ln(str)
-					out.ln(f'return ({otype})val;')
+					out.ln(f'return detail::number_or_flag( detail::parse_integer<{otype}>(str), result );')
 				out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 				with out.blk():
-					out.ln('bool result = true;')
-					out.ln(f'auto val = from_string<{otype}>( str, result);')
-					if bs != 64:
-						out.ln(f'if( !result ) {{ throw std::out_of_range("In ctle::from_string(): the value is out of range for the destination type ({otype})."); }}')
-					out.ln('return val;')
+					out.ln(f'return detail::number_or_throw( detail::parse_integer<{otype}>(str) );')
 
 		for bs in real_bit_sizes:
-			alias = 'd' if bs == 64 else 'f'
 			otype = f'f{bs}'
-			out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool & ) noexcept')
+			out.ln(f'template<> {otype} from_string( const string_span<char> &str, bool &result ) noexcept')
 			with out.blk():
-				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
+				out.ln(f'return detail::number_or_flag( detail::parse_real<{otype}>(str), result );')
 			out.ln(f'template<> {otype} from_string( const string_span<char> &str )')
 			with out.blk():
-				out.ln(f'return std::sto{alias}( std::string( str.start, str.end ) );')
+				out.ln(f'return detail::number_or_throw( detail::parse_real<{otype}>(str) );')
 
 		out.ln()
 	out.ln('//namespace ctle')

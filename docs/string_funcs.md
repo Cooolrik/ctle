@@ -8,8 +8,31 @@ The `string_funcs.h` header provides utilities for string manipulation, parsing,
 
 - `template<class _Ty> _Ty from_string(...)`: Convert string to value
 - `template<class _Ty> _Ty from_hex_string(...)`: Convert string hex value to value
+- `template<class _Ty> _Ty from_hex_string_unchecked(const char*, bool&)`: Decode a fixed-width unsigned integer from a buffer whose size is already known
 - `template<class _Ty> std::string to_string(const _Ty &val)`: Convert value to string
 - `template<class _Ty> std::string to_hex_string(const _Ty &val)`: Convert value to string hex value
+
+Integer hex parsing has two entry points over the same decoder:
+
+- `from_hex_string<T>(span, success)` checks for exactly `2 * sizeof(T)` characters.
+- `from_hex_string_unchecked<T>(text, success)` skips that length check. The caller
+  must guarantee at least `2 * sizeof(T)` readable characters.
+
+Both support `uint8_t`, `uint16_t`, `uint32_t`, and `uint64_t`, accept upper- and
+lowercase hex digits, and check characters while decoding. Neither requires a
+null terminator when using spans or the unchecked pointer entry point.
+The unchecked version does not skip character validation and must never receive
+a null, dangling, or undersized input pointer.
+
+Initialize `success` to `true`; these functions only clear it on failure. The
+throwing integer hex overload uses `std::invalid_argument` for invalid digits or
+incorrect width. Short forms, extra characters, whitespace, and `0x` prefixes are
+not accepted by the checked fixed-width integer parser.
+
+UUID and digest parsing validate their own layouts once and then use the shared
+byte decoder without redundant per-group bounds checks. Their existing exception
+types are unchanged. Numeric decimal parsing retains prefix semantics; see
+[base_types.md](base_types.md) for syntax and error handling.
 
 #### String Scanning
 
@@ -104,7 +127,7 @@ int main()
     
     // Convert hex back to value
     bool success = true;
-    uint32_t parsed = ctle::from_hex_string<uint32_t>(hex.c_str(), success);
+    uint32_t parsed = ctle::from_hex_string<uint32_t>(hex, success);
     
     if (success)
     {

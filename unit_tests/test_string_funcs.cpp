@@ -5,6 +5,9 @@
 
 #include "unit_tests.h"
 
+#include <cmath>
+#include <limits>
+
 using namespace ctle;
 
 template<class _Ty> string_span<_Ty> get_span( const std::basic_string<_Ty> &str )
@@ -200,6 +203,169 @@ TEST(string_funcs, from_to_string_tests)
 
 	test_to_from_string<uint64_t>(23456545218359, "23456545218359");
 	test_to_from_hex_string<uint64_t>(0x83645918243, "0000083645918243");		
+}
+
+template<class T> void test_hex_bounds()
+{
+	const std::string text( 2 * sizeof(T) + 1, 'f' );
+	for( size_t length : { size_t(0), 2 * sizeof(T) - 1, 2 * sizeof(T) + 1 } )
+	{
+		bool success = true;
+		const string_span<char> span( text.data(), text.data() + length );
+		from_hex_string<T>( span, success );
+		ASSERT_FALSE( success );
+		EXPECT_THROW( from_hex_string<T>( span ), std::invalid_argument );
+	}
+
+	bool success = true;
+	from_hex_string<T>( string_span<char>{}, success );
+	EXPECT_FALSE( success );
+}
+
+TEST( string_funcs, hex_rejects_incorrect_span_lengths )
+{
+	test_hex_bounds<uint8_t>();
+	test_hex_bounds<uint16_t>();
+	test_hex_bounds<uint32_t>();
+	test_hex_bounds<uint64_t>();
+}
+
+TEST( string_funcs, unchecked_hex_decodes_fixed_width_without_a_terminator )
+{
+	const char text[] = { '1', '2', 'a', 'B', '3', '4', 'c', 'D',
+		'5', '6', 'e', 'F', '7', '8', '9', '0' };
+	bool success = true;
+	EXPECT_EQ( from_hex_string_unchecked<uint8_t>( text, success ), 0x12 );
+	EXPECT_EQ( from_hex_string_unchecked<uint16_t>( text, success ), 0x12ab );
+	EXPECT_EQ( from_hex_string_unchecked<uint32_t>( text, success ), 0x12ab34cdU );
+	EXPECT_EQ( from_hex_string_unchecked<uint64_t>( text, success ), 0x12ab34cd56ef7890ULL );
+	EXPECT_TRUE( success );
+
+	const char invalid[] = { 'x', '0' };
+	from_hex_string_unchecked<uint8_t>( invalid, success );
+	EXPECT_FALSE( success );
+}
+
+template<class T> void test_integer_parse_errors()
+{
+	for( const std::string text : { "", "invalid", "+", "-", "+-1" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<T>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<T>( text ), std::invalid_argument );
+	}
+	const std::string overflow = "18446744073709551616";
+	bool success = true;
+	EXPECT_NO_THROW( from_string<T>( overflow, success ) );
+	EXPECT_FALSE( success );
+	EXPECT_THROW( from_string<T>( overflow ), std::out_of_range );
+
+	success = true;
+	EXPECT_NO_THROW( from_string<T>( string_span<char>{}, success ) );
+	EXPECT_FALSE( success );
+}
+
+TEST( string_funcs, integer_errors_are_reported_without_termination )
+{
+	test_integer_parse_errors<int8_t>();
+	test_integer_parse_errors<uint8_t>();
+	test_integer_parse_errors<int16_t>();
+	test_integer_parse_errors<uint16_t>();
+	test_integer_parse_errors<int32_t>();
+	test_integer_parse_errors<uint32_t>();
+	test_integer_parse_errors<int64_t>();
+	test_integer_parse_errors<uint64_t>();
+}
+
+template<class T> void test_real_parse_errors()
+{
+	for( const std::string text : { "", "invalid", "+" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<T>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<T>( text ), std::invalid_argument );
+	}
+	for( const std::string text : { "1e1000", "1e-1000" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<T>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<T>( text ), std::out_of_range );
+	}
+}
+
+TEST( string_funcs, real_errors_are_reported_without_termination )
+{
+	test_real_parse_errors<float>();
+	test_real_parse_errors<double>();
+}
+
+template<class T> void test_integer_limits()
+{
+	const T minimum = std::numeric_limits<T>::min();
+	const T maximum = std::numeric_limits<T>::max();
+	bool success = true;
+	EXPECT_EQ( from_string<T>( std::to_string( minimum ), success ), minimum );
+	EXPECT_EQ( from_string<T>( std::to_string( maximum ), success ), maximum );
+	EXPECT_TRUE( success );
+
+	const std::string overflow = sizeof(T) == 8 ? "18446744073709551616"
+		: std::to_string( uint64_t( maximum ) + 1 );
+	from_string<T>( overflow, success );
+	EXPECT_FALSE( success );
+	EXPECT_THROW( from_string<T>( overflow ), std::out_of_range );
+}
+
+TEST( string_funcs, integer_limits_and_existing_prefix_syntax )
+{
+	test_integer_limits<int8_t>();
+	test_integer_limits<uint8_t>();
+	test_integer_limits<int16_t>();
+	test_integer_limits<uint16_t>();
+	test_integer_limits<int32_t>();
+	test_integer_limits<uint32_t>();
+	test_integer_limits<int64_t>();
+	test_integer_limits<uint64_t>();
+
+	EXPECT_EQ( from_string<int32_t>( " \t\n+42suffix" ), 42 );
+	EXPECT_EQ( from_string<int32_t>( " -42suffix" ), -42 );
+	EXPECT_EQ( from_string<int32_t>( "0x123" ), 0 );
+	EXPECT_EQ( from_string<uint64_t>( "-1" ), std::numeric_limits<uint64_t>::max() );
+	EXPECT_EQ( from_string<uint8_t>( "-18446744073709551615" ), 1 );
+	EXPECT_THROW( from_string<uint8_t>( "-1" ), std::out_of_range );
+	EXPECT_THROW( from_string<int64_t>( "9223372036854775808" ), std::out_of_range );
+	EXPECT_THROW( from_string<int64_t>( "-9223372036854775809" ), std::out_of_range );
+	EXPECT_THROW( from_string<int8_t>( "-129" ), std::out_of_range );
+
+	const char digits[] = { '4', '2', '9' };
+	EXPECT_EQ( from_string<int>( digits, digits + 2 ), 42 );
+	bool success = false;
+	EXPECT_EQ( from_string<int>( "42", success ), 42 );
+	EXPECT_FALSE( success );
+	success = false;
+	EXPECT_EQ( from_hex_string<uint8_t>( "2a", success ), 42 );
+	EXPECT_FALSE( success );
+	EXPECT_EQ( from_hex_string_unchecked<uint8_t>( digits, success ), 0x42 );
+	EXPECT_FALSE( success );
+}
+
+TEST( string_funcs, real_syntax_and_bounds_are_preserved )
+{
+	EXPECT_DOUBLE_EQ( from_string<double>( " \t+12.5suffix" ), 12.5 );
+	EXPECT_FLOAT_EQ( from_string<float>( "0x1.8p+1" ), 3.0f );
+	EXPECT_TRUE( std::isinf( from_string<double>( "inf" ) ) );
+	EXPECT_TRUE( std::isnan( from_string<float>( "nan" ) ) );
+	EXPECT_TRUE( std::signbit( from_string<double>( "-0" ) ) );
+	EXPECT_THROW( from_string<float>( "1e39" ), std::out_of_range );
+
+	const char digits[] = { '1', '.', '2', '5', '9' };
+	EXPECT_DOUBLE_EQ( from_string<double>( digits, digits + 4 ), 1.25 );
+	EXPECT_DOUBLE_EQ( from_string<double>( std::string( 128, ' ' ) + "1.25" ), 1.25 );
+	bool success = false;
+	EXPECT_DOUBLE_EQ( from_string<double>( "1.25", success ), 1.25 );
+	EXPECT_FALSE( success );
 }
 
 TEST( string_funcs, wstring_conversion_tests )

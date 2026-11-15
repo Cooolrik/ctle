@@ -158,7 +158,7 @@ int main()
     std::cout << "Vector as string: " << str << std::endl;
     
     // Parse from string
-    bool success = false;
+    bool success = true;
     auto parsed_vec = ctle::from_string<ctle::n_tup<int, 3>>("1 2 3", success);
     
     if (success)

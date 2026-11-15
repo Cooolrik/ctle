@@ -38,9 +38,16 @@ template<class _Ty> struct string_span
 /// @param str The string span to parse.
 /// @param success Set to false if the conversion fails. Set to true before calling the function.
 /// @note The success parameter must be set to true before calling the functions!
+/// @note Integer hex input must contain exactly 2 * sizeof(_Ty) characters; decimal input accepts a numeric prefix.
 /// @return The parsed value.
 template<class _Ty> _Ty from_string(const string_span<char>& str, bool& success) noexcept;
 template<class _Ty> _Ty from_hex_string(const string_span<char>& str, bool& success) noexcept; ///< @copydoc template<class _Ty> _Ty from_string(const string_span<char>& str, bool& success) noexcept
+
+/// @brief Decode a fixed-width unsigned integer without checking the input length.
+/// @param text Must point to at least 2 * sizeof(_Ty) readable characters; no terminator is required.
+/// @param success Invalid hex characters clear this flag. Successful decoding never sets it to true.
+/// @note Supports uint8_t, uint16_t, uint32_t and uint64_t. Buffer validity is the caller's responsibility.
+template<class _Ty> _Ty from_hex_string_unchecked(const char* text, bool& success) noexcept;
 
 /// @brief Parse a type from a string. 
 /// @details For regular numbers, from_string assumes base - 10 and from_hex_string assumes base - 16 value. from_hex_string is only defined for unsigned integer values.
@@ -224,6 +231,8 @@ template<class _Ty> bool lex_t(std::vector<string_span<_Ty>>* dest, const _Ty* s
 template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const string_span<_Ty>& span, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, span.start, span.end, separators, quotes, whitespaces); }
 template<class _Ty> inline bool lex_t(std::vector<string_span<_Ty>>* dest, const std::basic_string<_Ty>& str, const _Ty* separators = nullptr, const _Ty* quotes = nullptr, const _Ty* whitespaces = nullptr) noexcept { return lex_t(dest, str.data(), str.data() + str.size(), separators, quotes, whitespaces); }
 
+/// @brief Internal decoder: requires count writable bytes and 2 * count readable characters.
+/// @note Checks digits, not bounds, and only clears success on failure.
 void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, bool& success) noexcept;
 std::string _bytes_to_hex_string(const void* bytes, size_t count);
 
@@ -271,7 +280,6 @@ inline uint8_t decode_hex_char(char c, bool& success) noexcept
 // note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
 void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, bool& success) noexcept
 {
-	success = true;
 	uint8_t* p = (uint8_t*)bytes;
 	for (size_t i = 0; i < count; ++i)
 	{
@@ -285,18 +293,32 @@ void _bytes_from_hex_string(void* bytes, size_t count, const char* hex_string, b
 // versions which does not throw instead clears the success flag if the conversion fails. 
 // note: the count is equal to the number of bytes, and the hex string is assumed to be twice the count (since two hex values is combined into one byte)
 // Note: The flag must be set before calling the function
-template <class T> T from_hex_string(const string_span<char>& str, bool& success) noexcept
+template <class T> T from_hex_string_unchecked(const char* text, bool& success) noexcept
 {
 	uint8_t bytes[sizeof(T)];
-	_bytes_from_hex_string(bytes, sizeof(T), str.start, success);
+	_bytes_from_hex_string(bytes, sizeof(T), text, success);
 	return from_bigendian<T>(bytes);
 }
-template <> uint8_t from_hex_string<uint8_t>(const string_span<char>& str, bool& success) noexcept
+template <> uint8_t from_hex_string_unchecked<uint8_t>(const char* text, bool& success) noexcept
 {
 	uint8_t value;
-	_bytes_from_hex_string(&value, sizeof(uint8_t), str.start, success);
+	_bytes_from_hex_string(&value, sizeof(uint8_t), text, success);
 	return value;
 }
+template uint16_t from_hex_string_unchecked<uint16_t>(const char* text, bool& success) noexcept;
+template uint32_t from_hex_string_unchecked<uint32_t>(const char* text, bool& success) noexcept;
+template uint64_t from_hex_string_unchecked<uint64_t>(const char* text, bool& success) noexcept;
+
+template <class T> T from_hex_string(const string_span<char>& str, bool& success) noexcept
+{
+	if( !str.start || !str.end || str.length() != 2 * sizeof(T) )
+	{
+		success = false;
+		return {};
+	}
+	return from_hex_string_unchecked<T>(str.start, success);
+}
+template uint8_t from_hex_string<uint8_t>(const string_span<char>& str, bool& success) noexcept;
 template uint16_t from_hex_string<uint16_t>(const string_span<char>& str, bool& success) noexcept;
 template uint32_t from_hex_string<uint32_t>(const string_span<char>& str, bool& success) noexcept;
 template uint64_t from_hex_string<uint64_t>(const string_span<char>& str, bool& success) noexcept;
@@ -306,7 +328,7 @@ template <class T> T from_hex_string(const string_span<char>& str)
 	bool success = true;
 	auto value = from_hex_string<T>(str, success);
 	if (!success)
-		throw std::runtime_error("Could not convert hex string to bytes, the string contains invalid (non-hex) characters.");
+		throw std::invalid_argument("Could not convert hex string: incorrect length or invalid characters.");
 	return value;
 }
 template uint8_t from_hex_string<uint8_t>(const string_span<char>& str);

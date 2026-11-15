@@ -92,6 +92,26 @@ TEST( types, basic_test )
 	EXPECT_EQ(gvec, gvec2);
 }
 
+TEST( types, malformed_components_report_failure )
+{
+	using vector_type = n_tup<int32_t, 3>;
+	using matrix_type = mn_tup<double, 2, 2>;
+	for( const std::string text : { "1 invalid 3", "1 18446744073709551616 3" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<vector_type>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<vector_type>( text ), std::out_of_range );
+	}
+	for( const std::string text : { "1 2 invalid 4", "1 2 1e1000 4" } )
+	{
+		bool success = true;
+		EXPECT_NO_THROW( from_string<matrix_type>( text, success ) );
+		EXPECT_FALSE( success );
+		EXPECT_THROW( from_string<matrix_type>( text ), std::out_of_range );
+	}
+}
+
 template<class _Ty, size_t _InnerSize, size_t _OuterSize, bool _Exact> void TestTupleOfTuples()
 {
 	mn_tup<_Ty, _InnerSize, _OuterSize> tupletuple = {};
