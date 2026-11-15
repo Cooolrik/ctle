@@ -82,6 +82,7 @@ std::unique_ptr<variant> new_variant( size_t index );
 std::unique_ptr<variant> random_variant();
 
 int run_process_test_child( const std::string &mode );
+int run_process_argument_child( int argc, char **argv );
 
 #define STANDARD_TEST_INIT() \
 	TEST_METHOD_INITIALIZE( InitMethod )\

@@ -1,6 +1,8 @@
 // ctle Copyright (c) 2026 Ulrik Lindahl
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
+#include "process_windows_arguments.inl"
+
 namespace ctle
 {
 namespace detail
@@ -93,13 +95,9 @@ std::string get_current_executable_path()
 status process::os_data::start( const std::vector<std::string> &arguments,
 	const std::string &directory, bool input, bool output, bool error )
 {
-	std::string command_line;
-	for( const auto &argument : arguments )
-	{
-		if( !command_line.empty() )
-			command_line += ' ';
-		command_line += quote_string_t<quote_string_options::whitespace>( argument );
-	}
+	if( arguments.front().find( '"' ) != std::string::npos )
+		return status::invalid_param;
+	const std::string command_line = detail::windows_command_line( arguments );
 	std::wstring command;
 	std::wstring working_directory;
 	if( !string_to_wstring( command_line, command ) || !string_to_wstring( directory, working_directory ) )

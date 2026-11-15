@@ -40,6 +40,7 @@ public:
 	/// @param stderr_callback Receives stderr data; null discards stderr.
 	/// @param use_stdin Enable put_stdin(); otherwise the child reads EOF from stdin.
 	/// @note Callbacks run on separate threads. Return false to close the corresponding pipe.
+	/// @note Windows arguments use Microsoft CRT quoting, not shell syntax; pass unquoted argument values.
 	static value_return<std::unique_ptr<process>> start(
 		const std::vector<std::string> &command_arguments,
 		const std::string &work_directory,

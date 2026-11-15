@@ -244,6 +244,9 @@ template<> mn_tup<f64,4,4> random_value<mn_tup<f64,4,4>>() { return mn_tup<f64,4
 
 int main(int argc, char** argv) 
 {
+	if( argc >= 2 && strcmp( argv[1], "--process-arguments" ) == 0 )
+		return run_process_argument_child( argc, argv );
+
 	if( argc == 3 && strcmp( argv[1], "--process-test" ) == 0 )
 		return run_process_test_child( argv[2] );
 

@@ -2,11 +2,15 @@
 // Licensed under the MIT license https://github.com/Cooolrik/ctle/blob/main/LICENSE
 
 #include <ctle/process.h>
+#include <ctle/uuid.h>
+#include <ctle/string_funcs.h>
 
 #include "unit_tests.h"
 
 #include <future>
+#include <filesystem>
 #if defined(_WIN32)
+#include <fcntl.h>
 #define _ADD_CTLE_HEADERS_WIN_STD
 #include <ctle/os.inl>
 #elif defined(__linux__)
@@ -17,6 +21,22 @@
 #endif
 
 using namespace ctle;
+
+int run_process_argument_child( int argc, char **argv )
+{
+#if defined(_WIN32)
+	_setmode( _fileno( stdout ), _O_BINARY );
+#endif
+	std::cout << argc - 1 << ':';
+	for( int index = 0; index < argc; ++index )
+	{
+		if( index == 1 )
+			continue;
+		const std::string argument = argv[index];
+		std::cout << argument.size() << ':' << argument;
+	}
+	return 0;
+}
 
 int run_process_test_child( const std::string &mode )
 {
@@ -257,6 +277,58 @@ TEST( process, closed_child_stdin_does_not_signal_parent )
 	child.reset();
 	expect_child_collected( child_id );
 }
+
+TEST( process, arguments_round_trip_through_child_startup )
+{
+	struct executable_copy
+	{
+		const std::filesystem::path directory = "ctle argv " + to_string( uuid::generate() );
+		const std::filesystem::path executable = directory / "argument child.exe";
+
+		~executable_copy()
+		{
+			std::error_code error;
+			std::filesystem::remove( this->executable, error );
+			std::filesystem::remove( this->directory, error );
+		}
+	} copy;
+	ASSERT_TRUE( std::filesystem::create_directory( copy.directory ) );
+	ASSERT_TRUE( std::filesystem::copy_file( get_current_executable_path(), copy.executable ) );
+
+	const std::vector<std::string> arguments = {
+		std::filesystem::absolute( copy.executable ).string(), "--process-arguments",
+		"", "", "plain", "two words", "with\ttab", "line\r\nbreak",
+		R"(C:\Temp\file.txt)", R"(C:\path with spaces\)", R"(\\server\share\)",
+		R"(say "hello")", R"(a\"b)", R"(a\\"b)", R"(")", R"(\\)", R"('^&|<>%PATH%$HOME)", ""
+	};
+	std::string expected = std::to_string( arguments.size() - 1 ) + ':';
+	for( size_t index = 0; index < arguments.size(); ++index )
+	{
+		if( index != 1 )
+			expected += std::to_string( arguments[index].size() ) + ':' + arguments[index];
+	}
+	std::string received;
+	auto result = process::start( arguments, ".",
+		[&]( const std::vector<uint8_t> &data )
+		{
+			received.append( data.begin(), data.end() );
+			return true;
+		} );
+	ASSERT_EQ( result.status(), status::ok );
+	auto child = std::move( result.value() );
+	int exit_code = -1;
+	ASSERT_EQ( child->wait( std::chrono::seconds( 5 ), &exit_code ), status::ok );
+	child.reset();
+	EXPECT_EQ( exit_code, 0 );
+	EXPECT_EQ( received, expected );
+}
+
+#if defined(_WIN32)
+TEST( process, windows_executable_path_rejects_embedded_quotes )
+{
+	EXPECT_EQ( process::start( { R"(bad"name.exe)" }, "." ).status(), status::invalid_param );
+}
+#endif
 
 TEST( process, basic_test )
 {
