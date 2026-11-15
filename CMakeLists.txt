@@ -167,19 +167,9 @@ if(CTLE_BUILD_TESTS)
 		PUBLIC ${vulkan_headers_SOURCE_DIR}/include
 		)
 
-	if(MSVC)
-		target_link_libraries( 	
-			unit_tests 
-			
-			gtest_main 
-			ws2_32
-			)
-	else()
-		target_link_libraries( 	
-			unit_tests 
-			
-			gtest_main 
-			)
+	target_link_libraries(unit_tests PRIVATE gtest_main)
+	if(WIN32)
+		target_link_libraries(unit_tests PRIVATE ws2_32)
 	endif()
 
 	include("${CMAKE_CURRENT_LIST_DIR}/cmake/header_checks.cmake")

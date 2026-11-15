@@ -21,7 +21,7 @@
 #define NOMINMAX
 #endif//NOMINMAX
 
-#include <Windows.h>
+#include <windows.h>
 #include <io.h>
 #include <utility>
 
@@ -116,8 +116,8 @@ private:
 #ifndef _CTLE_HEADERS_WIN_SOCKETS_ADDED
 #define _CTLE_HEADERS_WIN_SOCKETS_ADDED
 
-#include <WinSock2.h>
-#include <WS2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 #endif//_CTLE_HEADERS_WIN_SOCKETS_ADDED
 #undef _ADD_CTLE_HEADERS_WIN_SOCKETS
