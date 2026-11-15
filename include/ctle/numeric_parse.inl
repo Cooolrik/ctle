@@ -79,7 +79,8 @@ namespace detail
 				return { {}, parse_error::out_of_range };
 			if( negative && magnitude == maximum + 1 )
 				return { std::numeric_limits<T>::min(), parse_error::none };
-			const T value = static_cast<T>( magnitude );
+			// Unsigned instantiations compile this branch too; keep unary negation signed.
+			const int64_t value = static_cast<int64_t>( magnitude );
 			return { static_cast<T>( negative ? -value : value ), parse_error::none };
 		}
 
