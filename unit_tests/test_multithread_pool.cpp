@@ -10,6 +10,88 @@
 
 using namespace ctle;
 
+TEST( multithread_pool, deinitialize_detaches_all_lending_state )
+{
+	for( const bool borrow : { false, true } )
+	{
+		multithread_pool<int> pool;
+		std::vector<std::unique_ptr<int>> objects;
+		objects.emplace_back( new int( 1 ) );
+		objects.emplace_back( new int( 2 ) );
+		int *second = objects.back().get();
+		pool.initialize( objects );
+		if( borrow )
+			ASSERT_EQ( pool.borrow_item(), second );
+
+		EXPECT_EQ( pool.deinitialize( objects ), !borrow );
+		ASSERT_EQ( objects.size(), 2 );
+		EXPECT_EQ( objects.back().get(), second );
+		EXPECT_FALSE( pool.item_available() );
+		EXPECT_EQ( pool.available_count(), 0 );
+		EXPECT_FALSE( pool.item_borrowed() );
+		EXPECT_EQ( pool.borrow_item(), nullptr );
+		EXPECT_FALSE( pool.return_item( second ) );
+
+		std::vector<std::unique_ptr<int>> empty;
+		EXPECT_TRUE( pool.deinitialize( empty ) );
+		EXPECT_TRUE( empty.empty() );
+	}
+}
+
+TEST( multithread_pool, initialize_replaces_previous_loans_and_available_items )
+{
+	for( const bool empty : { false, true } )
+	{
+		multithread_pool<int> pool;
+		std::vector<std::unique_ptr<int>> original;
+		original.emplace_back( new int( 1 ) );
+		original.emplace_back( new int( 2 ) );
+		pool.initialize( original );
+		ASSERT_NE( pool.borrow_item(), nullptr );
+
+		std::vector<std::unique_ptr<int>> replacement;
+		if( !empty )
+			replacement.emplace_back( new int( 9 ) );
+		pool.initialize( replacement );
+		EXPECT_TRUE( replacement.empty() );
+		EXPECT_FALSE( pool.item_borrowed() );
+		EXPECT_EQ( pool.available_count(), empty ? 0 : 1 );
+		if( !empty )
+		{
+			int *item = pool.borrow_item();
+			ASSERT_NE( item, nullptr );
+			EXPECT_EQ( *item, 9 );
+			EXPECT_EQ( pool.borrow_item(), nullptr );
+			EXPECT_TRUE( pool.return_item( item ) );
+		}
+
+		EXPECT_TRUE( pool.deinitialize( replacement ) );
+		EXPECT_EQ( replacement.size(), empty ? 0 : 1 );
+	}
+}
+
+TEST( multithread_pool, detached_loans_do_not_enter_a_reinitialized_pool )
+{
+	multithread_pool<int> pool;
+	std::vector<std::unique_ptr<int>> detached;
+	detached.emplace_back( new int( 1 ) );
+	pool.initialize( detached );
+	int *old_loan = pool.borrow_item();
+	ASSERT_NE( old_loan, nullptr );
+	EXPECT_FALSE( pool.deinitialize( detached ) );
+
+	std::vector<std::unique_ptr<int>> replacement;
+	replacement.emplace_back( new int( 9 ) );
+	int *new_item = replacement.front().get();
+	pool.initialize( replacement );
+	EXPECT_FALSE( pool.return_item( old_loan ) );
+	EXPECT_EQ( pool.available_count(), 1 );
+	ASSERT_EQ( pool.borrow_item(), new_item );
+	EXPECT_EQ( pool.borrow_item(), nullptr );
+	EXPECT_TRUE( pool.return_item( new_item ) );
+	EXPECT_TRUE( pool.deinitialize( replacement ) );
+}
+
 TEST( multithread_pool, basic_test )
 {
 	multithread_pool<int> mypool;
